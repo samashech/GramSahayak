@@ -62,15 +62,16 @@ If you need an endpoint, column, or field not in `/docs/api-contract.md`:
      - `feat(db): add postgres and sqlite schemas and sqlite initializer`
      - `feat(rag): implement chroma schema-first ingest`
      - `fix(fe): handle browser speechSynthesis fallback on /voice`
-3. **Pull/rebase before pushing**:
+3. **Sync with `origin/dev` before & after merges (No Rebase on Long-Lived Branches — `DEC-09`)**:
    ```bash
    git fetch origin
-   git rebase origin/dev
-   git push -u origin feat/<role>-<task>
+   git merge origin/dev
+   git push
    ```
-4. **Pull Requests**:
+   - Each person edits **only their own folder**. Shared files (`.gitignore`, `README.md`, `.env.example`, `docs/api-contract.md`) change **only through the Team Lead**.
+4. **Pull Requests & Merges into `dev` (`--no-ff`, NOT Squash — `DEC-09`)**:
    - Open a PR into **`dev`** (never straight into `main`).
-   - **Lead reviews within 5 minutes** and **squash-merges** into `dev`.
+   - **Lead reviews within 5 minutes** and merges into `dev` using **`git merge --no-ff`** (never squash-merge long-lived branches `backend`, `rag`, `frontend`, `feat/db-setup`, as squashing rewrites commits and causes subsequent merges of the same branch to conflict).
 5. **Hard prohibitions**:
    - **NEVER force-push** (`git push --force` is forbidden).
    - **NEVER commit secrets** (`.env`, API keys, Supabase password/service keys), `node_modules`, `.venv`, `chroma_db`, `.next`, or `*.sqlite`.

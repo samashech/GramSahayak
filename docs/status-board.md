@@ -21,17 +21,18 @@
 
 ---
 
-## 2. Live Feature Status Board (Updated at `H0-1` Integration)
+## 2. Live Feature Status Board (Updated at `H1-4` Integration)
 
-Legend: `DONE` = merged & verified · `WIP (branch)` = pushed on role branch · `MOCK` = working with contract mocks · `QUEUED` = scheduled for next window
+Legend: `DONE` = merged & verified in `dev` · `WIP (branch)` = pushed on role branch · `MOCK` = working with contract mocks · `QUEUED` = scheduled for next window
 
 | Feature | FE (`:3000`) | BE (`:5000`) | RAG (`:8000`) | DB (`/db`) | Integrated (`dev`) | Tested | Demo-Ready |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Repo, Contract v1 & Schemas (`H0-1`)** | `WIP` (`origin/frontend` — needs `/frontend` folder move) | `DONE` (`A-00, K-01..04, B-01, B-02`) | `DONE` (`RAG-01` `/health`) | `DONE` (`DB-01, DB-02` Postgres & SQLite) | `DONE` (`dev`) | `PASS` | `YES` |
-| **1. Voice Web App (`/voice`)** | `WIP` (`FE-01/02` shell + mocks; `FE-05` in H4–10) | `QUEUED` (`B-06` in H4–10) | `WIP` (`RAG-01` live; `RAG-02/03` in H1–4) | `DONE` (`sessions`, `interaction_logs`) | `QUEUED` (`H10`) | `QUEUED` | `NO` |
-| **2. IVR Phone Simulator (`/ivr`)** | `WIP` (`FE-02` mock stages; `FE-06` in H4–10) | `QUEUED` (`B-07` in H4–10) | `WIP` (`RAG-01` live) | `DONE` (`sessions`) | `QUEUED` (`H10`) | `QUEUED` | `NO` |
-| **3. Offline SMS Simulator (`/sms`)** | `WIP` (`FE-02` mock; `FE-04` in H4–10) | `WIP` (`B-05` SMS parser ready on `origin/backend`) | `WIP` (`RAG-01` live) | `DONE` (`schemes` + 13 seed cards) | `QUEUED` (`H4`) | `WIP` (BE unit tests pass) | `NO` |
-| **4. Deterministic Eligibility (`/eligibility`)** | `WIP` (`FE-02` mock; `FE-03` in H1–4) | `WIP` (`B-05` engine ready on `origin/backend`) | *N/A (`R4` deterministic)* | `DONE` (`user_profiles`, `schemes`) | `QUEUED` (`H4`) | `WIP` (BE unit tests pass) | `NO` |
+| **Repo, Contract v1 & Schemas (`H0-1`)** | `WIP` (`origin/frontend` — remove 24 root duplicate files) | `DONE` (`A-00, K-01..04, B-01, B-02`) | `DONE` (`RAG-01` `/health`) | `DONE` (`DB-01, DB-02` Postgres & SQLite) | `DONE` (`dev`) | `PASS` | `YES` |
+| **Seed Validator, Loader & Personas (`H1-4`)** | `WIP` (`FE-01..03` on `origin/frontend`) | `DONE` (`B-03, B-04` `7f10261`) | `DONE` (`RAG-02` Chroma ingest) | `DONE` (`DB-03, DB-05` `de648dd`) | `DONE` (`dev`) | `PASS` (`10/10` seed, `0` reset diffs) | `YES` |
+| **1. Voice Web App (`/voice`)** | `WIP` (`FE-01/02` shell + mocks; `FE-05` in H4–10) | `QUEUED` (`B-06` in H4–10) | `DONE` (`RAG-03` LCEL `/rag/query` `e346851`) | `DONE` (`sessions`, `interaction_logs`) | `QUEUED` (`H10`) | `QUEUED` | `NO` |
+| **2. IVR Phone Simulator (`/ivr`)** | `WIP` (`FE-02` mock stages; `FE-06` in H4–10) | `QUEUED` (`B-07` in H4–10) | `DONE` (`RAG-03` `for_voice` mode) | `DONE` (`sessions`) | `QUEUED` (`H10`) | `QUEUED` | `NO` |
+| **3. Offline SMS Simulator (`/sms`)** | `WIP` (`FE-02` mock; `FE-04` in H4–10) | `DONE` (`B-05` SMS parser `6436077`) | `DONE` (`RAG-03` `/rag/query`) | `DONE` (`schemes` + 13 seed cards) | `DONE` (BE+DB+RAG in `dev`) | `PASS` (`41/41` BE tests) | `NO` (FE-04 in H4–10) |
+| **4. Deterministic Eligibility (`/eligibility`)** | `WIP` (`FE-03` built on `origin/frontend` `8b4a45f`) | `DONE` (`B-05` engine `6436077`) | *N/A (`R4` deterministic)* | `DONE` (`user_profiles`, `schemes`) | `WIP` (BE+DB in `dev`; awaiting FE root cleanup) | `PASS` (`41/41` BE tests, `G6` 8 schemes) | `ALMOST` |
 | **5. `/live` Projector Screen (SSE)** | `WIP` (`FE-02` mock timer; `FE-07` in H10–15) | `QUEUED` (`B-08` in H10–15) | *N/A* | *N/A* | `QUEUED` (`H12`) | `QUEUED` | `NO` |
 | **6. Real CloudTalk Call & Webhooks** | *N/A* | `QUEUED` (`B-07` in H4–10) | *N/A* | `DONE` (`interaction_logs`) | `WIP` (`LD-01` runbook + `test-webhooks.sh`) | `QUEUED` (`H6` gate) | `BONUS` |
 | **7. Safety & Hallucination Guardrails** | `WIP` (`FE-02` `S1` mock fixture) | `QUEUED` (`B-06` safety routing) | `QUEUED` (`RAG-04` in H4–10) | *N/A* | `QUEUED` (`H15` `LD-04`) | `QUEUED` | `NO` |
@@ -94,13 +95,13 @@ Every 4 hours, the designated Integration Owner pulls all ready PRs into `dev`, 
 
 ---
 
-## 5. Hour-0 (`H1` Checkpoint) Prompt Verification Audit
+## 5. Hour-0 & Hour-1..4 (`H1` & `H4` Checkpoints) Prompt Verification Audit
 
 | Role & Prompt | Branch / Commit | Contract Compliance Check | Verification Result |
 | :--- | :--- | :--- | :---: |
-| **DB (`DB-01`)** Repo, Contract v1, Git protocol | `origin/dev` (`f2c90a9`, tag `contract-v1`) | `/docs/api-contract.md`, `.gitignore`, `.env.example`, `README.md`, `ROLE.md`, `docs/team-protocol.md`, PR/CCR templates present. | **PASS (Merged in `dev`)** |
-| **DB (`DB-02`)** Postgres & SQLite schemas | `origin/feat/db-setup` (`4aef4e7`) | `db/schema.postgres.sql`, `db/schema.sqlite.sql`, `db/init_sqlite.py`, `db/README.md` match Contract §5 (`sessions, user_profiles, interaction_logs, schemes`, 0 diff vs `B-02`). | **PASS (Merged in `dev`)** |
-| **BE (`A-00`, `K-01..04`, `B-01`, `B-02`)** Contract align, 13 seed cards, gateway & DB adapter | `origin/dev` (`bfb7ea4`) + `f605b09` | 13 scheme cards (`PMKISAN..PRAGATI`) with 4-lang `sms_summary` `<=160` chars; `dbAdapter.js` supports `postgres \| sqlite \| memory` and applies `db/schema.sqlite.sql`; `GET /api/health` returns Contract §6 envelope. | **PASS (Merged in `dev`)** |
-| **RAG (`RAG-01`)** FastAPI scaffold, schemas & `/health` | `origin/rag` (`913c243`) | `rag/app/{main.py,config.py,schemas.py,rag.py,llm.py,prompts.py,safety.py}`, `GET /health` returns `{status, vector_count, embedding_model, mode}`, validates vocabulary on `/rag/query`. | **PASS (Merged in `dev`)** |
-| **Lead (`LD-01`, `LD-05`)** CloudTalk runbook, webhook test script, status board | `feat/lead-setup` | `docs/CLAUDE.md`, `docs/ROLE.md`, `docs/decisions.md`, `docs/status-board.md`, `docs/cloudtalk-runbook.md`, `scripts/test-webhooks.sh` complete inside `/docs` & `/scripts`. | **PASS (Merged in `dev`)** |
-| **FE (`FE-01`, `FE-02`)** Next.js shell, 4 tabs, `/live`, i18n, typed client, mocks | `origin/frontend` (`e54193c`) | App shell, `AppContext`, `lib/types.ts`, `lib/api.ts`, and `mocks/*.json` match Contract §6/§12, **BUT** files were committed at repo root (`/app`, `/components`, `/lib`, `/package.json`) instead of `/frontend/*`. | **HOLD MERGE (Action sent to FE: move into `/frontend/`)** |
+| **DB (`DB-01`, `DB-02`)** Repo, Contract v1, Postgres & SQLite schemas | `origin/feat/db-setup` (`4aef4e7`) | `/docs/api-contract.md`, `db/schema.postgres.sql`, `db/schema.sqlite.sql`, `db/init_sqlite.py` match Contract §5 (`0` diffs vs `B-02`). | **PASS (Merged in `dev`)** |
+| **DB (`DB-03`, `DB-05`)** Seed validator/loader, `demo_personas.json`, `demo_reset.py` | `origin/feat/db-setup` (`de648dd`) | `python3 db/validate_seed.py` -> **10/10 PASS**; `python3 db/demo_reset.py --driver sqlite --check` -> **0 differences** (5 personas + 2-turn histories). *(Next: `CCR-04` move `starter_history` into `demo_personas.json`)*. | **PASS (Merged in `dev`)** |
+| **BE (`A-00`, `K-01..04`, `B-01..B-05`)** Gateway, DB adapter, 13 seed cards, personas, profile, eligibility, SMS parser | `origin/backend` (`7f10261`) | `cd backend && npm ci && npm test` -> **41/41 PASS** (`memory` + `sqlite` drivers, `POST /api/demo/reset` parity with `starter_history`, `G6` 8 eligible schemes, `G8` `<300ms` SMS keyword, `POST /api/schemes/ingest` aligned with `RAG-02`). | **PASS (Merged in `dev`)** |
+| **RAG (`RAG-01`, `RAG-02`, `RAG-03`)** FastAPI `/health`, Chroma schema-first ingest, LCEL `/rag/query` | `origin/rag` (`e346851`) | `rag/ingest.py` + `POST /rag/ingest` + `POST /rag/query` LCEL chain in place. *(Note `CCR-06`: preserve `data/raw` per-file category on full re-index instead of defaulting all `data/raw` files to `"schemes"`)*. | **PASS (Merged in `dev`)** |
+| **Lead (`LD-01`, `LD-05`)** CloudTalk runbook, webhook test script, status board, decisions log | `feat/lead-setup` | `docs/decisions.md` updated with `DEC-09` (`--no-ff` merge rule), `CCR-02/CR-1` (`G6` 8 eligible schemes), `CCR-04` (`starter_history` approved), `CCR-05` (FE fixes), `CCR-06` (RAG `data/raw` category). | **PASS (Merged in `dev`)** |
+| **FE (`FE-01`, `FE-02`, `FE-03`)** App shell, mocks, `/eligibility` checker | `origin/frontend` (`bfc0554`) | `/frontend` code & `FE-03` exist, **HELD from `dev` merge** until FE completes `CCR-05`: (1) `git rm` the 24 duplicate root files (`mocks/`, `context/`, `public/`, `next.config.ts`, `tsconfig.json`, `tsconfig.tsbuildinfo`, `package-lock.json`, `postcss.config.mjs`, `next-env.d.ts`, `eslint.config.mjs`, `components.json`, `declarations.d.ts`), and (2) align `IvrStep.audioBase64` + `session`, SSE types, `ProfileResponse.profile: Profile \| null`, and `g6_eligibility_hi.json` (8 eligible schemes). | **HOLD (Awaiting FE `git rm` of 24 root duplicates)** |

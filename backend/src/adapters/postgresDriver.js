@@ -8,6 +8,23 @@ const { PROFILE_COLUMNS, toIso } = require('./rows');
 
 const isLocal = (url) => /@(localhost|127\.0\.0\.1)(:\d+)?\//.test(url);
 
+// SSL is configured here, not in the URL: node-postgres treats sslmode=require as verify-full,
+// which rejects Supabase's pooler certificate (signed by Supabase's own CA). Like libpq's
+// "require", remote connections are encrypted without CA verification.
+const SSL_URL_PARAMS = ['sslmode', 'ssl', 'sslcert', 'sslkey', 'sslrootcert', 'uselibpqcompat'];
+
+function poolConnection(databaseUrl) {
+  let connectionString = databaseUrl;
+  try {
+    const url = new URL(databaseUrl);
+    for (const p of SSL_URL_PARAMS) url.searchParams.delete(p);
+    connectionString = url.toString();
+  } catch {
+    // Not a parseable URL: hand it to pg unchanged.
+  }
+  return { connectionString, ssl: isLocal(databaseUrl) ? false : { rejectUnauthorized: false } };
+}
+
 const normalizeRow = (row) => {
   if (!row) return null;
   const out = { ...row };
@@ -24,8 +41,7 @@ function createPostgresDriver({ databaseUrl }) {
     async init() {
       if (!databaseUrl) throw new Error('DATABASE_URL is empty');
       pool = new Pool({
-        connectionString: databaseUrl,
-        ssl: isLocal(databaseUrl) ? false : { rejectUnauthorized: false },
+        ...poolConnection(databaseUrl),
         max: 5,
         connectionTimeoutMillis: 3000,
         idleTimeoutMillis: 30000,
@@ -33,6 +49,11 @@ function createPostgresDriver({ databaseUrl }) {
       });
       // A pool 'error' must not crash the process; the adapter's circuit breaker handles it.
       pool.on('error', (err) => console.warn('[db:postgres] idle client error:', err.message));
+      try {
+        await pool.query('SELECT 1');
+      } catch (err) {
+        throw new Error(`cannot connect (${err.message}); check DATABASE_URL (Supabase pooler, port 6543)`);
+      }
       for (const table of ['sessions', 'user_profiles', 'interaction_logs', 'schemes']) {
         try {
           await pool.query(`SELECT 1 FROM ${table} LIMIT 1`);
@@ -102,4 +123,4 @@ function createPostgresDriver({ databaseUrl }) {
   };
 }
 
-module.exports = { createPostgresDriver };
+module.exports = { createPostgresDriver, poolConnection };

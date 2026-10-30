@@ -1,8 +1,10 @@
 const path = require('node:path');
 const dotenv = require('dotenv');
 
-// Contract section 10: one root .env shared by all services.
+// Contract section 10: one root .env shared by all services. A backend/.env (also git-ignored)
+// is read too and wins for the gateway; real environment variables win over both.
 const REPO_ROOT = path.resolve(__dirname, '../../..');
+dotenv.config({ path: path.join(REPO_ROOT, 'backend', '.env'), quiet: true });
 dotenv.config({ path: path.join(REPO_ROOT, '.env'), quiet: true });
 
 const env = process.env;

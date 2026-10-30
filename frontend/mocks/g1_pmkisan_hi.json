@@ -1,0 +1,38 @@
+{
+  "success": true,
+  "data": {
+    "answerText": "पीएम-किसान योजना के तहत 2 हेक्टेयर तक भूमि वाले पात्र किसान परिवारों को प्रति वर्ष ₹6,000 की वित्तीय सहायता 3 समान किस्तों (₹2,000 प्रत्येक) में सीधे बैंक खाते में दी जाती है। दस्तावेज़: आधार कार्ड, भूमि रिकॉर्ड (खतौनी), बैंक खाता और eKYC। संस्थागत भूमिधारक इसके पात्र नहीं हैं।",
+    "languageCode": "hi-IN",
+    "category": "schemes",
+    "matchedSchemeId": "PMKISAN",
+    "smsReceipt": {
+      "smsReceiptText": "पीएम-किसान: भूमिधारक किसान परिवार को ₹6000/वर्ष, 3 किस्तों में। दस्तावेज़: आधार, भूमि रिकॉर्ड, बैंक खाता, eKYC। pmkisan.gov.in हेल्पलाइन: 155261",
+      "helpline": "155261",
+      "portalUrl": "https://pmkisan.gov.in",
+      "documents": [
+        "Aadhaar Card",
+        "Land ownership documents (Khatauni)",
+        "Active bank account",
+        "eKYC verification"
+      ],
+      "delivery": "simulated"
+    },
+    "sources": [
+      {
+        "id": "PMKISAN",
+        "title": "Pradhan Mantri Kisan Samman Nidhi (पीएम-किसान)",
+        "category": "schemes",
+        "helpline": "155261",
+        "portalUrl": "https://pmkisan.gov.in"
+      }
+    ],
+    "safety": {
+      "flagged": false,
+      "helplines": []
+    },
+    "latencyMs": 740,
+    "source": "cache"
+  },
+  "error": null,
+  "timestamp": "2026-10-31T08:00:00.000Z"
+}

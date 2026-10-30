@@ -1,0 +1,41 @@
+{
+  "success": true,
+  "data": {
+    "answerText": "नेशनल स्कॉलरशिप पोर्टल (scholarships.gov.in) पर आवेदन करने के लिए पहले वन-टाइम रजिस्ट्रेशन (OTR) पूरा करें। आवश्यक दस्तावेज़: आधार कार्ड, आय प्रमाण पत्र, जाति प्रमाण पत्र और बैंक खाता। आवेदन भरने के बाद अपने विद्यालय/कॉलेज से समय सीमा से पूर्व सत्यापन अवश्य करवाएं। आधिकारिक हेल्पलाइन: 0120-6619540।",
+    "languageCode": "hi-IN",
+    "category": "education",
+    "matchedSchemeId": "NSP",
+    "smsReceipt": {
+      "smsReceiptText": "राष्ट्रीय छात्रवृत्ति पोर्टल: केंद्र व राज्य छात्रवृत्ति के लिए एक जगह आवेदन। आधार, आय/जाति प्रमाणपत्र, अंकपत्र। scholarships.gov.in हेल्पलाइन: 0120-6619540",
+      "helpline": "0120-6619540",
+      "portalUrl": "https://scholarships.gov.in",
+      "documents": [
+        "Aadhaar card",
+        "Income certificate",
+        "Caste/community certificate",
+        "Academic marksheets",
+        "Active bank passbook"
+      ],
+      "delivery": "simulated"
+    },
+    "sources": [
+      {
+        "id": "NSP",
+        "title": "National Scholarship Portal (NSP)",
+        "category": "education",
+        "helpline": "0120-6619540",
+        "portalUrl": "https://scholarships.gov.in"
+      }
+    ],
+    "safety": {
+      "flagged": false,
+      "helplines": [
+        "0120-6619540"
+      ]
+    },
+    "latencyMs": 780,
+    "source": "cache"
+  },
+  "error": null,
+  "timestamp": "2026-10-31T08:00:00.000Z"
+}

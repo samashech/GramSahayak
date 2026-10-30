@@ -1,0 +1,41 @@
+{
+  "success": true,
+  "data": {
+    "answerText": "ஜனனி சுரக்ஷா யோஜனா (JSY) திட்டத்தின் கீழ் அரசு மருத்துவமனையில் பிரசவம் செய்யும் கிராமப்புற தாய்மார்களுக்கு நிதி உதவி வழங்கப்படுகிறது. LPS மாநிலங்களில் ₹1,400 வரை உதவி வழங்கப்படுகிறது. தேவையான ஆவணங்கள்: MCP தாய் சேய் பாதுகாப்பு அட்டை, ஆதார் அட்டை மற்றும் வங்கி கணக்கு புத்தகம்.",
+    "languageCode": "ta-IN",
+    "category": "health",
+    "matchedSchemeId": "JSY",
+    "smsReceipt": {
+      "smsReceiptText": "ஜனனி சுரக்ஷா: அரசு மருத்துவமனை பிரசவத்துக்கு கிராமப்புற தாய்க்கு ₹700 (HPS மாநிலம்) / ₹1400 (LPS). MCP அட்டை, ஆதார், வங்கி. nhm.gov.in உதவி: 104",
+      "helpline": "104",
+      "portalUrl": "https://nhm.gov.in",
+      "documents": [
+        "Mother and Child Protection (MCP) card",
+        "Aadhaar card",
+        "Bank account linked to Aadhaar",
+        "BPL ration card (for HPS states)"
+      ],
+      "delivery": "simulated"
+    },
+    "sources": [
+      {
+        "id": "JSY",
+        "title": "Janani Suraksha Yojana (ஜனனி சுரக்ஷா திட்டம்)",
+        "category": "health",
+        "helpline": "104",
+        "portalUrl": "https://nhm.gov.in"
+      }
+    ],
+    "safety": {
+      "flagged": false,
+      "helplines": [
+        "104",
+        "102"
+      ]
+    },
+    "latencyMs": 710,
+    "source": "cache"
+  },
+  "error": null,
+  "timestamp": "2026-10-31T08:00:00.000Z"
+}

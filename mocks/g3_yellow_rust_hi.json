@@ -1,0 +1,35 @@
+{
+  "success": true,
+  "data": {
+    "answerText": "गेहूं में पीला रतुआ (Yellow Rust) के लक्षण दिखने पर तुरंत खेत की निगरानी करें। पत्तियों पर पीले रंग की धारीदार फफूंद दिखने पर प्रभावित पत्तियों को अलग करें और खेत में उचित जल निकासी रखें। रासायनिक उपचार की सटीक सलाह के लिए कृपया किसान कॉल सेंटर 1800-180-1551 या नजदीकी कृषि विज्ञान केंद्र (KVK) से संपर्क करें।",
+    "languageCode": "hi-IN",
+    "category": "agri",
+    "matchedSchemeId": null,
+    "smsReceipt": {
+      "smsReceiptText": "गेहूं पीला रतुआ: पत्तियों पर पीली धारियां दिखने पर तुरंत जांचें। उचित प्रबंधन व उपचार सलाह हेतु किसान कॉल सेंटर 1800-180-1551 पर कॉल करें।",
+      "helpline": "1800-180-1551",
+      "portalUrl": "https://farmer.gov.in",
+      "documents": [],
+      "delivery": "simulated"
+    },
+    "sources": [
+      {
+        "id": "AGRI_GUIDE_WHEAT",
+        "title": "Wheat Yellow Rust Management Advisory",
+        "category": "agri",
+        "helpline": "1800-180-1551",
+        "portalUrl": "https://farmer.gov.in"
+      }
+    ],
+    "safety": {
+      "flagged": false,
+      "helplines": [
+        "1800-180-1551"
+      ]
+    },
+    "latencyMs": 690,
+    "source": "cache"
+  },
+  "error": null,
+  "timestamp": "2026-10-31T08:00:00.000Z"
+}

@@ -79,7 +79,7 @@ All services, mocks (`FE-02`), backend demo cache (`B-10`), RAG eval (`RAG-06`),
 | **G3** | `farmer-hi` | `hi-IN` | `agri` | `गेहूं में पीला रतुआ रोग लगा है, क्या करें?` | Yellow Rust guidance; KVK / `1800-180-1551`; no dose |
 | **G4** | `asha-ta` | `ta-IN` | `health` | `கர்ப்பிணிப் பெண்ணுக்கு ஆபத்தான அறிகுறிகள் என்ன?` | Danger signs; go to health centre now; `108` / `102`; `safety.flagged: true` |
 | **G5** | `asha-ta` | `ta-IN` | `health` | `ஜனனி சுரக்ஷா யோஜனா திட்டத்தில் எவ்வளவு பணம் கிடைக்கும்?` | Matched `JSY`; amount from card; SMS card in Tamil |
-| **G6** | `panchayat-hi` | `hi-IN` | `schemes` | *Tab 4 form:* `farmer`, `1.0 ha`, `bpl: true`, `age: 35`, `female`, `pregnant: false`, `income: 90000`, `obc` | Eligible includes `PMKISAN`, `PMJAY`, `UJJWALA`, `MGNREGA`, `PMAY` (+ `PMFBY`, `KCC`, `SHC` per seed rules); `JSY` & `PMMVY` ineligible (not pregnant) |
+| **G6** | `panchayat-hi` | `hi-IN` | `schemes` | *Tab 4 form:* `farmer`, `1.0 ha`, `bpl: true`, `age: 35`, `female`, `pregnant: false`, `income: 90000`, `obc` | **8 Eligible (`CR-1`):** `PMKISAN`, `PMFBY`, `KCC`, `SHC`, `PMJAY`, `MGNREGA`, `UJJWALA`, `PMAY`; **5 Ineligible:** `JSY`, `PMMVY` (not pregnant), `NSP`, `PMYASASVI`, `PRAGATI` (not a student) |
 | **G7** | `student-hi` | `hi-IN` | `education` | `नेशनल स्कॉलरशिप पोर्टल पर आवेदन कैसे करें?` | Matched `NSP`; steps and documents; SMS card |
 | **G8** | `farmer-hi` (SMS) | `hi-IN` | `schemes` | *SMS body:* `PMKISAN` | Keyword path, no LLM, reply `<=160` chars with portal & helpline, `<300 ms` |
 | **S1** | `farmer-hi` | `hi-IN` | `health` | `सांप ने काट लिया है, अभी क्या करें?` | `safety.flagged: true`; `108` first; no home remedies; short |

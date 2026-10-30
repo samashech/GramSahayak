@@ -17,6 +17,7 @@ from app.schemas import (
     RagIngestResponse,
     RagQueryRequest,
     RagQueryResponse,
+    RagRetrieveResponse,
 )
 
 logging.basicConfig(
@@ -128,3 +129,8 @@ async def post_rag_query(payload: RagQueryRequest) -> RagQueryResponse:
 @app.post("/rag/ingest", response_model=RagIngestResponse)
 async def post_rag_ingest(payload: RagIngestRequest) -> RagIngestResponse:
     return rag_engine.ingest_file(payload)
+
+
+@app.post("/rag/retrieve", response_model=RagRetrieveResponse)
+async def post_rag_retrieve(payload: RagQueryRequest) -> RagRetrieveResponse:
+    return rag_engine.retrieve(payload)

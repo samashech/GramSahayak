@@ -1,9 +1,25 @@
-"""Groq LLM client wrapper and mode tracker for GramSahayak RAG (expanded in RAG-03 & RAG-05)."""
+"""Groq LLM client wrapper, LCEL chain builder, and mode tracker for GramSahayak RAG (RAG-03 & RAG-05)."""
 
+import logging
 import time
-from typing import Literal
+from typing import List, Literal, Sequence
+
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnableSerializable
 from langchain_groq import ChatGroq
+
 from app.config import settings
+from app.prompts import (
+    LANGUAGE_NAMES,
+    ROLE_HINTS,
+    TEXT_INSTRUCTION,
+    VOICE_INSTRUCTION,
+    build_rag_prompt,
+)
+from app.schemas import HistoryMessage
+
+logger = logging.getLogger("gramsahayak.llm")
 
 
 class LLMRuntimeState:
@@ -32,7 +48,7 @@ llm_state = LLMRuntimeState()
 
 
 def get_chat_groq(for_voice: bool = False) -> ChatGroq:
-    """Build a configured ChatGroq instance per contract budget rules."""
+    """Build a configured ChatGroq instance per contract budget rules (temperature 0.2, timeout 3.5s)."""
     max_tokens = 120 if for_voice else 220
     return ChatGroq(
         api_key=settings.LLM_API_KEY,
@@ -42,3 +58,75 @@ def get_chat_groq(for_voice: bool = False) -> ChatGroq:
         timeout=settings.LLM_TIMEOUT_SEC,
         max_retries=0,
     )
+
+
+def build_lcel_chain(for_voice: bool = False) -> RunnableSerializable[dict, str]:
+    """Build the LangChain Expression Language (LCEL) chain: prompt | llm | parser."""
+    prompt = build_rag_prompt()
+    llm = get_chat_groq(for_voice=for_voice)
+    parser = StrOutputParser()
+    return prompt | llm | parser
+
+
+def trim_history_messages(
+    history: Sequence[HistoryMessage],
+    max_messages: int = 6,
+    max_chars: int = 1200,
+) -> List[BaseMessage]:
+    """Keep the last 6 messages from the request, trimmed to at most 1200 total characters."""
+    recent = list(history[-max_messages:])
+    trimmed_reversed: List[BaseMessage] = []
+    used_chars = 0
+
+    for item in reversed(recent):
+        text = item.content.strip()
+        if not text:
+            continue
+        remaining = max_chars - used_chars
+        if remaining <= 0:
+            break
+        if len(text) > remaining:
+            text = text[-remaining:]
+        used_chars += len(text)
+        if item.role == "user":
+            trimmed_reversed.append(HumanMessage(content=text))
+        else:
+            trimmed_reversed.append(AIMessage(content=text))
+
+    return list(reversed(trimmed_reversed))
+
+
+def invoke_lcel_answer(
+    *,
+    question: str,
+    context: str,
+    language: str,
+    role: str,
+    for_voice: bool,
+    history: Sequence[HistoryMessage],
+) -> str:
+    """Invoke the LCEL (prompt | llm | parser) chain with Groq and update runtime state."""
+    language_name = LANGUAGE_NAMES.get(language, "Hindi")
+    role_hint = ROLE_HINTS.get(role, ROLE_HINTS["farmer"])
+    format_instruction = (
+        VOICE_INSTRUCTION
+        if for_voice
+        else TEXT_INSTRUCTION.format(language_name=language_name, language=language)
+    )
+    lc_history = trim_history_messages(history, max_messages=6, max_chars=1200)
+
+    chain = build_lcel_chain(for_voice=for_voice)
+    answer = chain.invoke(
+        {
+            "language_name": language_name,
+            "language": language,
+            "role": role,
+            "role_hint": role_hint,
+            "format_instruction": format_instruction,
+            "context": context,
+            "history": lc_history,
+            "question": question,
+        }
+    )
+    llm_state.record_success()
+    return answer.strip()

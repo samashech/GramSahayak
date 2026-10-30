@@ -144,25 +144,51 @@ test('kill test: RAG down -> fallback with the local card match, Tamil receipt, 
   assert.ok(events.some((e) => e.type === 'pipeline' && e.step === 'sms_receipt_dispatched'));
 });
 
-test('RAG timeout falls back fast; S3 off-topic with RAG down gets the fixed "no verified info" answer', async () => {
+test('RAG timeout falls back fast to the local card match', async () => {
   ragMode = 'slow';
   config.ragTimeoutMs = 200;
   const t0 = Date.now();
   const slow = await chat({ queryText: G5, languageCode: 'ta-IN', role: 'asha' });
   assert.ok(Date.now() - t0 < 1200, 'did not wait for the slow RAG');
   assert.equal(slow.json.data.source, 'fallback');
-  ragMode = 'down';
-  const s3 = await chat({ queryText: S3, languageCode: 'hi-IN', role: 'farmer' });
-  assert.equal(s3.json.data.answerText, msg.NO_VERIFIED_INFO['hi-IN']);
-  assert.equal(s3.json.data.matchedSchemeId, null);
+  assert.equal(slow.json.data.matchedSchemeId, 'JSY');
 });
 
-test('USE_MOCK_AI skips RAG entirely', async () => {
+test('ladder with RAG down: card match -> golden cache -> "no verified info"', async () => {
+  ragMode = 'down';
+  const golden = require('../../data/seed/golden_queries.json').queries;
+  const g2 = golden.find((q) => q.id === 'G2');
+  // G2 (pest guide, no scheme card) comes from the golden cache, in every language.
+  for (const [lang, text] of Object.entries(g2.text)) {
+    const { json } = await chat({ queryText: text, languageCode: lang, category: 'agri', role: 'farmer' });
+    assert.equal(json.data.source, 'cache', `${lang}`);
+    assert.ok(json.data.answerText.length > 40);
+    assert.equal(json.data.smsReceipt, null);
+  }
+  // S3 (off-topic) is cached too: RAG-04's polite out-of-scope text.
+  const s3 = await chat({ queryText: S3, languageCode: 'hi-IN', role: 'farmer' });
+  assert.equal(s3.json.data.source, 'cache');
+  assert.equal(s3.json.data.matchedSchemeId, null);
+  // Not cached and no scheme named -> fixed "no verified info".
+  const other = await chat({ queryText: 'आज मौसम कैसा रहेगा?', languageCode: 'hi-IN', role: 'farmer' });
+  assert.deepEqual([other.json.data.source, other.json.data.answerText], ['fallback', msg.NO_VERIFIED_INFO['hi-IN']]);
+});
+
+test('USE_MOCK_AI skips RAG and answers from the golden cache; receipt still from the seed (R5)', async () => {
   config.useMockAi = true;
   const { json } = await chat({ queryText: G1, languageCode: 'hi-IN', role: 'farmer' });
   assert.equal(rag.calls.length, 0);
-  assert.equal(json.data.source, 'fallback');
+  assert.equal(json.data.source, 'cache');
   assert.equal(json.data.matchedSchemeId, 'PMKISAN');
+  assert.equal(json.data.smsReceipt.smsReceiptText, seedSchemes.getByCode('PMKISAN').sms_summary['hi-IN']);
+  const s1 = await chat({ queryText: S1, languageCode: 'hi-IN', role: 'farmer' });
+  assert.deepEqual([s1.json.data.answerText, s1.json.data.safety.flagged], [msg.SAFETY_ANSWERS.emergency['hi-IN'], true], 'safety first, even in mock mode');
+});
+
+test('voice answers never speak a domain, even RAG\'s comma-split "pmkisan, gov, in"', () => {
+  const { voiceSafe } = require('../src/services/agentBrain');
+  assert.equal(voiceSafe('दस्तावेज़: आधार, बैंक खाता, eKYC, pmkisan, gov, in'), 'दस्तावेज़: आधार, बैंक खाता, eKYC');
+  assert.equal(voiceSafe('Apply at pmkisan.gov.in today'), 'Apply at today');
 });
 
 test('POST /api/chat validation', async () => {

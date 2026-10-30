@@ -171,8 +171,9 @@ async function processSpeech({ callerPhone, recordingUrl, audioPath, text, langu
 // SMS flow (contract section 8) -> {replyText, charCount, matchedSchemeId, mode, delivery}
 async function smsIncoming({ fromPhone, body, languageCode, sendRealSms = false }) {
   const result = await smsParserService.handleSmsQuery(fromPhone, body, languageCode, { answerFreeText: agentBrain.answerForSms });
+  eventBus.emit('sms', { channel: 'sms', phone: result.sessionKey, direction: 'in', text: String(body ?? '').trim() });
   const delivery = sendRealSms ? await cloudtalkService.sendSms(result.sessionKey, result.replyText) : 'simulated';
-  eventBus.emit('sms', { channel: 'sms', phone: result.sessionKey, text: result.replyText });
+  eventBus.emit('sms', { channel: 'sms', phone: result.sessionKey, direction: 'out', text: result.replyText, mode: result.mode, delivery });
   return {
     replyText: result.replyText,
     charCount: result.charCount,

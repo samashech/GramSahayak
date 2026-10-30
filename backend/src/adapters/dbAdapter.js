@@ -97,15 +97,19 @@ async function ensureSession(sessionKey, { phone = null, channel = null } = {}) 
   return row;
 }
 
-async function saveSessionTurn(sessionKey, turn, { phone = null } = {}) {
-  const session = await ensureSession(sessionKey, { phone, channel: turn.channel });
-  session.history = [...(session.history || []), turn].slice(-config.historyLimit);
-  session.last_channel = turn.channel || session.last_channel;
+// Appends turns in order with one read + one write (Supabase round-trips matter for SMS < 300 ms).
+async function saveSessionTurns(sessionKey, turns, { phone = null } = {}) {
+  const last = turns[turns.length - 1];
+  const session = await ensureSession(sessionKey, { phone, channel: last?.channel });
+  session.history = [...(session.history || []), ...turns].slice(-config.historyLimit);
+  session.last_channel = last?.channel || session.last_channel;
   if (phone && !session.phone) session.phone = phone;
   session.updated_at = now();
   await write('putSession', session);
   return session;
 }
+
+const saveSessionTurn = (sessionKey, turn, opts) => saveSessionTurns(sessionKey, [turn], opts);
 
 // ---- Profiles ----
 
@@ -193,6 +197,7 @@ module.exports = {
   getSession,
   ensureSession,
   saveSessionTurn,
+  saveSessionTurns,
   getUserProfile,
   upsertUserProfile,
   logCallOrSms,

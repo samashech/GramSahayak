@@ -28,7 +28,6 @@ async function transcribe({ audioPath, languageCode, transcriptHint, channel, ph
       const stt = await sarvamService.speechToText(buffer, languageCode);
       const ms = performance.now() - t1;
       eventBus.pipeline('sarvam_stt_done', ms, { channel, phone, text: stt.transcript });
-      eventBus.emit('transcript', { channel, phone, text: stt.transcript });
       await dbAdapter.logCallOrSms({ sessionKey, phone, channel, eventType: 'stt', detail: { via: 'sarvam', languageCode: stt.languageCode }, latencyMs: ms });
       return {
         transcript: stt.transcript,
@@ -41,7 +40,6 @@ async function transcribe({ audioPath, languageCode, transcriptHint, channel, ph
     }
   }
   if (hint) {
-    eventBus.emit('transcript', { channel, phone, text: hint });
     return { transcript: hint, detectedLanguage: languageCode || languageFromScript(hint), via: 'hint' };
   }
   throw new AppError('ERR_STT_FAILED', 'Could not understand the audio. Please try again or type your question.');

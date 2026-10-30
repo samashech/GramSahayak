@@ -57,6 +57,13 @@ async function appendTurn(sessionKey, turnInput, { phone } = {}) {
   return turn;
 }
 
+// Several turns (e.g. user + assistant) saved in order with one session read and one write.
+async function appendTurns(sessionKey, turnInputs, { phone } = {}) {
+  const turns = turnInputs.map(buildTurn);
+  await dbAdapter.saveSessionTurns(sessionKey, turns, { phone: phoneFor(sessionKey, phone) });
+  return turns;
+}
+
 async function getHistory(sessionKey, limit = config.historyLimit) {
   const session = await dbAdapter.getSession(sessionKey);
   return (session?.history || []).slice(-limit);
@@ -152,6 +159,7 @@ module.exports = {
   requireSessionKey,
   buildTurn,
   appendTurn,
+  appendTurns,
   getHistory,
   toRagHistory,
   sanitizeProfile,

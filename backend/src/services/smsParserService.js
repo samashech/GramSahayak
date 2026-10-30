@@ -82,13 +82,18 @@ async function handleSmsQuery(fromPhone, smsBody, languageHint, { answerFreeText
   const latencyMs = Math.round(performance.now() - started);
 
   const category = reply.matchedSchemeId ? seedSchemes.getByCode(reply.matchedSchemeId)?.category : null;
-  await sessionService.appendTurn(sessionKey, { channel: 'sms', speaker: 'user', text: body, category, language: languageCode });
-  await sessionService.appendTurn(sessionKey, { channel: 'sms', speaker: 'assistant', text: replyText, category, language: languageCode });
-  await dbAdapter.logCallOrSms({ sessionKey, phone: sessionKey, channel: 'sms', eventType: 'sms_in', detail: { body, languageCode } });
-  await dbAdapter.logCallOrSms({
-    sessionKey, phone: sessionKey, channel: 'sms', eventType: 'sms_out',
-    detail: { replyText, mode: reply.mode, matchedSchemeId: reply.matchedSchemeId }, latencyMs,
-  });
+  // Turns (one read + one write) and the two logs are independent: run them together.
+  await Promise.all([
+    sessionService.appendTurns(sessionKey, [
+      { channel: 'sms', speaker: 'user', text: body, category, language: languageCode },
+      { channel: 'sms', speaker: 'assistant', text: replyText, category, language: languageCode },
+    ]),
+    dbAdapter.logCallOrSms({ sessionKey, phone: sessionKey, channel: 'sms', eventType: 'sms_in', detail: { body, languageCode } }),
+    dbAdapter.logCallOrSms({
+      sessionKey, phone: sessionKey, channel: 'sms', eventType: 'sms_out',
+      detail: { replyText, mode: reply.mode, matchedSchemeId: reply.matchedSchemeId }, latencyMs,
+    }),
+  ]);
 
   return {
     replyText,

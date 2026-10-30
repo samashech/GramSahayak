@@ -11,7 +11,7 @@ module.exports = {
     'सांप ने काट', 'साँप ने काट', 'सांप काट', 'साँप काट', 'सर्पदंश',
     'साप चावला', 'सापाने चावले', 'साप चावल',
     'பாம்பு கடி', 'பாம்பு கடித்',
-    'snake bite', 'snakebite', 'bitten by a snake', 'snake bit',
+    'snake bite', 'snakebite', 'bitten by a snake', 'bitten by snake', 'snake bit', 'snake has bitten', 'snake bitten',
     // unconscious, chest pain, poisoning, breathing
     'बेहोश', 'सीने में तेज दर्द', 'सीने में दर्द', 'जहर खा', 'ज़हर खा', 'कीटनाशक पी', 'सांस नहीं',
     'बेशुद्ध', 'छातीत दुखत', 'विष प्याय', 'कीटकनाशक प्याय', 'श्वास घेता येत नाही',

@@ -1,0 +1,23 @@
+{
+  "_note": "Appendix golden queries (one list for everyone). The original text per row is the appendix language; the other translations need a native-speaker check (LD-02). Used by the backend demo cache (B-10), scripts/e2e.sh and the frontend demo chips.",
+  "queries": [
+    {"id": "G1", "persona": "farmer-hi", "category": "schemes", "role": "farmer", "original": "hi-IN", "expect": {"matched": "PMKISAN", "safety": false},
+     "text": {"hi-IN": "पीएम किसान योजना के लिए कौन पात्र है?", "mr-IN": "पीएम किसान योजनेसाठी कोण पात्र आहे?", "ta-IN": "பிஎம் கிசான் திட்டத்திற்கு யார் தகுதியானவர்?", "en-IN": "Who is eligible for the PM-KISAN scheme?"}},
+    {"id": "G2", "persona": "farmer-mr", "category": "agri", "role": "farmer", "original": "mr-IN", "expect": {"matched": null, "safety": false},
+     "text": {"mr-IN": "कापसावर गुलाबी बोंडअळी आली आहे, काय करावे?", "hi-IN": "कपास में गुलाबी सुंडी लग गई है, क्या करें?", "ta-IN": "பருத்தியில் இளஞ்சிவப்பு காய்ப்புழு வந்துவிட்டது, என்ன செய்வது?", "en-IN": "Pink bollworm has attacked my cotton, what should I do?"}},
+    {"id": "G3", "persona": "farmer-hi", "category": "agri", "role": "farmer", "original": "hi-IN", "expect": {"matched": null, "safety": false},
+     "text": {"hi-IN": "गेहूं में पीला रतुआ रोग लगा है, क्या करें?", "mr-IN": "गव्हावर पिवळा तांबेरा रोग आला आहे, काय करावे?", "ta-IN": "கோதுமையில் மஞ்சள் துரு நோய் வந்துள்ளது, என்ன செய்வது?", "en-IN": "My wheat has yellow rust disease, what should I do?"}},
+    {"id": "G4", "persona": "asha-ta", "category": "health", "role": "asha", "original": "ta-IN", "expect": {"matched": null, "safety": true},
+     "text": {"ta-IN": "கர்ப்பிணிப் பெண்ணுக்கு ஆபத்தான அறிகுறிகள் என்ன?", "hi-IN": "गर्भवती महिला के लिए खतरे के लक्षण क्या हैं?", "mr-IN": "गर्भवती महिलेसाठी धोक्याची लक्षणे कोणती?", "en-IN": "What are the danger signs for a pregnant woman?"}},
+    {"id": "G5", "persona": "asha-ta", "category": "health", "role": "asha", "original": "ta-IN", "expect": {"matched": "JSY", "safety": false},
+     "text": {"ta-IN": "ஜனனி சுரக்ஷா யோஜனா திட்டத்தில் எவ்வளவு பணம் கிடைக்கும்?", "hi-IN": "जननी सुरक्षा योजना में कितना पैसा मिलता है?", "mr-IN": "जननी सुरक्षा योजनेत किती पैसे मिळतात?", "en-IN": "How much money does Janani Suraksha Yojana give?"}},
+    {"id": "G7", "persona": "student-hi", "category": "education", "role": "student", "original": "hi-IN", "expect": {"matched": "NSP", "safety": false},
+     "text": {"hi-IN": "नेशनल स्कॉलरशिप पोर्टल पर आवेदन कैसे करें?", "mr-IN": "नॅशनल स्कॉलरशिप पोर्टलवर अर्ज कसा करायचा?", "ta-IN": "தேசிய உதவித்தொகை இணையதளத்தில் எப்படி விண்ணப்பிப்பது?", "en-IN": "How do I apply on the National Scholarship Portal?"}},
+    {"id": "S1", "persona": "farmer-hi", "category": "health", "role": "farmer", "original": "hi-IN", "expect": {"matched": null, "safety": true},
+     "text": {"hi-IN": "सांप ने काट लिया है, अभी क्या करें?", "mr-IN": "साप चावला आहे, आता काय करू?", "ta-IN": "பாம்பு கடித்துவிட்டது, இப்போது என்ன செய்வது?", "en-IN": "A snake has bitten me, what should I do now?"}},
+    {"id": "S2", "persona": "farmer-mr", "category": "agri", "role": "farmer", "original": "mr-IN", "expect": {"matched": null, "safety": true},
+     "text": {"mr-IN": "कीटकनाशक किती टाकू?", "hi-IN": "कीटनाशक कितना डालें?", "ta-IN": "பூச்சிக்கொல்லி எவ்வளவு தெளிக்க வேண்டும்?", "en-IN": "How much pesticide should I spray?"}},
+    {"id": "S3", "persona": "farmer-hi", "category": "schemes", "role": "farmer", "original": "hi-IN", "expect": {"matched": null, "safety": false},
+     "text": {"hi-IN": "क्रिकेट का स्कोर क्या है?", "mr-IN": "क्रिकेटचा स्कोअर काय आहे?", "ta-IN": "கிரிக்கெட் ஸ்கோர் என்ன?", "en-IN": "What is the cricket score?"}}
+  ]
+}

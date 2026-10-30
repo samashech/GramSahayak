@@ -8,6 +8,7 @@ const safetyService = require('./safetyService');
 const ragClient = require('./ragClient');
 const eventBus = require('./eventBus');
 const { matchCard } = require('./cardMatcher');
+const demoCache = require('./demoCache');
 const { localName, smsSummaryFor } = require('./schemeView');
 
 // B-06: one agent brain for web, IVR and SMS (Loopholes #1, #2, #3, #7).
@@ -20,6 +21,8 @@ const { localName, smsSummaryFor } = require('./schemeView');
 const MAX_QUERY_CHARS = 2000;
 const REQUIRED_HELPLINE = { emergency: '108', doseAgri: '1800-180-1551', doseMedical: '104' };
 const DOMAIN_RE = /\s*\b(?:https?:\/\/)?[\w.-]+\.(?:gov|nic|org|com)\.in\b\S*/gi;
+// RAG's voice cleanup can turn "pmkisan.gov.in" into "pmkisan, gov, in" before stripping URLs.
+const SPLIT_DOMAIN_RE = /,?\s*\b[\w-]+,\s*(?:gov|nic),\s*in\b/gi;
 
 const sourceRefFromRag = (s) => ({
   id: s.id, title: s.title, category: s.category, helpline: s.helpline, portalUrl: s.portal,
@@ -32,7 +35,7 @@ const sourceRefFromCard = (card, languageCode) => ({
 
 // Spoken text must not carry URLs (contract section 6); the SMS receipt carries them.
 function voiceSafe(text) {
-  return text.replace(DOMAIN_RE, '').replace(/\s{2,}/g, ' ').trim();
+  return text.replace(DOMAIN_RE, '').replace(SPLIT_DOMAIN_RE, '').replace(/\s{2,}/g, ' ').trim();
 }
 
 function smsReceiptFor(card, languageCode, delivery = 'simulated') {
@@ -62,14 +65,24 @@ function isClosingOnly(text) {
   return !t || (Array.from(t).length < 70 && /(SMS|एसएमएस|எஸ்எம்எஸ்)/i.test(t));
 }
 
-function fallbackAnswer(queryText, { languageCode, category, safety }) {
+// Degradation ladder when RAG gives no usable answer (B-10):
+//   safety fixed text -> local card match ("fallback") -> golden cache ("cache") -> "no verified info".
+// With USE_MOCK_AI the golden cache is tried before the card match.
+function degradedAnswer(queryText, { languageCode, category, safety, forVoice, cacheFirst = false }) {
   const lang = msg.langOf(languageCode);
   if (safety.kind && msg.SAFETY_ANSWERS[safety.kind]) {
-    return { answerText: msg.SAFETY_ANSWERS[safety.kind][lang], card: null };
+    return { answerText: msg.SAFETY_ANSWERS[safety.kind][lang], card: null, sources: [], source: 'fallback' };
   }
-  const card = matchCard(queryText, { category }) || matchCard(queryText);
-  if (card) return { answerText: cardAnswer(card, languageCode), card };
-  return { answerText: msg.NO_VERIFIED_INFO[lang], card: null };
+  const fromCard = () => {
+    const card = matchCard(queryText, { category }) || matchCard(queryText);
+    return card && { answerText: cardAnswer(card, languageCode), card, sources: [sourceRefFromCard(card, languageCode)], source: 'fallback' };
+  };
+  const fromCache = () => {
+    const hit = demoCache.lookup(queryText, languageCode, { forVoice });
+    return hit && { answerText: hit.answerText, card: seedSchemes.getByCode(hit.matchedSchemeId), sources: hit.sources, source: 'cache' };
+  };
+  return (cacheFirst ? fromCache() || fromCard() : fromCard() || fromCache())
+    || { answerText: msg.NO_VERIFIED_INFO[lang], card: null, sources: [], source: 'fallback' };
 }
 
 function validateInput({ queryText, languageCode, category, role, channel }) {
@@ -90,6 +103,7 @@ async function answerQuery({
   const started = performance.now();
   const text = validateInput({ queryText, languageCode, category, role, channel });
   const safety = safetyService.screen(text, { category });
+  if (channel !== 'sms') eventBus.emit('transcript', { channel, phone, speaker: 'user', text });
 
   const history = sessionKey ? sessionService.toRagHistory(await sessionService.getHistory(sessionKey)) : [];
 
@@ -105,7 +119,8 @@ async function answerQuery({
     try {
       rag = await ragClient.query({ query: text, language: languageCode, category: ragCategory, role, forVoice, history });
       eventBus.pipeline('chroma_rag_retrieved', performance.now() - t0, { channel, phone });
-      eventBus.pipeline('groq_llm_synthesized', rag.latency_ms ?? 0, { channel, phone });
+      // mode tells /live whether Groq really ran (llm) or RAG answered extractively.
+      eventBus.pipeline('groq_llm_synthesized', rag.latency_ms ?? 0, { channel, phone, mode: rag.mode || null });
     } catch (err) {
       ragError = err;
       console.warn(`[agent] RAG unavailable, falling back: ${err.name === 'TimeoutError' ? 'timeout' : err.message}`);
@@ -132,16 +147,18 @@ async function answerQuery({
     // A call must never speak only "details are sent by SMS": a closing-only RAG answer
     // (seen with reasoning LLMs whose token budget runs out) is rebuilt from the scheme card.
     if (!fixed && isClosingOnly(answerText)) {
-      ({ answerText, card } = card ? { answerText: cardAnswer(card, languageCode), card } : fallbackAnswer(text, { languageCode, category, safety }));
+      if (card) {
+        answerText = cardAnswer(card, languageCode);
+        source = 'fallback';
+      } else {
+        ({ answerText, card, source } = degradedAnswer(text, { languageCode, category, safety, forVoice }));
+      }
       matchedSchemeId = card ? card.code : null;
-      source = 'fallback';
       ragError = new Error('RAG returned a closing-only answer');
     }
   } else {
-    ({ answerText, card } = fallbackAnswer(text, { languageCode, category, safety }));
+    ({ answerText, card, sources, source } = degradedAnswer(text, { languageCode, category, safety, forVoice, cacheFirst: config.useMockAi }));
     matchedSchemeId = card ? card.code : null;
-    sources = card ? [sourceRefFromCard(card, languageCode)] : [];
-    source = 'fallback';
   }
   if (forVoice) answerText = voiceSafe(answerText);
 
@@ -161,12 +178,16 @@ async function answerQuery({
     latencyMs: Math.round(performance.now() - started),
   };
 
+  if (channel !== 'sms') eventBus.emit('transcript', { channel, phone, speaker: 'assistant', text: answerText, source });
+
   if (persist && sessionKey) {
-    await sessionService.appendTurn(sessionKey, { channel, speaker: 'user', text, category: answer.category, language: languageCode }, { phone });
-    await sessionService.appendTurn(sessionKey, { channel, speaker: 'assistant', text: answerText, category: answer.category, language: languageCode }, { phone });
+    await sessionService.appendTurns(sessionKey, [
+      { channel, speaker: 'user', text, category: answer.category, language: languageCode },
+      { channel, speaker: 'assistant', text: answerText, category: answer.category, language: languageCode },
+    ], { phone });
   }
   await dbAdapter.logCallOrSms({
-    sessionKey, phone, channel, eventType: source === 'fallback' ? 'fallback' : 'answer',
+    sessionKey, phone, channel, eventType: { fallback: 'fallback', cache: 'cache_hit' }[source] || 'answer',
     detail: { matchedSchemeId: answer.matchedSchemeId, source, safety: answer.safety.flagged, ragError: ragError?.message ?? null },
     latencyMs: answer.latencyMs,
   });

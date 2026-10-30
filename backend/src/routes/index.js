@@ -7,12 +7,16 @@ const eligibilityRoutes = require('./eligibilityRoutes');
 const chatRoutes = require('./chatRoutes');
 const cloudtalkRoutes = require('./cloudtalkRoutes');
 const simulateRoutes = require('./simulateRoutes');
+const streamRoutes = require('./streamRoutes');
+const docsRoutes = require('./docsRoutes');
 const { sessionContext } = require('../middlewares/sessionContext');
 
 // Feature routers (schemes, profile, chat, simulators, cloudtalk, stream) mount here in B-03..B-08.
 const router = Router();
 
 router.use('/health', healthRoutes);
+router.use('/stream', streamRoutes); // SSE: no session needed
+router.use('/docs', docsRoutes); // Swagger / OpenAPI
 router.use(sessionContext);
 router.use('/demo', demoRoutes);
 router.use('/schemes', schemeRoutes);

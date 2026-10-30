@@ -94,20 +94,18 @@ export interface VoiceAnswerData extends AnswerData {
 
 // IVR Interaction Step returned from POST /api/ivr-simulate
 export interface IvrStep {
+  // Contract section 7: where the call now is. greeting -> send "language" next, language -> "category",
+  // category -> "speech" (text or audio), answer -> "goodbye". See lib/ivr.ts.
   stage: 'greeting' | 'language' | 'category' | 'speech' | 'answer' | 'goodbye';
   promptText: string;
   audioBase64: string | null;
   useBrowserTts: boolean;
-  dtmfOptions?: Record<string, string>;
-  inputExpected: 'dtmf' | 'speech' | 'none';
-  callerPhone: string;
   session: {
     languageCode: LanguageCode;
     category: Category | null;
   };
-  answer?: AnswerData;
+  answer: AnswerData | null;
   webhookLog: {
-    stage: string;
     request: Record<string, unknown>;
     response: Record<string, unknown>;
   };
@@ -128,6 +126,11 @@ export interface SseEvent {
   phone?: string;
   digit?: string;
   text?: string;
+  speaker?: 'user' | 'assistant'; // transcript
+  direction?: 'in' | 'out'; // sms
+  mode?: string; // pipeline groq_llm_synthesized: 'llm' | 'extractive'; sms: keyword | rag | help
+  delivery?: 'sent' | 'simulated' | 'failed';
+  source?: string; // transcript (assistant): rag | cache | fallback
   ts: string;
 }
 

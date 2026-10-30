@@ -44,6 +44,8 @@ export function TopBar() {
     t,
     resetDemoData,
     isResetting,
+    liteMode,
+    setLiteMode,
   } = useApp();
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -145,6 +147,19 @@ export function TopBar() {
           >
             <RotateCcw className={`h-3 w-3 ${isResetting ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">{isResetting ? t.resetting : t.resetDemo}</span>
+          </button>
+
+          {/* Lite mode (FE-09): text-first, no animation, for 2G/3G */}
+          <button
+            type="button"
+            onClick={() => setLiteMode(!liteMode)}
+            aria-pressed={liteMode}
+            title="Lite mode for slow networks (?lite=1)"
+            className={`rounded-lg border px-2.5 py-1 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
+              liteMode ? 'border-emerald-700 bg-emerald-700 text-white' : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100'
+            }`}
+          >
+            Lite
           </button>
 
           {/* Live Projector Screen Link */}

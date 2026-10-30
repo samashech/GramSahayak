@@ -3,6 +3,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useApp } from '@/context/AppContext';
 import { ivrSimulate } from '@/lib/api';
+import { LivePipelineBar } from '@/components/live/LivePipelineBar';
+import { awaitedInput, acceptsDigits, webhookLabel } from '@/lib/ivr';
 import { IvrStep, LanguageCode, Category } from '@/lib/types';
 import {
   Phone,
@@ -212,7 +214,7 @@ export default function IvrPage() {
 
   // SMS Notification Toast
   const [showSmsToast, setShowSmsToast] = useState<boolean>(false);
-  const [smsToastData, setSmsToastData] = useState<{ text: string; portal: string; help: string } | null>(null);
+  const [smsToastData, setSmsToastData] = useState<{ text: string; portal: string; help: string; delivery: string } | null>(null);
 
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -236,11 +238,31 @@ export default function IvrPage() {
     [isAudioMuted]
   );
 
+  // Play an IVR step: Sarvam WAV (audioBase64) when present, else browser speech synthesis.
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playStep = useCallback(
+    (step: IvrStep) => {
+      if (isAudioMuted) return;
+      if (step.audioBase64 && !step.useBrowserTts) {
+        audioRef.current?.pause();
+        const audio = new Audio(`data:audio/wav;base64,${step.audioBase64}`);
+        audioRef.current = audio;
+        audio.onplay = () => setIsSpeaking(true);
+        audio.onended = () => setIsSpeaking(false);
+        audio.play().catch(() => speakPrompt(step.promptText, step.session.languageCode));
+        return;
+      }
+      speakPrompt(step.promptText, step.session.languageCode);
+    },
+    [isAudioMuted, speakPrompt]
+  );
+
   // Stop speech playback
   const stopSpeech = useCallback(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
+    audioRef.current?.pause();
     setIsSpeaking(false);
   }, []);
 
@@ -280,7 +302,7 @@ export default function IvrPage() {
       }, 1000);
 
       // Play greeting prompt
-      speakPrompt(step.promptText, step.session.languageCode || 'hi-IN');
+      playStep(step);
     } catch (err) {
       console.error('Failed to start IVR call:', err);
       setCallState('idle');
@@ -306,7 +328,7 @@ export default function IvrPage() {
 
       setCurrentStep(step);
       if (step.webhookLog) setWebhookLogs((prev) => [step.webhookLog, ...prev]);
-      speakPrompt(step.promptText, sessionLang);
+      playStep(step);
     } catch {
       // ignore
     } finally {
@@ -326,19 +348,17 @@ export default function IvrPage() {
 
     if (callState !== 'connected' || !currentStep || isProcessing) return;
 
-    // Only process DTMF if inputExpected is 'dtmf'
-    if (currentStep.inputExpected !== 'dtmf') return;
+    // Digits are accepted only while the call waits for the language or category choice.
+    if (!acceptsDigits(currentStep.stage)) return;
 
     setIsProcessing(true);
     stopSpeech();
 
     try {
-      let nextStage: IvrStep['stage'] = 'category';
-      if (currentStep.stage === 'category') nextStage = 'speech';
-
+      // Send the input the current step waits for (contract section 7): greeting -> language, language -> category.
       const nextStep = await ivrSimulate({
         callerPhone,
-        stage: currentStep.stage,
+        stage: awaitedInput(currentStep.stage) as IvrStep['stage'],
         dtmfDigit: digit,
         languageCode: sessionLang,
       });
@@ -348,11 +368,11 @@ export default function IvrPage() {
       setSessionCategory(nextStep.session.category);
       if (nextStep.webhookLog) setWebhookLogs((prev) => [nextStep.webhookLog, ...prev]);
 
-      if (nextStep.stage === 'speech') {
+      if (awaitedInput(nextStep.stage) === 'speech') {
         playTelephoneBeep();
       }
 
-      speakPrompt(nextStep.promptText, nextStep.session.languageCode);
+      playStep(nextStep);
     } catch (err) {
       console.error('DTMF simulation failed:', err);
     } finally {
@@ -385,11 +405,12 @@ export default function IvrPage() {
           text: nextStep.answer.smsReceipt.smsReceiptText,
           portal: nextStep.answer.smsReceipt.portalUrl,
           help: nextStep.answer.smsReceipt.helpline,
+          delivery: nextStep.answer.smsReceipt.delivery,
         });
         setShowSmsToast(true);
       }
 
-      speakPrompt(nextStep.promptText, nextStep.session.languageCode);
+      playStep(nextStep);
     } catch (err) {
       console.error('Speech query failed:', err);
     } finally {
@@ -461,7 +482,7 @@ export default function IvrPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-emerald-200 uppercase tracking-wider">
-                    {t.smsReceipt} Dispatched to {callerPhone}
+                    {t.smsReceipt} → {callerPhone} · {smsToastData.delivery}
                   </span>
                   <span className="text-[10px] bg-emerald-800 px-1.5 py-0.2 rounded text-emerald-300 font-mono">
                     Verbatim Card (R5)
@@ -585,17 +606,20 @@ export default function IvrPage() {
 
               {/* Active Stage Helper Hint */}
               <div className="mt-2 text-[11px] text-zinc-400 flex items-center justify-center gap-1">
-                {currentStep.stage === 'language' && (
+                {awaitedInput(currentStep.stage) === 'language' && (
                   <span>👇 Press 1 for Hindi · 2 for Marathi · 3 for Tamil</span>
                 )}
-                {currentStep.stage === 'category' && (
+                {awaitedInput(currentStep.stage) === 'category' && (
                   <span>👇 Press 1 for Schemes · 2 for Agri · 3 for Health · 4 for Education</span>
                 )}
-                {currentStep.stage === 'speech' && (
+                {awaitedInput(currentStep.stage) === 'speech' && (
                   <span className="text-amber-400 font-semibold">🎙️ Speak or click question below</span>
                 )}
                 {currentStep.stage === 'answer' && (
-                  <span className="text-emerald-400 font-semibold">✓ Answer Played · SMS Sent</span>
+                  <span className="text-emerald-400 font-semibold">
+                    ✓ Answer played
+                    {currentStep.answer?.smsReceipt ? ` · SMS ${currentStep.answer.smsReceipt.delivery}` : ''}
+                  </span>
                 )}
               </div>
             </div>
@@ -613,7 +637,7 @@ export default function IvrPage() {
         </div>
 
         {/* 5. Stage 3 Speech Query Input (Active when stage === 'speech') */}
-        {callState === 'connected' && currentStep?.stage === 'speech' && (
+        {callState === 'connected' && awaitedInput(currentStep?.stage) === 'speech' && (
           <div className="mt-4 rounded-2xl bg-zinc-800/90 border border-zinc-700 p-3 text-left">
             <div className="flex items-center justify-between text-xs text-zinc-300 font-bold mb-2">
               <span className="flex items-center gap-1.5">
@@ -666,16 +690,18 @@ export default function IvrPage() {
         )}
 
         {/* 6. DTMF Telephone Dialpad */}
-        <div className="mt-5 grid grid-cols-3 gap-2.5 sm:gap-3 px-2 sm:px-4">
+        <div className="mt-5 grid grid-cols-3 gap-2.5 sm:gap-3 px-2 sm:px-4" role="group" aria-label="Phone keypad (DTMF)">
           {KEYPAD_BUTTONS.map((btn) => {
             const isPressed = activeDigit === btn.digit;
-            const isClickable = callState === 'connected' && currentStep?.inputExpected === 'dtmf';
+            const isClickable = callState === 'connected' && acceptsDigits(currentStep?.stage);
 
             return (
               <button
                 key={btn.digit}
                 type="button"
                 onClick={() => handleKeypadPress(btn.digit)}
+                aria-label={`Key ${btn.digit}${btn.sub ? `, ${btn.sub}` : ''}`}
+                aria-disabled={!isClickable}
                 className={`flex flex-col items-center justify-center h-14 sm:h-16 rounded-2xl border transition-all cursor-pointer select-none active:scale-95 ${
                   isPressed
                     ? 'bg-emerald-500 border-emerald-400 text-white ring-4 ring-emerald-500/40'
@@ -707,6 +733,7 @@ export default function IvrPage() {
             <button
               type="button"
               onClick={startCall}
+              aria-label="Call the toll-free number (simulated)"
               disabled={isProcessing}
               className="flex items-center gap-2 px-8 py-3.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg hover:shadow-emerald-600/30 transition-all cursor-pointer active:scale-95"
             >
@@ -717,6 +744,7 @@ export default function IvrPage() {
             <button
               type="button"
               onClick={hangUp}
+              aria-label="Hang up"
               className="flex items-center gap-2 px-8 py-3.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm shadow-lg hover:shadow-rose-600/30 transition-all cursor-pointer active:scale-95"
             >
               <PhoneOff className="h-5 w-5" />
@@ -756,7 +784,7 @@ export default function IvrPage() {
                   >
                     <div className="flex items-center justify-between text-[11px] text-zinc-400 border-b border-zinc-800/80 pb-1.5 mb-2">
                       <span className="text-emerald-400 font-bold uppercase">
-                        Stage: {log.stage}
+                        Stage: {webhookLabel(log)}
                       </span>
                       <button
                         type="button"
@@ -786,6 +814,7 @@ export default function IvrPage() {
           )}
         </div>
       )}
+      <LivePipelineBar />
     </div>
   );
 }

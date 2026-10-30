@@ -108,3 +108,31 @@
     }
   }
 }
+
+/* Lite mode (FE-09): ?lite=1, the top-bar toggle, or Data Saver / 2G-3G. Text-first, no motion,
+   no blur or shadows, decorative images hidden, system fonts. */
+html[data-lite='1'] *,
+html[data-lite='1'] *::before,
+html[data-lite='1'] *::after {
+  animation: none !important;
+  transition: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+html[data-lite='1'] body {
+  font-family: system-ui, -apple-system, 'Segoe UI', 'Noto Sans', sans-serif !important;
+}
+html[data-lite='1'] img:not([data-essential]),
+html[data-lite='1'] [data-decorative] {
+  display: none !important;
+}
+html[data-lite='1'] [class*='bg-gradient'] {
+  background-image: none !important;
+}
+
+/* No horizontal page scroll at 360 px. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}

@@ -69,6 +69,8 @@ interface AppContextValue {
   t: UIStrings;
   resetDemoData: () => Promise<boolean>;
   isResetting: boolean;
+  liteMode: boolean;
+  setLiteMode: (on: boolean) => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -114,6 +116,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [role, setRoleState] = useState<Role>('farmer');
   const [demoUser, setDemoUserState] = useState<string | null>(null);
   const [isResetting, startResetTransition] = useTransition();
+  const [liteMode, setLiteModeState] = useState<boolean>(false);
 
   // Initialize from localStorage on mount
   useEffect(() => {
@@ -137,7 +140,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (storedUser) {
       setDemoUserState(storedUser);
     }
+
+    // Lite mode (FE-09): ?lite=1|0 wins, then the stored choice, then Data Saver / 2G-3G networks.
+    const param = new URLSearchParams(window.location.search).get('lite');
+    const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    const slowNetwork = Boolean(conn?.saveData) || ['slow-2g', '2g', '3g'].includes(conn?.effectiveType ?? '');
+    const stored = getSafeStorage('gs_lite');
+    const lite = param !== null ? param === '1' : stored !== null ? stored === '1' : slowNetwork;
+    setLiteModeState(lite);
+    document.documentElement.dataset.lite = lite ? '1' : '0';
   }, []);
+
+  const setLiteMode = (on: boolean) => {
+    setLiteModeState(on);
+    setSafeStorage('gs_lite', on ? '1' : '0');
+    document.documentElement.dataset.lite = on ? '1' : '0';
+  };
 
   const setLanguageCode = (code: LanguageCode) => {
     setLanguageCodeState(code);
@@ -216,6 +234,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         t,
         resetDemoData,
         isResetting,
+        liteMode,
+        setLiteMode,
       }}
     >
       {children}

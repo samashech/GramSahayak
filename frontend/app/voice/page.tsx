@@ -3,6 +3,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useApp } from '@/context/AppContext';
 import { voiceChat, chat } from '@/lib/api';
+import { LivePipelineBar } from '@/components/live/LivePipelineBar';
+import { SafetyBanner, SourcePill } from '@/components/SafetyBanner';
 import { AnswerData, VoiceAnswerData, Category, LanguageCode } from '@/lib/types';
 import {
   Mic,
@@ -678,38 +680,7 @@ export default function VoicePage() {
       {activeTurn && (
         <div className="space-y-4 mb-8">
           {/* S1 Emergency Safety Banner */}
-          {activeTurn.answer.safety?.flagged && (
-            <div className="rounded-3xl border-2 border-rose-500 bg-rose-50 p-4 sm:p-5 text-rose-950 shadow-md animate-pulse">
-              <div className="flex items-start gap-3">
-                <div className="h-10 w-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center shrink-0">
-                  <AlertTriangle className="h-6 w-6" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-base font-extrabold text-rose-900">
-                    {t.safetyAlert}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-rose-800 mt-1 font-medium">
-                    तत्काल 108 / 102 डायल करें या नजदीकी प्राथमिक स्वास्थ्य केंद्र (PHC) जाएं। घाव को काटें या बांधें नहीं।
-                  </p>
-                  <div className="mt-3 flex items-center gap-2">
-                    <a
-                      href="tel:108"
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm transition-all"
-                    >
-                      <Phone className="h-4 w-4" />
-                      <span>{t.emergencyCall} (108 Ambulance)</span>
-                    </a>
-                    <a
-                      href="tel:102"
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-rose-300 text-rose-900 font-bold text-xs hover:bg-rose-100 transition-all"
-                    >
-                      <span>102 (Pregnancy/Child)</span>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          <SafetyBanner safety={activeTurn.answer.safety} title={t.safetyAlert} />
 
           {/* User Query Bubble */}
           <div className="flex justify-end">
@@ -784,9 +755,7 @@ export default function VoicePage() {
                 <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full font-mono">
                   {activeTurn.answer.latencyMs}ms
                 </span>
-                <span className="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded-full uppercase">
-                  {activeTurn.answer.source}
-                </span>
+                <SourcePill source={activeTurn.answer.source} />
                 <span className="bg-zinc-100 text-zinc-700 px-2 py-0.5 rounded-full font-mono">
                   {activeTurn.answer.languageCode}
                 </span>
@@ -912,6 +881,7 @@ export default function VoicePage() {
           </div>
         </div>
       )}
+      <LivePipelineBar />
     </div>
   );
 }

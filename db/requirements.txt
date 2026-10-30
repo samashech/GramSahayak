@@ -1,0 +1,5 @@
+# Python dependencies for /db scripts (DB-03..DB-06)
+# Note: db/init_sqlite.py uses Python stdlib only so Hour-0 bootstrap needs zero installs.
+jsonschema>=4.23.0
+psycopg2-binary>=2.9.10
+python-dotenv>=1.0.1

@@ -29,7 +29,7 @@ You make the shared ground truth reliable across the entire team:
 | **DB-02** | `H0:30–H1` | `db/schema.postgres.sql`, `db/schema.sqlite.sql`, `db/init_sqlite.py`, `db/README.md`, diff vs `docs/db-integration-for-senior.md` | **DONE** | Backend (`B-02`) |
 | **DB-03** | `H1–H3` | `db/seed.schema.json`, `db/validate_seed.py`, `db/seed_db.py` (`--reset`, `--dry-run`, `--check`) | **DONE** | Backend, RAG, Lead |
 | **DB-04** | `H4–H6` | Supabase project & pooler `:6543` setup, `db/check_connection.py`, Node `pg` test snippet, `docs/db-fallback.md` | Next | Backend (`DATABASE_URL` by H5) |
-| **DB-05** | `H1–H4` | `/data/seed/demo_personas.json` (5 presets), JSON Schema validation, `db/demo_reset.py` (`--check`) | Queued | Backend (`B-03` by H2), Frontend |
+| **DB-05** | `H1–H4` | `/data/seed/demo_personas.json` (5 presets), JSON Schema validation, `db/demo_reset.py` (`--check`) | **DONE** | Backend (`B-03` by H2), Frontend |
 | **DB-06** | `H10–H22` | `db/snapshot.py`, `db/restore.py`, 2-min restore drill, `EXPLAIN` index audit, optional impact views (`v_channel_usage`, `v_language_usage`, `v_top_schemes`), freeze checklist | Queued | Final Demo & Pitch (`H15–H22`) |
 
 ---

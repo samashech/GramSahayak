@@ -27,6 +27,11 @@ python3 db/seed_db.py
 python3 db/seed_db.py --check
 python3 db/seed_db.py --dry-run
 python3 db/seed_db.py --reset   # blocked when APP_ENV=production
+
+# Validate & reset the 5 judge demo personas + 2 starter web turns (DB-05):
+python3 db/demo_reset.py --validate-only
+python3 db/demo_reset.py        # blocked when APP_ENV=production
+python3 db/demo_reset.py --check
 ```
 
 ---

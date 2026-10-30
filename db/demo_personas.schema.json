@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gramsahayak.local/schemas/demo_personas.schema.json",
+  "title": "GramSahayak Demo Personas (Contract v1 Section 12)",
+  "description": "Validates /data/seed/demo_personas.json (5 judge demo presets for x-demo-user).",
+  "type": "array",
+  "minItems": 5,
+  "maxItems": 5,
+  "items": {
+    "$ref": "#/$defs/DemoPersona"
+  },
+  "$defs": {
+    "DemoPersona": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "phone",
+        "name",
+        "role",
+        "language",
+        "occupation",
+        "land_hectares",
+        "bpl",
+        "age",
+        "gender",
+        "pregnant",
+        "annual_income",
+        "social_category"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "enum": [
+            "farmer-hi",
+            "farmer-mr",
+            "asha-ta",
+            "student-hi",
+            "panchayat-hi"
+          ]
+        },
+        "phone": {
+          "type": "string",
+          "pattern": "^\\+91[0-9]{10}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string",
+          "enum": ["farmer", "asha", "panchayat", "student"]
+        },
+        "language": {
+          "type": "string",
+          "enum": [
+            "hi-IN",
+            "mr-IN",
+            "ta-IN",
+            "en-IN",
+            "te-IN",
+            "bn-IN",
+            "gu-IN",
+            "kn-IN",
+            "ml-IN",
+            "pa-IN",
+            "od-IN"
+          ]
+        },
+        "occupation": {
+          "type": "string",
+          "enum": [
+            "farmer",
+            "agri_labourer",
+            "daily_wage",
+            "student",
+            "homemaker",
+            "other"
+          ]
+        },
+        "land_hectares": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "bpl": {
+          "type": "boolean"
+        },
+        "age": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120
+        },
+        "gender": {
+          "type": "string",
+          "enum": ["male", "female", "other"]
+        },
+        "pregnant": {
+          "type": "boolean"
+        },
+        "annual_income": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "social_category": {
+          "type": "string",
+          "enum": ["general", "obc", "sc", "st"]
+        }
+      }
+    }
+  }
+}

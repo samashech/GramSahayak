@@ -1,8 +1,10 @@
 const path = require('node:path');
 const dotenv = require('dotenv');
 
-// Contract section 10: one root .env shared by all services.
+// Contract section 10: one root .env shared by all services. A backend/.env (also git-ignored)
+// is read too and wins for the gateway; real environment variables win over both.
 const REPO_ROOT = path.resolve(__dirname, '../../..');
+dotenv.config({ path: path.join(REPO_ROOT, 'backend', '.env'), quiet: true });
 dotenv.config({ path: path.join(REPO_ROOT, '.env'), quiet: true });
 
 const env = process.env;
@@ -69,6 +71,7 @@ const config = {
   },
 
   sarvamApiKey: env.SARVAM_API_KEY || '',
+  sarvamBaseUrl: 'https://api.sarvam.ai',
   llmApiKey: env.LLM_API_KEY || '',
   llmModel: env.LLM_MODEL || 'llama-3.3-70b-versatile',
 
@@ -76,6 +79,7 @@ const config = {
     apiKeyId: env.CLOUDTALK_API_KEY_ID || '',
     apiSecret: env.CLOUDTALK_API_SECRET || '',
     webhookSecret: env.CLOUDTALK_WEBHOOK_SECRET || '',
+    baseUrl: 'https://my.cloudtalk.io',
   },
 
   paths: {

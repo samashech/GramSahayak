@@ -40,4 +40,25 @@ async function ingest({ filePath, category, timeoutMs = 20000 }) {
   }
 }
 
-module.exports = { health, ingest };
+// POST /rag/query (contract section 9). RAG's request model forbids extra keys and rejects
+// null role/language, so only valid values are sent. Throws on timeout or non-2xx so the
+// agent brain can fall back (local card match, then demo cache).
+async function query({ query: text, language, category, role, forVoice, history }, { timeoutMs = config.ragTimeoutMs } = {}) {
+  const body = { query: text, for_voice: Boolean(forVoice), history: history || [] };
+  if (language) body.language = language;
+  if (role) body.role = role;
+  if (category) body.category = category;
+  const res = await fetch(`${config.aiRagUrl}/rag/query`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`RAG /rag/query -> HTTP ${res.status} ${detail.slice(0, 200)}`);
+  }
+  return res.json();
+}
+
+module.exports = { health, ingest, query };

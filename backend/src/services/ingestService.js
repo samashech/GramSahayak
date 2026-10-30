@@ -16,6 +16,15 @@ const repoRelative = (abs) => path.relative(config.repoRoot, abs).split(path.sep
 const safeBase = (name) =>
   path.basename(name, path.extname(name)).replace(/[^A-Za-z0-9_-]+/g, '_').slice(0, 60) || 'upload';
 
+// CCR-06: RAG's full re-index falls back to a category token in the filename when its manifest
+// has no entry (e.g. RAG was down at upload). Saved name = <category>-<base>-<time>; category
+// words are removed from <base> so RAG's token scan cannot pick the wrong one.
+const CATEGORY_WORD_RE = /(^|[_-])(agri|health|education|schemes)(?=$|[_-])/gi;
+const rawFileName = (originalName, category, stamp, ext) => {
+  const base = safeBase(originalName).replace(CATEGORY_WORD_RE, '$1').replace(/[_-]{2,}/g, '_').replace(/^[_-]+|[_-]+$/g, '') || 'upload';
+  return `${category}-${base}-${stamp}${ext}`;
+};
+
 function moveFile(from, to) {
   try {
     fs.renameSync(from, to);
@@ -78,7 +87,7 @@ async function ingest({ file, body }) {
         throw err instanceof AppError ? err : new AppError('ERR_VALIDATION', 'Uploaded .json is not a valid scheme card');
       }
     }
-    savedAbs = path.join(config.paths.rawDir, `${safeBase(file.originalname || 'upload')}-${stamp}${ext}`);
+    savedAbs = path.join(config.paths.rawDir, rawFileName(file.originalname || 'upload', category, stamp, ext));
     moveFile(file.path, savedAbs);
   } else {
     const card = body?.card && typeof body.card === 'object' ? body.card : body;

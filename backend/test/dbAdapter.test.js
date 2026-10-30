@@ -104,3 +104,11 @@ test('phone normalisation and session key resolution', () => {
   assert.equal(sessionService.resolveSessionKey({ sessionId: 'a1b2c3d4-e5f6' }), 'a1b2c3d4-e5f6');
   assert.equal(sessionService.resolveSessionKey({ sessionId: 'bad id!' }), null);
 });
+
+test('postgres: SSL params are taken out of the URL and set explicitly (Supabase pooler)', () => {
+  const { poolConnection } = require('../src/adapters/postgresDriver');
+  const remote = poolConnection('postgresql://u.ref:p%40ss@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require&application_name=gs');
+  assert.equal(remote.connectionString, 'postgresql://u.ref:p%40ss@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?application_name=gs');
+  assert.deepEqual(remote.ssl, { rejectUnauthorized: false });
+  assert.equal(poolConnection('postgres://u:p@localhost:5432/gs').ssl, false);
+});

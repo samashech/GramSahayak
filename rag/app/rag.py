@@ -1,5 +1,6 @@
-"""Core embedding, Chroma vector store, and LCEL query/ingest orchestration for GramSahayak RAG (RAG-03)."""
+"""Core embedding, Chroma vector store, in-process cache, and LCEL/extractive orchestration (RAG-03..RAG-05)."""
 
+from collections import OrderedDict
 import json
 import logging
 import os
@@ -44,6 +45,47 @@ try:
 except Exception:
     pass
 
+CacheKey = Tuple[str, str, str, bool]
+
+
+class QueryResponseCache:
+    """
+    Tiny in-process LRU + TTL cache keyed by (query, language, category, for_voice)
+    for repeated demo questions (max 200 entries, 10 minutes / 600 seconds) (RAG-05 requirement 5).
+    """
+
+    def __init__(self, max_entries: int = 200, ttl_seconds: float = 600.0) -> None:
+        self.max_entries = max_entries
+        self.ttl_seconds = ttl_seconds
+        self._store: OrderedDict[CacheKey, Tuple[float, dict[str, Any]]] = OrderedDict()
+        self._lock = threading.Lock()
+
+    def get(self, key: CacheKey) -> Optional[dict[str, Any]]:
+        now = time.time()
+        with self._lock:
+            entry = self._store.get(key)
+            if entry is None:
+                return None
+            ts, payload = entry
+            if (now - ts) > self.ttl_seconds:
+                self._store.pop(key, None)
+                return None
+            self._store.move_to_end(key)
+            return dict(payload)
+
+    def set(self, key: CacheKey, payload: dict[str, Any]) -> None:
+        now = time.time()
+        with self._lock:
+            if key in self._store:
+                self._store.move_to_end(key)
+            self._store[key] = (now, dict(payload))
+            while len(self._store) > self.max_entries:
+                self._store.popitem(last=False)
+
+    def clear(self) -> None:
+        with self._lock:
+            self._store.clear()
+
 
 def _cosine_distance_to_similarity(distance: float) -> float:
     """Convert Chroma cosine distance (1 - cos_sim) into normalized [0.0, 1.0] similarity."""
@@ -54,7 +96,7 @@ def _cosine_distance_to_similarity(distance: float) -> float:
 def _clean_for_voice(text: str, language: str) -> str:
     """Enforce for_voice rules: plain text, no URLs/markdown/lists, max 3 short sentences."""
     cleaned = re.sub(r"https?://\S+", "", text)
-    cleaned = re.sub(r"\b[a-zA-Z0-9.-]+\.(?:gov|nic)\.in(?:/\S*)?", "", cleaned)
+    cleaned = re.sub(r"\b[a-zA-Z0-9.-]+\.(?:gov|nic|org|ac)\.in(?:/\S*)?", "", cleaned)
     cleaned = re.sub(r"[*_`#>\[\]]+", "", cleaned)
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
 
@@ -71,23 +113,60 @@ def _clean_for_voice(text: str, language: str) -> str:
     return result
 
 
-def _extract_two_relevant_sentences(chunk_text: str, helpline: str) -> str:
-    """Extract the two most relevant content sentences from a guide chunk plus helpline."""
+def _extract_two_relevant_sentences(chunk_text: str, helpline: str, query: str = "") -> str:
+    """
+    Extract the two most relevant sentences from the top guide chunk plus the relevant helpline (RAG-05 item 3).
+    """
     body = chunk_text.removeprefix("passage: ").strip()
-    lines = [
-        ln.strip().lstrip("-*0123456789. ").strip()
-        for ln in body.splitlines()
-        if ln.strip() and not ln.strip().startswith("#") and "|" not in ln
-    ]
-    combined = " ".join(lines)
-    sentences = [
+    content_lines: List[str] = []
+    for idx, ln in enumerate(body.splitlines()):
+        stripped = ln.strip()
+        if not stripped:
+            continue
+        # Skip the first header line ("Doc Title | ## Section...")
+        if idx == 0 and ("|" in stripped or stripped.startswith("#")):
+            continue
+        if stripped.startswith("#"):
+            continue
+        if stripped.startswith("Context:"):
+            continue
+        cleaned_line = re.sub(r"^[-*•]\s+|\d+\.\s+", "", stripped).strip()
+        if cleaned_line:
+            content_lines.append(cleaned_line)
+
+    combined = " ".join(content_lines)
+    raw_sentences = [
         s.strip()
         for s in re.split(r"(?<=[.।!?])\s+", combined)
-        if len(s.strip()) > 15
+        if len(s.strip()) > 12
     ]
-    selected = ". ".join(s.rstrip(".") for s in sentences[:2]).strip()
-    if selected and not selected.endswith((".", "।", "!", "?")):
-        selected += "."
+    if not raw_sentences:
+        raw_sentences = [s.strip() for s in content_lines if s.strip()]
+
+    query_tokens = {
+        tok.lower()
+        for tok in re.findall(r"\w+", query)
+        if len(tok) > 2
+    }
+
+    if query_tokens and len(raw_sentences) > 2:
+        scored_sentences = []
+        for idx, sent in enumerate(raw_sentences):
+            sent_tokens = {t.lower() for t in re.findall(r"\w+", sent)}
+            overlap = len(query_tokens & sent_tokens)
+            # Keep original order as tie-breaker
+            scored_sentences.append((overlap, -idx, idx, sent))
+        top_two = sorted(scored_sentences, reverse=True)[:2]
+        top_two.sort(key=lambda item: item[2])
+        chosen = [item[3] for item in top_two]
+    else:
+        chosen = raw_sentences[:2]
+
+    selected = " ".join(
+        s if s.endswith((".", "।", "!", "?")) else f"{s}."
+        for s in chosen
+    ).strip()
+
     if helpline and helpline not in selected:
         selected = f"{selected} Helpline: {helpline}." if selected else f"Helpline: {helpline}."
     return selected or body[:280]
@@ -98,51 +177,72 @@ def _build_extractive_answer(
     language: str,
     for_voice: bool,
     sms_summary: Optional[str],
+    query: str = "",
 ) -> str:
     """
-    Build a grounded extractive answer in the user's requested language when Groq is unavailable
-    or MOCK_LLM=true (RAG-03 / RAG-05).
+    Build a deterministic extractive answer when MOCK_LLM=true, LLM_API_KEY is missing,
+    or Groq fails (RAG-05):
+    - Scheme cards: localised name (name_hi / name_mr / name_ta / name_en) + card sms_summary in requested language + helpline.
+    - Guide chunks: two most relevant sentences from the top chunk + relevant helpline (with regional script support for hi/mr/ta seed guides).
     """
     kind = top_doc.metadata.get("kind")
     helpline = str(top_doc.metadata.get("helpline") or "1800-180-1551")
 
     if kind == "scheme":
         lang_prefix = language.split("-")[0]
-        local_name = (
+        local_name = str(
             top_doc.metadata.get(f"name_{lang_prefix}")
             or top_doc.metadata.get("name_en")
             or top_doc.metadata.get("title")
             or ""
-        )
-        if sms_summary:
-            ans = f"{local_name}: {sms_summary}" if local_name and local_name not in sms_summary else sms_summary
+        ).strip()
+
+        raw_sms = top_doc.metadata.get("sms_summary")
+        resolved_sms = sms_summary
+        if not resolved_sms and raw_sms:
+            try:
+                sms_map = json.loads(raw_sms) if isinstance(raw_sms, str) else raw_sms
+                resolved_sms = sms_map.get(language) or sms_map.get("en-IN")
+            except Exception:
+                resolved_sms = None
+
+        if resolved_sms:
+            if local_name and local_name not in resolved_sms:
+                ans = f"{local_name}: {resolved_sms}"
+            else:
+                ans = resolved_sms
             if helpline and helpline not in ans:
-                ans = f"{ans} ({helpline})"
+                ans = f"{ans} Helpline: {helpline}"
         else:
-            ans = _extract_two_relevant_sentences(top_doc.page_content, helpline)
+            ans = _extract_two_relevant_sentences(top_doc.page_content, helpline, query=query)
+
         if for_voice:
             closing = VOICE_CLOSING_BY_LANG.get(language, VOICE_CLOSING_BY_LANG["en-IN"])
-            return _clean_for_voice(f"{ans} {closing}", language)
+            return _clean_for_voice(f"{ans}. {closing}", language)
         return ans
 
-    # Guide chunk: check if we have a curated regional-language summary for this guide topic
+    # Guide chunk: if language is regional (hi-IN, mr-IN, ta-IN) and matches a seed guide topic, return grounded regional summary
     heading_lower = str(top_doc.metadata.get("title") or top_doc.page_content[:200]).lower()
-    for topic_key, lang_map in GUIDE_LOCALISED_SUMMARIES:
-        if topic_key in heading_lower and language in lang_map:
-            ans = lang_map[language]
-            if for_voice:
-                closing = VOICE_CLOSING_BY_LANG.get(language, VOICE_CLOSING_BY_LANG["en-IN"])
-                return _clean_for_voice(f"{ans} {closing}", language)
-            return ans
+    if language != "en-IN":
+        for topic_key, lang_map in GUIDE_LOCALISED_SUMMARIES:
+            if topic_key in heading_lower and language in lang_map:
+                ans = lang_map[language]
+                if helpline and not any(h.strip() in ans for h in helpline.split("/")):
+                    ans = f"{ans} ({helpline})"
+                if for_voice:
+                    closing = VOICE_CLOSING_BY_LANG.get(language, VOICE_CLOSING_BY_LANG["en-IN"])
+                    return _clean_for_voice(f"{ans} {closing}", language)
+                return ans
 
-    ans = _extract_two_relevant_sentences(top_doc.page_content, helpline)
+    # English or newly uploaded guide chunk: two most relevant sentences from top chunk + helpline
+    ans = _extract_two_relevant_sentences(top_doc.page_content, helpline, query=query)
     if for_voice:
         return _clean_for_voice(ans, language)
     return ans
 
 
 class RagEngine:
-    """Singleton manager holding the loaded HuggingFace embedding model and ChromaDB collection."""
+    """Singleton manager holding the loaded HuggingFace embedding model, ChromaDB collection, and query cache."""
 
     def __init__(self) -> None:
         self.embeddings: Optional[Any] = None
@@ -152,6 +252,7 @@ class RagEngine:
         self.ready: bool = False
         self._embed_ready = threading.Event()
         self._init_lock = threading.Lock()
+        self.query_cache = QueryResponseCache(max_entries=200, ttl_seconds=600.0)
 
     def _open_chroma_client(self) -> None:
         if self.chroma_client is None:
@@ -176,9 +277,12 @@ class RagEngine:
 
     def initialize(self) -> None:
         """Open persistent ChromaDB collection immediately and load embedding model at startup."""
-        t0 = time.perf_counter()
-        self._open_chroma_client()
-        self.ready = True
+        with self._init_lock:
+            t0 = time.perf_counter()
+            self._open_chroma_client()
+            self.ready = True
+            if self._embed_ready.is_set():
+                return
 
         loader_thread = threading.Thread(
             target=self._load_embedding_model,
@@ -268,8 +372,9 @@ class RagEngine:
             logger.warning("Failed to snapshot existing raw categories from Chroma: %s", exc)
 
     def reset_collection(self) -> None:
-        """Delete and recreate the Chroma collection."""
+        """Delete and recreate the Chroma collection and clear the query cache."""
         self.ensure_embeddings_ready()
+        self.query_cache.clear()
         assert self.chroma_client is not None
         try:
             self.chroma_client.delete_collection(name=settings.CHROMA_COLLECTION)
@@ -282,7 +387,7 @@ class RagEngine:
         self._bind_vectorstore()
 
     def upsert_documents(self, items: List[Tuple[str, Document]]) -> int:
-        """Idempotently upsert (id, Document) pairs into Chroma."""
+        """Idempotently upsert (id, Document) pairs into Chroma and invalidate cache."""
         if not items:
             return 0
         self.ensure_embeddings_ready()
@@ -291,6 +396,7 @@ class RagEngine:
         ids = [doc_id for doc_id, _ in items]
         docs = [doc for _, doc in items]
         self.vectorstore.add_documents(documents=docs, ids=ids)
+        self.query_cache.clear()
         return len(items)
 
     def get_vector_count(self) -> int:
@@ -427,10 +533,34 @@ class RagEngine:
         return RagRetrieveResponse(chunks=chunks, matched_scheme_id=matched_scheme_id)
 
     def query(self, req: RagQueryRequest) -> RagQueryResponse:
-        """Execute the LangChain retrieval-and-answer chain (RAG-03)."""
+        """Execute the LangChain retrieval-and-answer chain with cache and extractive fallback (RAG-03..RAG-05)."""
         t0 = time.perf_counter()
 
-        # Check safety, dose refusal, prompt-injection, and explicit out-of-scope overrides (RAG-04)
+        # 1. Check in-process cache keyed by (query, language, category, for_voice) when no custom history is passed
+        cache_key: CacheKey = (
+            req.query.strip(),
+            req.language,
+            req.category or "",
+            bool(req.for_voice),
+        )
+        if not req.history:
+            cached = self.query_cache.get(cache_key)
+            # Only serve an LLM-generated cached answer if we are still in 'llm' mode, or extractive if in 'extractive' mode
+            if cached is not None and (
+                cached.get("mode") == llm_state.current_mode or not llm_state.can_attempt_groq
+            ):
+                elapsed_ms = int((time.perf_counter() - t0) * 1000)
+                return RagQueryResponse(
+                    answer=cached["answer"],
+                    sources=cached["sources"],
+                    matched_scheme_id=cached["matched_scheme_id"],
+                    sms_summary=cached["sms_summary"],
+                    confidence=cached["confidence"],
+                    mode="extractive" if not llm_state.can_attempt_groq else cached["mode"],
+                    latency_ms=elapsed_ms,
+                )
+
+        # 2. Check safety, dose refusal, prompt-injection, and explicit out-of-scope overrides (RAG-04)
         safety_override = check_safety_override(
             req.query,
             req.language,
@@ -439,25 +569,21 @@ class RagEngine:
         )
         if safety_override is not None:
             elapsed_ms = int((time.perf_counter() - t0) * 1000)
-            logger.info(
-                "RAG /rag/query SAFETY/OOS override lang=%s cat=%s role=%s voice=%s conf=%.2f total=%dms",
-                req.language,
-                req.category,
-                req.role,
-                req.for_voice,
-                safety_override.get("confidence", 1.0),
-                elapsed_ms,
-            )
-            return RagQueryResponse(
+            mode_out = "extractive" if not llm_state.can_attempt_groq else safety_override.get("mode", llm_state.current_mode)
+            resp = RagQueryResponse(
                 answer=safety_override["answer"],
                 sources=safety_override.get("sources", []),
                 matched_scheme_id=safety_override.get("matched_scheme_id"),
                 sms_summary=safety_override.get("sms_summary"),
                 confidence=safety_override.get("confidence", 1.0),
-                mode=safety_override.get("mode", llm_state.current_mode),
+                mode=mode_out,
                 latency_ms=elapsed_ms,
             )
+            if not req.history:
+                self.query_cache.set(cache_key, resp.model_dump())
+            return resp
 
+        # 3. Embed + Retrieve from Chroma
         top_k = 3 if req.for_voice else settings.RAG_TOP_K
         scored, embed_ms, retrieve_ms = self.search_chunks_timed(
             req.query,
@@ -465,7 +591,6 @@ class RagEngine:
             k=top_k,
         )
 
-        # If category filter returned no high-confidence hit, retry unfiltered so cross-category scheme queries still work
         if req.category and (not scored or scored[0][1] < settings.RAG_MATCH_THRESHOLD):
             unfiltered_scored, emb2_ms, ret2_ms = self.search_chunks_timed(
                 req.query,
@@ -478,16 +603,10 @@ class RagEngine:
                 scored = unfiltered_scored
 
         if not scored:
-            default_messages = {
-                "hi-IN": "हमारे पास इस विषय पर सत्यापित जानकारी नहीं है। कृपया किसान कॉल सेंटर 1800-180-1551 या हेल्पलाइन 104 पर संपर्क करें।",
-                "mr-IN": "आमच्याकडे या विषयावर सत्यापित माहिती नाही. कृपया किसान कॉल सेंटर 1800-180-1551 किंवा हेल्पलाईन 104 वर संपर्क साधा.",
-                "ta-IN": "இது குறித்த சரிபார்க்கப்பட்ட தகவல் எங்களிடம் இல்லை. தயவுசெய்து கிசான் அழைப்பு மையம் 1800-180-1551 அல்லது 104 எண்ணை அழைக்கவும்.",
-                "en-IN": "We do not have verified information on this topic. Please call Kisan Call Centre 1800-180-1551 or helpline 104.",
-            }
-            answer = default_messages.get(req.language, default_messages["en-IN"])
+            oos = build_out_of_scope_override(req.language, for_voice=req.for_voice)
             elapsed_ms = int((time.perf_counter() - t0) * 1000)
             return RagQueryResponse(
-                answer=answer,
+                answer=oos["answer"],
                 sources=[],
                 matched_scheme_id=None,
                 sms_summary=None,
@@ -501,14 +620,12 @@ class RagEngine:
             doc.metadata.get("kind") == "guide" and sim >= (settings.RAG_MATCH_THRESHOLD - 0.015)
             for doc, sim in scored
         )
-        # RAG-04 requirement 3: out-of-scope when top similarity < RAG_MATCH_THRESHOLD - 0.15
-        # (or below RAG_MATCH_THRESHOLD when no guide chunk matches in multilingual-e5-small space)
         if top_sim < (settings.RAG_MATCH_THRESHOLD - 0.15) or (
             top_sim < settings.RAG_MATCH_THRESHOLD and not has_guide_match
         ):
             oos = build_out_of_scope_override(req.language, for_voice=req.for_voice)
             elapsed_ms = int((time.perf_counter() - t0) * 1000)
-            return RagQueryResponse(
+            resp = RagQueryResponse(
                 answer=oos["answer"],
                 sources=[],
                 matched_scheme_id=None,
@@ -517,6 +634,9 @@ class RagEngine:
                 mode=llm_state.current_mode,
                 latency_ms=elapsed_ms,
             )
+            if not req.history:
+                self.query_cache.set(cache_key, resp.model_dump())
+            return resp
 
         matched_scheme_id: Optional[str] = None
         sms_summary: Optional[str] = None
@@ -552,9 +672,9 @@ class RagEngine:
 
         context_str = "\n\n".join(context_blocks)
         llm_ms = 0.0
-        mode_used = llm_state.current_mode
 
-        if mode_used == "llm":
+        # 4. Run Groq LCEL chain if available (and >=60s since any prior failure), else extractive fallback (RAG-05)
+        if llm_state.can_attempt_groq:
             t_llm0 = time.perf_counter()
             try:
                 answer_text = invoke_lcel_answer(
@@ -569,7 +689,7 @@ class RagEngine:
                     answer_text = _clean_for_voice(answer_text, req.language)
                 mode_used = "llm"
             except Exception as exc:
-                logger.warning("Groq LCEL call failed (%s); falling back to extractive answer.", exc)
+                logger.warning("Groq LCEL call failed (%s); falling back to extractive answer for 60s.", exc)
                 llm_state.record_failure()
                 mode_used = "extractive"
                 answer_text = _build_extractive_answer(
@@ -577,14 +697,17 @@ class RagEngine:
                     language=req.language,
                     for_voice=req.for_voice,
                     sms_summary=sms_summary,
+                    query=req.query,
                 )
             llm_ms = (time.perf_counter() - t_llm0) * 1000.0
         else:
+            mode_used = "extractive"
             answer_text = _build_extractive_answer(
                 top_doc=top_doc,
                 language=req.language,
                 for_voice=req.for_voice,
                 sms_summary=sms_summary,
+                query=req.query,
             )
 
         elapsed_ms = int((time.perf_counter() - t0) * 1000)
@@ -603,7 +726,7 @@ class RagEngine:
             elapsed_ms,
         )
 
-        return RagQueryResponse(
+        resp = RagQueryResponse(
             answer=answer_text,
             sources=sources,
             matched_scheme_id=matched_scheme_id,
@@ -612,6 +735,9 @@ class RagEngine:
             mode=mode_used,
             latency_ms=elapsed_ms,
         )
+        if not req.history:
+            self.query_cache.set(cache_key, resp.model_dump())
+        return resp
 
 
 rag_engine = RagEngine()

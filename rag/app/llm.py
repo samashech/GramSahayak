@@ -1,4 +1,4 @@
-"""Groq LLM client wrapper, LCEL chain builder, and mode tracker for GramSahayak RAG (RAG-03 & RAG-05)."""
+"""Groq LLM client wrapper, LCEL chain builder, and 60s retry state tracker for GramSahayak RAG (RAG-03 & RAG-05)."""
 
 import logging
 import time
@@ -23,28 +23,50 @@ logger = logging.getLogger("gramsahayak.llm")
 
 
 class LLMRuntimeState:
-    """Tracks whether the service is operating in 'llm' or 'extractive' mode."""
+    """
+    Tracks whether the service is operating in 'llm' or 'extractive' mode (RAG-05).
+    - When MOCK_LLM=true or LLM_API_KEY is missing -> 'extractive'.
+    - When Groq fails (timeout, 429, 5xx, error) -> 'extractive' for 60 seconds, then retries Groq.
+    - /health reports 'llm' when the last Groq call succeeded (or key is present and no recent failure),
+      'extractive' otherwise.
+    """
 
-    def __init__(self) -> None:
+    def __init__(self, retry_interval_sec: float = 60.0) -> None:
         self._last_failure_ts: float = 0.0
-        self._retry_interval_sec: float = 60.0
+        self._last_success_ts: float = 0.0
+        self._retry_interval_sec: float = retry_interval_sec
+
+    @property
+    def can_attempt_groq(self) -> bool:
+        """Return True if Groq should be attempted on the next query (initial attempt or >=60s since failure)."""
+        if settings.MOCK_LLM or not settings.LLM_API_KEY:
+            return False
+        if self._last_failure_ts == 0.0:
+            return True
+        return (time.time() - self._last_failure_ts) >= self._retry_interval_sec
 
     @property
     def current_mode(self) -> Literal["llm", "extractive"]:
+        """
+        Report current mode for /health and responses:
+        - 'extractive' if MOCK_LLM=true, LLM_API_KEY is unset, or the last Groq call failed within 60s.
+        - 'llm' when LLM_API_KEY is configured, MOCK_LLM=false, and the last Groq call succeeded (or no failure occurred).
+        """
         if settings.MOCK_LLM or not settings.LLM_API_KEY:
             return "extractive"
-        if self._last_failure_ts > 0 and (time.time() - self._last_failure_ts) < self._retry_interval_sec:
+        if self._last_failure_ts > 0.0 and (time.time() - self._last_failure_ts) < self._retry_interval_sec:
             return "extractive"
         return "llm"
 
     def record_success(self) -> None:
         self._last_failure_ts = 0.0
+        self._last_success_ts = time.time()
 
     def record_failure(self) -> None:
         self._last_failure_ts = time.time()
 
 
-llm_state = LLMRuntimeState()
+llm_state = LLMRuntimeState(retry_interval_sec=60.0)
 
 
 def get_chat_groq(for_voice: bool = False) -> ChatGroq:

@@ -178,12 +178,42 @@ export async function chat(params: {
  */
 export async function voiceChat(formData: FormData): Promise<VoiceAnswerData> {
   if (USE_MOCKS) {
-    await fakeDelay(800, 1200);
-    const mockAnswer = g1Fixture.data as AnswerData;
+    await fakeDelay(700, 1100);
+    const hint = String(formData.get('transcriptHint') || '').toLowerCase();
+    const lang = (formData.get('languageCode') as LanguageCode) || 'hi-IN';
+    const cat = formData.get('category') as Category | null;
+
+    let matchedFixture = g1Fixture.data as AnswerData;
+    let transcript = 'पीएम किसान योजना के लिए कौन पात्र है?';
+
+    if (hint.includes('सांप') || hint.includes('काट') || hint.includes('snake')) {
+      matchedFixture = s1Fixture.data as AnswerData;
+      transcript = 'सांप ने काट लिया है क्या करूं?';
+    } else if (hint.includes('बोंडअळी') || hint.includes('कापूस') || hint.includes('cotton') || (lang === 'mr-IN' && !hint)) {
+      matchedFixture = g2Fixture.data as AnswerData;
+      transcript = 'कपाशीवरील बोंडअळी कशी रोखावी?';
+    } else if (hint.includes('पीला रतुआ') || hint.includes('गेहूं') || hint.includes('wheat') || (cat === 'agri' && lang === 'hi-IN' && !hint)) {
+      matchedFixture = g3Fixture.data as AnswerData;
+      transcript = 'गेहूं में पीला रतुआ लग गया है क्या करें?';
+    } else if (hint.includes('ஆபத்தான') || hint.includes('கர்ப்பிணி') || hint.includes('danger')) {
+      matchedFixture = g4Fixture.data as AnswerData;
+      transcript = 'கர்ப்ப காலத்தில் என்னென்ன ஆபத்தான அறிகுறிகள்?';
+    } else if (hint.includes('ஜனனி') || hint.includes('சுரக்ஷா') || hint.includes('jsy') || (lang === 'ta-IN' && !hint)) {
+      matchedFixture = g5Fixture.data as AnswerData;
+      transcript = 'ஜனனி சுரக்ஷா யோஜனா திட்டத்தில் எவ்வளவு பணம் கிடைக்கும்?';
+    } else if (hint.includes('स्कॉलरशिप') || hint.includes('scholarship') || hint.includes('nsp') || cat === 'education') {
+      matchedFixture = g7Fixture.data as AnswerData;
+      transcript = 'नेशनल स्कॉलरशिप पोर्टल पर आवेदन कैसे करें?';
+    }
+
+    if (hint && hint.trim().length > 3) {
+      transcript = String(formData.get('transcriptHint'));
+    }
+
     return {
-      ...mockAnswer,
-      transcript: 'पीएम किसान योजना के लिए कौन पात्र है?',
-      detectedLanguage: 'hi-IN',
+      ...matchedFixture,
+      transcript,
+      detectedLanguage: matchedFixture.languageCode,
       audioBase64: null,
       useBrowserTts: true,
     };

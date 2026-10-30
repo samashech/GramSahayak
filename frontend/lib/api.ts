@@ -314,27 +314,184 @@ export async function ivrSimulate(params: {
 }): Promise<IvrStep> {
   if (USE_MOCKS) {
     await fakeDelay(500, 1000);
-    const stages = ivrStagesFixture as Record<string, IvrStep>;
+    // Comprehensive two-stage IVR mock engine (DEC-06, B-07, Contract v1)
+    const phone = params.callerPhone || '+919829011111';
+    const lang = params.languageCode || 'hi-IN';
 
-    // State transition logic for mock simulator:
-    // greeting -> language -> category -> speech -> answer -> goodbye
     if (params.stage === 'greeting') {
-      return { ...stages.language, callerPhone: params.callerPhone };
-    }
-    if (params.stage === 'language') {
-      return { ...stages.category, callerPhone: params.callerPhone };
-    }
-    if (params.stage === 'category') {
-      return { ...stages.speech, callerPhone: params.callerPhone };
-    }
-    if (params.stage === 'speech') {
-      return { ...stages.answer, callerPhone: params.callerPhone };
-    }
-    if (params.stage === 'answer') {
-      return { ...stages.goodbye, callerPhone: params.callerPhone };
+      return {
+        stage: 'language',
+        promptText:
+          'नमस्ते, ग्राम सहायक में आपका स्वागत है। हिंदी के लिए 1 दबाएं। मराठीसाठी 2 दाबा। தமிழுக்கு 3 அழுத்தவும்। For English press 4.',
+        audioBase64: null,
+        useBrowserTts: true,
+        dtmfOptions: { '1': 'hi-IN', '2': 'mr-IN', '3': 'ta-IN', '4': 'en-IN' },
+        inputExpected: 'dtmf',
+        callerPhone: phone,
+        session: { languageCode: 'hi-IN', category: null },
+        webhookLog: {
+          stage: 'greeting',
+          request: { event: 'call_incoming', caller_number: phone, channel: 'ivr' },
+          response: { status: 200, prompt: 'language_menu', valid_digits: '1,2,3,4' },
+        },
+      };
     }
 
-    return { ...stages.greeting, callerPhone: params.callerPhone };
+    if (params.stage === 'language') {
+      const digitToLang: Record<string, LanguageCode> = {
+        '1': 'hi-IN',
+        '2': 'mr-IN',
+        '3': 'ta-IN',
+        '4': 'en-IN',
+      };
+      const chosenLang = (params.dtmfDigit && digitToLang[params.dtmfDigit]) || lang || 'hi-IN';
+
+      const categoryPrompts: Record<LanguageCode, string> = {
+        'hi-IN': 'सरकारी योजनाओं के लिए 1, फसल व खेती के लिए 2, स्वास्थ्य के लिए 3, छात्रवृत्ति के लिए 4 दबाएं।',
+        'mr-IN': 'शासकीय योजनांसाठी 1, शेतीसाठी 2, आरोग्यासाठी 3, शिष्यवृत्तीसाठी 4 दाबा.',
+        'ta-IN': 'அரசு திட்டங்களுக்கு 1, விவசாயத்திற்கு 2, சுகாதாரத்திற்கு 3, உதவித்தொகைக்கு 4 அழுத்தவும்.',
+        'en-IN': 'Press 1 for Schemes, 2 for Agriculture, 3 for Health, 4 for Education.',
+      };
+
+      return {
+        stage: 'category',
+        promptText: categoryPrompts[chosenLang] || categoryPrompts['hi-IN'],
+        audioBase64: null,
+        useBrowserTts: true,
+        dtmfOptions: { '1': 'schemes', '2': 'agri', '3': 'health', '4': 'education' },
+        inputExpected: 'dtmf',
+        callerPhone: phone,
+        session: { languageCode: chosenLang, category: null },
+        webhookLog: {
+          stage: 'language',
+          request: {
+            endpoint: '/api/cloudtalk/voice/dtmf-category',
+            caller_number: phone,
+            dtmf_digit: params.dtmfDigit || '1',
+            stage: 'language',
+          },
+          response: {
+            status: 200,
+            languageCode: chosenLang,
+            next_stage: 'category',
+            dtmf_options: { '1': 'schemes', '2': 'agri', '3': 'health', '4': 'education' },
+          },
+        },
+      };
+    }
+
+    if (params.stage === 'category') {
+      const digitToCategory: Record<string, Category> = {
+        '1': 'schemes',
+        '2': 'agri',
+        '3': 'health',
+        '4': 'education',
+      };
+      const chosenCategory =
+        (params.dtmfDigit && digitToCategory[params.dtmfDigit]) || 'schemes';
+
+      const speechPrompts: Record<LanguageCode, string> = {
+        'hi-IN': 'कृपया बीप के बाद अपना सवाल बोलें या नीचे विकल्प चुनें...',
+        'mr-IN': 'कृपया बीप नंतर आपला प्रश्न बोला किंवा खाली पर्याय निवडा...',
+        'ta-IN': 'தயவுசெய்து பீப் சத்தத்திற்குப் பிறகு உங்கள் கேள்வியைக் கேட்கவும்...',
+        'en-IN': 'Please speak your question after the beep...',
+      };
+
+      return {
+        stage: 'speech',
+        promptText: speechPrompts[lang] || speechPrompts['hi-IN'],
+        audioBase64: null,
+        useBrowserTts: true,
+        inputExpected: 'speech',
+        callerPhone: phone,
+        session: { languageCode: lang, category: chosenCategory },
+        webhookLog: {
+          stage: 'category',
+          request: {
+            endpoint: '/api/cloudtalk/voice/dtmf-category',
+            caller_number: phone,
+            dtmf_digit: params.dtmfDigit || '1',
+            stage: 'category',
+          },
+          response: {
+            status: 200,
+            category: chosenCategory,
+            next_stage: 'speech',
+            action: 'record_audio_and_beep',
+          },
+        },
+      };
+    }
+
+    if (params.stage === 'speech') {
+      const query = (params.text || '').toLowerCase();
+      let matchedAnswer = g1Fixture.data as AnswerData;
+
+      if (query.includes('सांप') || query.includes('काट') || query.includes('snake')) {
+        matchedAnswer = s1Fixture.data as AnswerData;
+      } else if (query.includes('बोंडअळी') || lang === 'mr-IN') {
+        matchedAnswer = g2Fixture.data as AnswerData;
+      } else if (query.includes('पीला रतुआ') || (lang === 'hi-IN' && query.includes('गेहूं'))) {
+        matchedAnswer = g3Fixture.data as AnswerData;
+      } else if (query.includes('ஆபத்தான') || (lang === 'ta-IN' && query.includes('கர்ப்ப'))) {
+        matchedAnswer = g4Fixture.data as AnswerData;
+      } else if (query.includes('ஜனனி') || lang === 'ta-IN') {
+        matchedAnswer = g5Fixture.data as AnswerData;
+      } else if (query.includes('स्कॉलरशिप') || query.includes('nsp')) {
+        matchedAnswer = g7Fixture.data as AnswerData;
+      }
+
+      return {
+        stage: 'answer',
+        promptText: `${matchedAnswer.answerText} आपके फोन पर एसएमएस रसीद भेज दी गई है। (SMS receipt dispatched to ${phone})`,
+        audioBase64: null,
+        useBrowserTts: true,
+        inputExpected: 'none',
+        callerPhone: phone,
+        session: { languageCode: lang, category: matchedAnswer.category },
+        answer: matchedAnswer,
+        webhookLog: {
+          stage: 'speech',
+          request: {
+            endpoint: '/api/cloudtalk/voice/process-speech',
+            caller_number: phone,
+            transcript: params.text || 'Voice Question',
+            category: matchedAnswer.category,
+            languageCode: lang,
+          },
+          response: {
+            status: 200,
+            answerText: matchedAnswer.answerText,
+            matchedSchemeId: matchedAnswer.matchedSchemeId,
+            smsDispatched: true,
+            delivery: 'simulated',
+          },
+        },
+      };
+    }
+
+    // Default: goodbye stage
+    const goodbyePrompts: Record<LanguageCode, string> = {
+      'hi-IN': 'ग्राम सहायक से संपर्क करने के लिए धन्यवाद। आपका दिन शुभ हो!',
+      'mr-IN': 'ग्राम सहायकाशी संपर्क केल्याबद्दल धन्यवाद. आपला दिवस चांगला जावो!',
+      'ta-IN': 'கிராம சகாயக்கை தொடர்பு கொண்டதற்கு நன்றி. நல்வாழ்த்துகள்!',
+      'en-IN': 'Thank you for calling GramSahayak. Have a great day!',
+    };
+
+    return {
+      stage: 'goodbye',
+      promptText: goodbyePrompts[lang] || goodbyePrompts['hi-IN'],
+      audioBase64: null,
+      useBrowserTts: true,
+      inputExpected: 'none',
+      callerPhone: phone,
+      session: { languageCode: lang, category: null },
+      webhookLog: {
+        stage: 'goodbye',
+        request: { event: 'call_terminate', caller_number: phone },
+        response: { status: 200, action: 'hangup' },
+      },
+    };
   }
 
   const isMultipart = Boolean(params.audio);

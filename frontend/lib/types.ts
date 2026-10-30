@@ -105,7 +105,7 @@ export interface IvrStep {
     languageCode: LanguageCode;
     category: Category | null;
   };
-  answer?: AnswerData & { smsReceipt?: SmsReceipt };
+  answer?: AnswerData;
   webhookLog: {
     stage: string;
     request: Record<string, unknown>;

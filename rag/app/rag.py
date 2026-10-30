@@ -18,7 +18,12 @@ from langchain_core.documents import Document
 
 from app.config import settings
 from app.llm import invoke_lcel_answer, llm_state
-from app.prompts import GUIDE_LOCALISED_SUMMARIES, VOICE_CLOSING_BY_LANG
+from app.prompts import (
+    GUIDE_LOCALISED_SUMMARIES,
+    SYSTEM_PROMPT_TEMPLATE,
+    VOICE_CLOSING_BY_LANG,
+    VOICE_INSTRUCTION,
+)
 from app.safety import (
     build_out_of_scope_override,
     check_safety_override,
@@ -93,10 +98,23 @@ def _cosine_distance_to_similarity(distance: float) -> float:
     return max(0.0, min(1.0, round(sim, 4)))
 
 
+def _is_prompt_intact() -> bool:
+    """Verify that SYSTEM_PROMPT_TEMPLATE in app.prompts retains required grounding and language directives."""
+    required_clauses = (
+        "Answer ONLY from the CONTEXT",
+        "{language_name}",
+        "Never invent amounts",
+        "1800-180-1551",
+    )
+    return all(clause in SYSTEM_PROMPT_TEMPLATE for clause in required_clauses)
+
+
 def _clean_for_voice(text: str, language: str) -> str:
-    """Enforce for_voice rules: plain text, no URLs/markdown/lists, max 3 short sentences."""
-    cleaned = re.sub(r"https?://\S+", "", text)
-    cleaned = re.sub(r"\b[a-zA-Z0-9.-]+\.(?:gov|nic|org|ac)\.in(?:/\S*)?", "", cleaned)
+    """Enforce for_voice rules from VOICE_INSTRUCTION: plain text, no URLs/markdown/lists, max 3 short sentences."""
+    cleaned = text
+    if "URLs" in VOICE_INSTRUCTION:
+        cleaned = re.sub(r"https?://\S+", "", cleaned)
+        cleaned = re.sub(r"\b[a-zA-Z0-9.-]+\.(?:gov|nic|org|ac)\.in(?:/\S*)?", "", cleaned)
     cleaned = re.sub(r"[*_`#>\[\]]+", "", cleaned)
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
 
@@ -105,7 +123,7 @@ def _clean_for_voice(text: str, language: str) -> str:
         for s in re.split(r"(?<=[.।!?])\s+", cleaned)
         if s.strip()
     ]
-    if len(sentences) > 3:
+    if "3 short sentences" in VOICE_INSTRUCTION and len(sentences) > 3:
         sentences = sentences[:3]
     result = " ".join(sentences).strip()
     if not result:
@@ -185,6 +203,9 @@ def _build_extractive_answer(
     - Scheme cards: localised name (name_hi / name_mr / name_ta / name_en) + card sms_summary in requested language + helpline.
     - Guide chunks: two most relevant sentences from the top chunk + relevant helpline (with regional script support for hi/mr/ta seed guides).
     """
+    if not _is_prompt_intact():
+        return f"Broken prompt configuration: {SYSTEM_PROMPT_TEMPLATE[:160]}"
+
     kind = top_doc.metadata.get("kind")
     helpline = str(top_doc.metadata.get("helpline") or "1800-180-1551")
 
@@ -217,8 +238,10 @@ def _build_extractive_answer(
             ans = _extract_two_relevant_sentences(top_doc.page_content, helpline, query=query)
 
         if for_voice:
+            # Keep single-sentence flow before appending SMS closing so voice output stays <=3 sentences with helpline intact
+            voice_base = re.sub(r"[.।]+\s*", ", ", ans.strip()).strip(", ")
             closing = VOICE_CLOSING_BY_LANG.get(language, VOICE_CLOSING_BY_LANG["en-IN"])
-            return _clean_for_voice(f"{ans}. {closing}", language)
+            return _clean_for_voice(f"{voice_base}. {closing}", language)
         return ans
 
     # Guide chunk: if language is regional (hi-IN, mr-IN, ta-IN) and matches a seed guide topic, return grounded regional summary
@@ -506,6 +529,23 @@ class RagEngine:
         scored, _emb_ms, _ret_ms = self.search_chunks_timed(query, category=category, k=k)
         return scored
 
+    @staticmethod
+    def _select_primary_doc(scored: List[Tuple[Document, float]]) -> Tuple[Document, float]:
+        """
+        Return the primary (top_doc, top_sim), promoting a canonical scheme card if the #1 chunk
+        is a guide section mirroring that exact scheme and the scheme card is also >= RAG_MATCH_THRESHOLD.
+        """
+        top_doc, top_sim = scored[0]
+        if top_doc.metadata.get("kind") == "guide":
+            top_title_upper = str(top_doc.metadata.get("title") or "").upper()
+            for cand_doc, cand_sim in scored[1:]:
+                if cand_doc.metadata.get("kind") == "scheme" and cand_sim >= settings.RAG_MATCH_THRESHOLD:
+                    cand_code = str(cand_doc.metadata.get("code") or "").upper()
+                    cand_title = str(cand_doc.metadata.get("name_en") or "").upper()
+                    if (cand_code and cand_code in top_title_upper) or (cand_title and cand_title in top_title_upper):
+                        return cand_doc, cand_sim
+        return top_doc, top_sim
+
     def retrieve(self, req: RagQueryRequest) -> RagRetrieveResponse:
         """Return raw retrieved chunks and matched_scheme_id for POST /rag/retrieve."""
         top_k = 3 if req.for_voice else settings.RAG_TOP_K
@@ -513,7 +553,7 @@ class RagEngine:
 
         matched_scheme_id: Optional[str] = None
         if scored:
-            top_doc, top_sim = scored[0]
+            top_doc, top_sim = self._select_primary_doc(scored)
             if (
                 top_doc.metadata.get("kind") == "scheme"
                 and top_sim >= settings.RAG_MATCH_THRESHOLD
@@ -570,8 +610,11 @@ class RagEngine:
         if safety_override is not None:
             elapsed_ms = int((time.perf_counter() - t0) * 1000)
             mode_out = "extractive" if not llm_state.can_attempt_groq else safety_override.get("mode", llm_state.current_mode)
+            ans_out = safety_override["answer"]
+            if req.for_voice:
+                ans_out = _clean_for_voice(ans_out, req.language)
             resp = RagQueryResponse(
-                answer=safety_override["answer"],
+                answer=ans_out,
                 sources=safety_override.get("sources", []),
                 matched_scheme_id=safety_override.get("matched_scheme_id"),
                 sms_summary=safety_override.get("sms_summary"),
@@ -615,7 +658,8 @@ class RagEngine:
                 latency_ms=elapsed_ms,
             )
 
-        top_doc, top_sim = scored[0]
+        top_doc, top_sim = self._select_primary_doc(scored)
+
         has_guide_match = any(
             doc.metadata.get("kind") == "guide" and sim >= (settings.RAG_MATCH_THRESHOLD - 0.015)
             for doc, sim in scored

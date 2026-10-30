@@ -20,6 +20,17 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 ## Endpoints (`:8000`)
-- `GET /health` -> `{"status":"ok","vector_count":0,"embedding_model":"intfloat/multilingual-e5-small","mode":"llm"|"extractive"}`
+- `GET /health` -> `{"status":"ok","vector_count":45,"embedding_model":"intfloat/multilingual-e5-small","mode":"llm"|"extractive"}`
 - `POST /rag/query` -> Grounded answer with sources, `matched_scheme_id`, verbatim `sms_summary`, `confidence`, `mode`, `latency_ms`
 - `POST /rag/ingest` -> Ingests markdown/PDF/JSON file into ChromaDB
+- `POST /rag/retrieve` -> Returns top retrieved chunks and `matched_scheme_id`
+
+## Golden Eval Harness (`RAG-06`)
+
+Run the golden evaluation suite (9 golden rows `G1-G5`, `G7`, `S1-S3`, 8 cross-lingual `PMKISAN`/`JSY` checks across `hi-IN`, `mr-IN`, `ta-IN`, `en-IN`, and 20-query sequential `p50`/`p95` latency benchmark):
+
+```bash
+python rag/eval/run_eval.py
+# Verify loud failure when prompt/output is broken on purpose:
+python rag/eval/run_eval.py --simulate-broken-prompt
+```

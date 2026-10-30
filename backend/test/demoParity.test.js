@@ -26,6 +26,21 @@ before(async () => {
 });
 after(async () => { await app.close(); env.cleanup(); });
 
+test('startup fills an empty persona history with its starter turns (memory driver parity)', async () => {
+  const session = await require('../src/adapters/dbAdapter').getSession('+919829055555');
+  assert.equal(session.last_channel, 'web');
+  assert.deepEqual(session.history, starter('hi-IN'));
+});
+
+test('startup never overwrites a persona history that already has turns', async () => {
+  const key = '+919822022222';
+  await sessionService.appendTurn(key, { channel: 'sms', speaker: 'user', text: 'KCC' });
+  await require('../src/services/seedService').seedDemoUsers({ wipe: false });
+  const history = await sessionService.getHistory(key);
+  assert.equal(history.length, 3);
+  assert.equal(history.at(-1).text, 'KCC');
+});
+
 test('reset restores each persona to exactly its starter turns, last_channel web', async () => {
   const key = '+919840033333';
   await sessionService.appendTurn(key, { channel: 'sms', speaker: 'user', text: 'JSY' });

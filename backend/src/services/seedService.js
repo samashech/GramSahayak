@@ -90,8 +90,10 @@ function personaProfile(persona) {
   return Object.fromEntries(PROFILE_FIELDS.filter((f) => f in persona).map((f) => [f, persona[f]]));
 }
 
-// Upsert every persona's session + profile (keyed by its phone). With wipe=true the
-// persona sessions are deleted first, so history and profile edits are cleared.
+// Upsert every persona's session + profile (keyed by its phone) and its starter_history.
+// wipe=true (POST /api/demo/reset) deletes the persona session first, so the result equals
+// db/demo_reset.py. wipe=false (startup) only adds starter turns to an empty history, which
+// gives the memory driver the same demo state without touching real conversations.
 async function seedDemoUsers({ wipe = false } = {}) {
   const seeded = [];
   for (const persona of personas) {
@@ -102,7 +104,8 @@ async function seedDemoUsers({ wipe = false } = {}) {
     }
     if (wipe) await dbAdapter.deleteSession(key);
     await sessionService.updateProfile(key, { ...personaProfile(persona), phone: key }, { phone: key });
-    if (wipe) {
+    const empty = wipe || !((await dbAdapter.getSession(key))?.history || []).length;
+    if (empty) {
       for (const turn of starterTurns(persona)) await dbAdapter.saveSessionTurn(key, turn, { phone: key });
     }
     seeded.push(persona.id);
@@ -110,9 +113,8 @@ async function seedDemoUsers({ wipe = false } = {}) {
   return seeded;
 }
 
-// Pending change request: DB-05 moves its starter turns from db/demo_reset.py into
-// demo_personas.json as `starter_history`, so this reset and demo_reset.py restore the same
-// state. Turns keep their fixed timestamps; until the field exists, reset clears history.
+// CCR-04: starter turns live in demo_personas.json (`starter_history`), shared with
+// db/demo_reset.py. Turns keep their fixed timestamps; a persona without the field gets none.
 function starterTurns(persona) {
   if (!Array.isArray(persona.starter_history)) return [];
   return persona.starter_history.map((t) => {

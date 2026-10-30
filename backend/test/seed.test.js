@@ -45,7 +45,10 @@ test('POST /api/demo/reset wipes persona history and restores the profile', asyn
   assert.equal(status, 200);
   assert.equal(json.data.reset, true);
   assert.equal(json.data.users.length, 5);
-  assert.deepEqual(await sessionService.getHistory(key), []);
+  // Reset leaves exactly the persona's starter_history (CCR-04), or nothing if the file has none.
+  const persona = seedService.getPersona('farmer-hi');
+  const expected = (persona.starter_history || []).map((t) => t.text);
+  assert.deepEqual((await sessionService.getHistory(key)).map((t) => t.text), expected);
   assert.equal((await sessionService.getProfile(key)).land_hectares, 1.2);
 });
 
@@ -86,7 +89,7 @@ test('POST /api/schemes/ingest accepts a multipart .md file and rejects bad inpu
   form.append('file', new Blob(['# Circular\n## Note\nNew advisory.']), 'circular note.md');
   const ok = await app.call('POST', '/api/schemes/ingest', { form });
   assert.equal(ok.status, 201);
-  assert.match(ok.json.data.savedPath, /^data\/raw\/circular_note-.*\.md$/);
+  assert.match(ok.json.data.savedPath, /^data\/raw\/agri-circular_note-.*\.md$/);
   rawCreated.push(ok.json.data.savedPath);
 
   const badType = new FormData();
@@ -94,4 +97,26 @@ test('POST /api/schemes/ingest accepts a multipart .md file and rejects bad inpu
   assert.equal((await app.call('POST', '/api/schemes/ingest', { form: badType })).json.error.code, 'ERR_VALIDATION');
   assert.equal((await app.call('POST', '/api/schemes/ingest', { body: { code: 'x' } })).status, 400);
   assert.equal((await app.call('POST', '/api/schemes/ingest', { body: { code: 'ABC', name_en: 'A', category: 'sports' } })).status, 400);
+});
+
+// Port of rag/ingest.py resolve_raw_file_category's filename fallback (CCR-06).
+function ragCategoryFromFilename(stem) {
+  const lower = stem.toLowerCase();
+  for (const cat of ['agri', 'health', 'education', 'schemes']) {
+    if (new RegExp(`(?:^|[_\\-\\s])${cat}(?:$|[_\\-\\s])`).test(lower) || lower.startsWith(cat)) return cat;
+  }
+  return 'schemes';
+}
+
+test('uploaded file names carry the category RAG falls back to on re-index (CCR-06)', async () => {
+  for (const [category, name] of [['health', 'agri_tips.md'], ['education', 'Health-Notice.txt'], ['agri', 'schemes list.md'], ['schemes', 'x.md']]) {
+    const form = new FormData();
+    form.append('category', category);
+    form.append('file', new Blob(['# t\n## s\nbody']), name);
+    const { json } = await app.call('POST', '/api/schemes/ingest', { form });
+    rawCreated.push(json.data.savedPath);
+    const stem = path.basename(json.data.savedPath, path.extname(json.data.savedPath));
+    assert.ok(stem.startsWith(`${category}-`), stem);
+    assert.equal(ragCategoryFromFilename(stem), category, stem);
+  }
 });

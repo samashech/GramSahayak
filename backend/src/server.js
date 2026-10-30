@@ -1,9 +1,11 @@
 const { config } = require('./config');
 const { createApp } = require('./app');
 const dbAdapter = require('./adapters/dbAdapter');
+const seedService = require('./services/seedService');
 
 async function main() {
   await dbAdapter.init();
+  await seedService.init();
   const app = createApp();
   const server = app.listen(config.port, () => {
     console.log(`[gramsahayak] gateway on :${config.port} (${config.appEnv})`);

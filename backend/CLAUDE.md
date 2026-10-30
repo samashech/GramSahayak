@@ -72,5 +72,27 @@ Error shape: `{"success": false, "data": null, "error": {"code": "ERR_CODE", "me
 - **B-01**: `FRONTEND_ORIGIN` is a comma-separated list. Config adds `DEMO_MODE` and `DB_DRIVER` (postgres | sqlite | memory). SMS webhook path is `/api/cloudtalk/sms/incoming` (not `/api/cloudtalk/sms`).
 - **Env**: one Groq key `LLM_API_KEY` shared by Node and RAG; RAG URL from `AI_RAG_URL` (may be a tunnel in production).
 
+### Dependency gate (run BEFORE every task)
+1. `git fetch origin` and check `origin/main` (and `origin/dev`, `origin/<role>` branches) for the artifacts the task depends on (table below).
+2. If a dependency is missing: STOP, tell the user which teammate task (DB-xx / RAG-xx / FE-xx / LD-xx) it is waiting on, and offer the documented fallback. Do not silently create another role's artifact.
+3. If an artifact exists but differs from what we assumed: list the differences as CONTRACT CHANGE REQUESTS before coding.
+
+| Backend task | Needs first (owner, due) | Fallback if missing |
+|---|---|---|
+| A-00 | `/docs/api-contract.md` on main (DB-01, H0:30) | — (wait; contract is DB-01's to commit) |
+| K-04 | A-00 | — |
+| B-01 / B-02 | repo + `.gitignore` (DB-01); schema column names (DB-02) | memory driver; diff later against `db/schema.*.sql` |
+| B-03 | K-04, B-02; `/data/seed/demo_personas.json` (DB-05, H2) | build from contract section 12 |
+| B-04 | B-03 | — |
+| B-05 | K-04 | — |
+| B-06 | `GET :8000/health` (RAG-01, H2); `POST /rag/query` passing golden queries (RAG-03, H6) | local card match + demo cache |
+| B-07 | B-06; real CloudTalk field names (LD-01, H6-8) | contract section 7 payloads; simulators |
+| B-08 / B-09 | B-06, B-07; typed client + mocks (FE-02) to cross-check shapes | — |
+| B-10 | golden queries appendix; RAG eval (RAG-06) | — |
+| B-11 | `DATABASE_URL` (DB-04, H5); RAG hosting decision (RAG-08); frontend origin (FE-10) | SQLite; RAG on laptop + tunnel |
+| any | seed corrections (LD-02, H10) | keep current seed, flag unverified |
+
+Status at H0 (2026-10-30): DB-01 not done — no `main`. A-00..B-02 were built ahead of it; the backend's `docs/api-contract.md` and `.gitignore` must be reconciled with DB-01's (theirs win) when `main` lands, by merging main into `backend` (no force-push).
+
 ### Scope
 I own only `/backend` (plus K-tasks: `/data/seed`, `/docs/architecture-blueprint.md`, `/docs/db-integration-for-senior.md`, `/docs/endpoint-map.md`, root `.env.example`). Anything else -> CONTRACT CHANGE REQUEST.

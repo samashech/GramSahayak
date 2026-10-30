@@ -341,29 +341,216 @@ export async function smsSimulate(params: {
   languageCode?: LanguageCode;
 }): Promise<SmsSimulateResult> {
   if (USE_MOCKS) {
-    await fakeDelay(300, 600); // SMS keyword feels instant
+    await fakeDelay(150, 300); // SMS keyword feels instant (< 300 ms)
     const b = params.body.trim().toUpperCase();
+    const lang = params.languageCode || 'hi-IN';
 
-    if (b.includes('PMKISAN')) {
-      return g8Fixture.data as SmsSimulateResult;
+    // Seed-aligned SMS summaries for all 13 schemes in 4 languages (Rule R5 verbatim from schemes.json)
+    const SMS_SUMMARIES: Record<string, Record<LanguageCode, string>> = {
+      PMKISAN: {
+        'hi-IN': 'पीएम-किसान: भूमिधारक किसान परिवार को ₹6000/वर्ष, 3 किस्तों में। दस्तावेज़: आधार, भूमि रिकॉर्ड, बैंक खाता, eKYC। pmkisan.gov.in हेल्पलाइन: 155261',
+        'mr-IN': 'पीएम-किसान: जमीनधारक शेतकरी कुटुंबाला ₹6000/वर्ष, 3 हप्त्यांत. कागदपत्रे: आधार, सातबारा, बँक खाते, eKYC. pmkisan.gov.in हेल्पलाइन: 155261',
+        'ta-IN': 'பிஎம்-கிசான்: நில உரிமை விவசாய குடும்பத்திற்கு ஆண்டுக்கு ₹6000, 3 தவணைகளில். ஆவணங்கள்: ஆதார், நில பதிவு, வங்கி கணக்கு. pmkisan.gov.in உதவி: 155261',
+        'en-IN': 'PM-KISAN: Rs 6000/yr in 3 instalments of Rs 2000 to landholding farmers. Docs: Aadhaar, land record, bank a/c, eKYC. pmkisan.gov.in Help: 155261',
+      },
+      PMFBY: {
+        'hi-IN': 'फसल बीमा PMFBY: किसान प्रीमियम खरीफ 2%, रबी 1.5%, व्यावसायिक फसल 5%। दस्तावेज़: आधार, भूमि/बुवाई प्रमाण, बैंक खाता। pmfby.gov.in हेल्पलाइन: 14447',
+        'mr-IN': 'पीक विमा PMFBY: शेतकरी हप्ता खरीप 2%, रब्बी 1.5%, व्यावसायिक पिके 5%. कागदपत्रे: आधार, सातबारा/पेरणी दाखला, बँक खाते. pmfby.gov.in हेल्पलाइन: 14447',
+        'ta-IN': 'பயிர் காப்பீடு PMFBY: விவசாயி பிரீமியம் காரிஃப் 2%, ரபி 1.5%, வணிக பயிர் 5%. ஆவணங்கள்: ஆதார், நில/விதைப்பு பதிவு, வங்கி கணக்கு. pmfby.gov.in உதவி: 14447',
+        'en-IN': 'PMFBY crop insurance: farmer premium 2% Kharif, 1.5% Rabi, 5% commercial crops. Docs: Aadhaar, land/sowing record, bank a/c. pmfby.gov.in Help: 14447',
+      },
+      KCC: {
+        'hi-IN': 'किसान क्रेडिट कार्ड: ₹3 लाख तक फसल ऋण, समय पर चुकाने पर 4% ब्याज। दस्तावेज़: आधार, भूमि रिकॉर्ड, फोटो। बैंक या pmkisan.gov.in हेल्पलाइन: 1800-180-1551',
+        'mr-IN': 'किसान क्रेडिट कार्ड: ₹3 लाखांपर्यंत पीक कर्ज, वेळेवर फेड केल्यास 4% व्याज. कागदपत्रे: आधार, सातबारा, फोटो. बँक किंवा pmkisan.gov.in हेल्पलाइन: 1800-180-1551',
+        'ta-IN': 'கிசான் கடன் அட்டை: ₹3 லட்சம் வரை பயிர் கடன், சரியான நேரத்தில் செலுத்தினால் 4% வட்டி. ஆதார், நில பதிவு. வங்கி/pmkisan.gov.in உதவி: 1800-180-1551',
+        'en-IN': 'Kisan Credit Card: crop loan up to Rs 3 lakh, 4% interest on timely repayment. Docs: Aadhaar, land record, photo. Bank or pmkisan.gov.in Help: 1800-180-1551',
+      },
+      SHC: {
+        'hi-IN': 'मृदा स्वास्थ्य कार्ड: खेत की मिट्टी की मुफ्त जांच और खाद की सलाह। दस्तावेज़: आधार, खेत का विवरण। soilhealth.dac.gov.in हेल्पलाइन: 1800-180-1551',
+        'mr-IN': 'मृदा आरोग्य पत्रिका: शेतातील मातीची मोफत तपासणी व खताचा सल्ला. कागदपत्रे: आधार, शेताचा तपशील. soilhealth.dac.gov.in हेल्पलाइन: 1800-180-1551',
+        'ta-IN': 'மண் வள அட்டை: உங்கள் வயல் மண்ணுக்கு இலவச பரிசோதனை, உர ஆலோசனை. ஆவணங்கள்: ஆதார், நில விவரம். soilhealth.dac.gov.in உதவி: 1800-180-1551',
+        'en-IN': 'Soil Health Card: free soil test of your field with fertiliser advice. Docs: Aadhaar, plot details. soilhealth.dac.gov.in Help: 1800-180-1551',
+      },
+      PMJAY: {
+        'hi-IN': 'आयुष्मान भारत: ₹5 लाख/वर्ष मुफ्त अस्पताल इलाज प्रति परिवार। दस्तावेज़: आधार, राशन कार्ड। मेरा पीएमजय या mera.pmjay.gov.in हेल्पलाइन: 14555',
+        'mr-IN': 'आयुष्मान भारत: प्रति कुटुंब ₹5 लाख/वर्ष मोफत रुग्णालय उपचार. कागदपत्रे: आधार, रेशन कार्ड. mera.pmjay.gov.in हेल्पलाइन: 14555',
+        'ta-IN': 'ஆயுஷ்மான் பாரத்: குடும்பத்திற்கு ஆண்டுக்கு ₹5 லட்சம் வரை இலவச மருத்துவ சிகிச்சை. mera.pmjay.gov.in உதவி: 14555',
+        'en-IN': 'Ayushman Bharat PM-JAY: free hospital care up to Rs 5 lakh/family/yr at empanelled hospitals. Docs: Aadhaar, ration card. mera.pmjay.gov.in Help: 14555',
+      },
+      JSY: {
+        'hi-IN': 'जननी सुरक्षा योजना: सरकारी अस्पताल में प्रसव पर ग्रामीण मां को ₹1400 (LPS राज्य) या ₹700 (HPS)। दस्तावेज़: MCP कार्ड, आधार, बैंक। nhm.gov.in हेल्पलाइन: 104',
+        'mr-IN': 'जननी सुरक्षा योजना: सरकारी रुग्णालयात प्रसूतीसाठी ग्रामीण मातेला ₹1400 (LPS राज्ये) किंवा ₹700 (HPS). कागदपत्रे: MCP कार्ड, आधार, बँक. nhm.gov.in हेल्पलाइन: 104',
+        'ta-IN': 'ஜனனி சுரக்ஷா: அரசு மருத்துவமனை பிரசவத்துக்கு கிராமப்புற தாய்க்கு ₹700 (HPS மாநிலம்) / ₹1400 (LPS). MCP அட்டை, ஆதார், வங்கி. nhm.gov.in உதவி: 104',
+        'en-IN': 'JSY: cash for delivery in govt hospital. Rural mother Rs 1400 (LPS states) or Rs 700 (HPS, BPL/SC/ST). Docs: MCP card, Aadhaar, bank. nhm.gov.in Help: 104',
+      },
+      PMMVY: {
+        'hi-IN': 'मातृत्व वंदना PMMVY: पहले बच्चे पर ₹5000 (2 किस्तों में), दूसरी बालिका पर ₹6000 एकमुश्त। आधार, MCP कार्ड, बैंक खाता। pmmvy.wcd.gov.in हेल्पलाइन: 104',
+        'mr-IN': 'मातृत्व वंदना PMMVY: पहिल्या अपत्यासाठी ₹5000 (2 हप्त्यांत), दुसरी मुलगी झाल्यास ₹6000 एकरकमी. आधार, MCP कार्ड, बँक. pmmvy.wcd.gov.in हेल्पलाइन: 104',
+        'ta-IN': 'மாத்ரு வந்தனா PMMVY: முதல் குழந்தைக்கு ₹5000 (2 தவணை), 2-வது பெண் குழந்தைக்கு ₹6000 ஒரே தவணை. ஆதார், MCP அட்டை, வங்கி. pmmvy.wcd.gov.in உதவி: 104',
+        'en-IN': 'PMMVY maternity: Rs 5000 for first child in 2 instalments, Rs 6000 for second girl child. Docs: Aadhaar, MCP card, bank a/c. pmmvy.wcd.gov.in Help: 104',
+      },
+      MGNREGA: {
+        'hi-IN': 'मनरेगा: ग्रामीण परिवार को 100 दिन का अकुशल गारंटी रोज़गार। 15 दिन में काम न मिले तो बेरोज़गारी भत्ता। दस्तावेज़: जॉब कार्ड, आधार। nrega.nic.in हेल्पलाइन: 1800-345-2244',
+        'mr-IN': 'मनरेगा: ग्रामीण कुटुंबाला 100 दिवसांचा हमी अकुशल रोजगार. 15 दिवसांत काम न मिळाल्यास बेरोजगारी भत्ता. कागदपत्रे: जॉब कार्ड, आधार. nrega.nic.in हेल्पलाइन: 1800-345-2244',
+        'ta-IN': 'மகாத்மா காந்தி ஊரக வேலைவாய்ப்பு: ஆண்டுக்கு 100 நாள் உத்திரவாத வேலை. 15 நாளில் வேலை கிடைக்காவிடில் உதவித்தொகை. ஜாப் கார்டு, ஆதார். nrega.nic.in உதவி: 1800-345-2244',
+        'en-IN': 'MGNREGA: 100 days guaranteed wage employment per rural household. Unemployment allowance if work not given within 15 days. Job card, Aadhaar. nrega.nic.in',
+      },
+      UJJWALA: {
+        'hi-IN': 'उज्ज्वला 2.0: गरीब परिवार की वयस्क महिला को मुफ्त LPG कनेक्शन, पहला सिलेंडर व चूल्हा मुफ्त। दस्तावेज़: आधार, राशन कार्ड, बैंक खाता। pmuy.gov.in हेल्पलाइन: 1800-266-6696',
+        'mr-IN': 'उज्ज्वला 2.0: गरीब कुटुंबातील महिलेला मोफत एलपीजी गॅस जोडणी, पहिला सिलिंडर व शेगडी मोफत. कागदपत्रे: आधार, रेशन कार्ड, बँक. pmuy.gov.in हेल्पलाइन: 1800-266-6696',
+        'ta-IN': 'உஜ்வாலா 2.0: ஏழை குடும்ப பெண்ணுக்கு இலவச LPG இணைப்பு, முதல் சிலிண்டர் மற்றும் அடுப்பு இலவசம். ஆதார், குடும்ப அட்டை, வங்கி. pmuy.gov.in உதவி: 1800-233-3555',
+        'en-IN': 'PM Ujjwala: free LPG connection to adult woman of poor household, first refill & stove free. Docs: Aadhaar, ration card, bank a/c. pmuy.gov.in Help: 1800-266-6696',
+      },
+      PMAY: {
+        'hi-IN': 'आवास योजना-ग्रामीण: बेघर/कच्चे घर वाले परिवार को पक्का घर बनाने हेतु ₹1.20 लाख (पहाड़ी क्षेत्र ₹1.30 लाख)। आधार, जॉब कार्ड। pmayg.nic.in हेल्पलाइन: 1800-11-6446',
+        'mr-IN': 'आवास योजना-ग्रामीण: बेघर/कच्च्या घरातील कुटुंबाला पक्के घर बांधण्यासाठी ₹1.20 लाख (डोंगरी भाग ₹1.30 लाख). आधार, जॉब कार्ड. pmayg.nic.in हेल्पलाइन: 1800-11-6446',
+        'ta-IN': 'வீட்டு வசதி-கிராமம்: வீடில்லா/குடிசை குடும்பத்துக்கு கான்கிரீட் வீடு கட்ட ₹1.20 லட்சம் (மலைப்பகுதி ₹1.30 லட்சம்). ஆதார். pmayg.nic.in உதவி: 1800-11-6446',
+        'en-IN': 'PMAY-Gramin: Rs 1.20 lakh (Rs 1.30 lakh hilly areas) to build a pucca house for houseless/kutcha house families. Aadhaar. pmayg.nic.in Help: 1800-11-6446',
+      },
+      NSP: {
+        'hi-IN': 'राष्ट्रीय छात्रवृत्ति पोर्टल: केंद्र व राज्य छात्रवृत्ति के लिए एक जगह आवेदन। आधार, आय/जाति प्रमाणपत्र, अंकपत्र। scholarships.gov.in हेल्पलाइन: 0120-6619540',
+        'mr-IN': 'राष्ट्रीय शिष्यवृत्ती पोर्टल: केंद्र व राज्य शिष्यवृत्तींसाठी एकाच ठिकाणी अर्ज. आधार, उत्पन्न/जात दाखला, गुणपत्रक. scholarships.gov.in हेल्पलाइन: 0120-6619540',
+        'ta-IN': 'தேசிய உதவித்தொகை இணையதளம்: மத்திய, மாநில உதவித்தொகைக்கு ஒரே இடத்தில் விண்ணப்பம். ஆதார், வருமான/சாதி சான்று. scholarships.gov.in உதவி: 0120-6619540',
+        'en-IN': 'National Scholarship Portal: apply for central & state scholarships in one place. Aadhaar, income/caste cert, marksheet. scholarships.gov.in Help: 0120-6619540',
+      },
+      PMYASASVI: {
+        'hi-IN': 'पीएम यशस्वी: OBC, EBC, DNT छात्रों को छात्रवृत्ति, पारिवारिक आय ₹2.5 लाख/वर्ष तक। NSP पर आवेदन। scholarships.gov.in हेल्पलाइन: 0120-6619540',
+        'mr-IN': 'पीएम यशस्वी: OBC, EBC, DNT विद्यार्थ्यांना शिष्यवृत्ती, कौटुंबिक उत्पन्न ₹2.5 लाख/वर्षपर्यंत. NSP वर अर्ज. scholarships.gov.in हेल्पलाइन: 0120-6619540',
+        'ta-IN': 'பிஎம் யசஸ்வி: OBC, EBC, DNT மாணவர்களுக்கு உதவித்தொகை, குடும்ப வருமானம் ₹2.5 லட்சம் வரை. NSP-ல் விண்ணப்பம். scholarships.gov.in உதவி: 0120-6619540',
+        'en-IN': 'PM YASASVI: scholarship for OBC, EBC, DNT students, family income up to Rs 2.5 lakh/yr. Apply on NSP. scholarships.gov.in Help: 0120-6619540',
+      },
+      PRAGATI: {
+        'hi-IN': 'AICTE प्रगति: AICTE डिग्री/डिप्लोमा की छात्राओं को ₹50,000/वर्ष, पारिवारिक आय ₹8 लाख तक। NSP पर आवेदन। scholarships.gov.in हेल्पलाइन: 0120-6619540',
+        'mr-IN': 'AICTE प्रगती: AICTE पदवी/पदविका शिकणाऱ्या मुलींना ₹50,000/वर्ष, कौटुंबिक उत्पन्न ₹8 लाखांपर्यंत. NSP वर अर्ज. scholarships.gov.in हेल्पलाइन: 0120-6619540',
+        'ta-IN': 'AICTE பிரகதி: பட்டம்/டிப்ளமோ மாணவிகளுக்கு ஆண்டுக்கு ₹50,000, குடும்ப வருமானம் ₹8 லட்சம் வரை. NSP-ல் விண்ணப்பம். scholarships.gov.in உதவி: 0120-6619540',
+        'en-IN': 'AICTE Pragati: Rs 50,000/yr for girls in AICTE degree/diploma courses, family income up to Rs 8 lakh. Apply on NSP. scholarships.gov.in Help: 0120-6619540',
+      },
+    };
+
+    const SMS_CATEGORY_REPLIES: Record<string, Record<LanguageCode, string>> = {
+      AGRI: {
+        'en-IN': 'Farming: send PMFBY, KCC or SHC. Crop advice: Kisan Call Centre 1800-180-1551',
+        'hi-IN': 'खेती: PMFBY, KCC या SHC भेजें। फसल सलाह: किसान कॉल सेंटर 1800-180-1551',
+        'mr-IN': 'शेती: PMFBY, KCC किंवा SHC पाठवा. पीक सल्ला: किसान कॉल सेंटर 1800-180-1551',
+        'ta-IN': 'விவசாயம்: PMFBY, KCC அல்லது SHC அனுப்பவும். பயிர் ஆலோசனை: கிசான் அழைப்பு மையம் 1800-180-1551',
+      },
+      HEALTH: {
+        'en-IN': 'Health: send PMJAY, JSY or PMMVY. Emergency: 108 ambulance, 102 pregnancy ambulance, 104 helpline',
+        'hi-IN': 'स्वास्थ्य: PMJAY, JSY या PMMVY भेजें। आपात: 108 एम्बुलेंस, 102 गर्भवती एम्बुलेंस, 104 हेल्पलाइन',
+        'mr-IN': 'आरोग्य: PMJAY, JSY किंवा PMMVY पाठवा. आपत्काल: 108 रुग्णवाहिका, 102 गर्भवती रुग्णवाहिका, 104 हेल्पलाइन',
+        'ta-IN': 'சுகாதாரம்: PMJAY, JSY அல்லது PMMVY அனுப்பவும். அவசரம்: 108 ஆம்புலன்ஸ், 102 கர்ப்பிணி ஆம்புலன்ஸ், 104 உதவி',
+      },
+      SCHOLARSHIP: {
+        'en-IN': 'Scholarships: send NSP, PMYASASVI or PRAGATI. Apply: scholarships.gov.in Help: 0120-6619540',
+        'hi-IN': 'छात्रवृत्ति: NSP, PMYASASVI या PRAGATI भेजें। आवेदन: scholarships.gov.in हेल्पलाइन: 0120-6619540',
+        'mr-IN': 'शिष्यवृत्ती: NSP, PMYASASVI किंवा PRAGATI पाठवा. अर्ज: scholarships.gov.in हेल्पलाइन: 0120-6619540',
+        'ta-IN': 'உதவித்தொகை: NSP, PMYASASVI அல்லது PRAGATI அனுப்பவும். விண்ணப்பம்: scholarships.gov.in உதவி: 0120-6619540',
+      },
+    };
+
+    const KEYWORD_ALIASES: Record<string, string> = {
+      PMUY: 'UJJWALA',
+      NREGA: 'MGNREGA',
+      MNREGA: 'MGNREGA',
+      AYUSHMAN: 'PMJAY',
+      SCHOLARSHIPS: 'SCHOLARSHIP',
+      YASASVI: 'PMYASASVI',
+      HELPME: 'HELP',
+      MENU: 'HELP',
+    };
+
+    // Keyword parsing: clean candidate tokens
+    const compact = b.replace(/[^A-Z0-9]/g, '');
+    const firstToken = (b.split(/\s+/)[0] || '').replace(/[^A-Z0-9]/g, '');
+    let matchedKey: string | null = null;
+
+    for (const cand of [compact, firstToken]) {
+      const resolved = KEYWORD_ALIASES[cand] || cand;
+      if (SMS_SUMMARIES[resolved] || SMS_CATEGORY_REPLIES[resolved] || resolved === 'HELP') {
+        matchedKey = resolved;
+        break;
+      }
     }
-    if (b.includes('HELP')) {
+
+    if (!matchedKey) {
+      // Substring check for known schemes
+      const foundScheme = Object.keys(SMS_SUMMARIES).find((k) => b.includes(k));
+      if (foundScheme) matchedKey = foundScheme;
+    }
+
+    // 1. Direct Scheme Keyword Matches (< 300 ms, Rule R5)
+    if (matchedKey && SMS_SUMMARIES[matchedKey]) {
+      const replyText = SMS_SUMMARIES[matchedKey][lang] || SMS_SUMMARIES[matchedKey]['hi-IN'];
       return {
-        replyText:
-          'GramSahayak Keywords: PMKISAN, PMFBY, KCC, SHC, PMJAY, JSY, PMMVY, MGNREGA, UJJWALA, PMAY, NSP, SCHOLARSHIP, HELP. Send any keyword for details.',
-        charCount: 147,
+        replyText,
+        charCount: Array.from(replyText).length,
+        matchedSchemeId: matchedKey,
+        mode: 'keyword',
+        delivery: 'simulated',
+      };
+    }
+
+    // 2. Category Keyword Matches (AGRI, HEALTH, SCHOLARSHIP)
+    if (matchedKey && SMS_CATEGORY_REPLIES[matchedKey]) {
+      const replyText = SMS_CATEGORY_REPLIES[matchedKey][lang] || SMS_CATEGORY_REPLIES[matchedKey]['hi-IN'];
+      return {
+        replyText,
+        charCount: Array.from(replyText).length,
+        matchedSchemeId: null,
+        mode: 'keyword',
+        delivery: 'simulated',
+      };
+    }
+
+    // 3. HELP Keyword
+    if (matchedKey === 'HELP' || b.includes('HELP') || b.includes('मदद') || b.includes('உதவி')) {
+      const helpTexts: Record<LanguageCode, string> = {
+        'hi-IN': 'ग्राम सहायक: PMKISAN PMFBY KCC SHC PMJAY JSY PMMVY MGNREGA UJJWALA PMAY NSP PMYASASVI PRAGATI या AGRI HEALTH SCHOLARSHIP भेजें, या सवाल लिखें',
+        'mr-IN': 'ग्राम सहायक: PMKISAN PMFBY KCC SHC PMJAY JSY PMMVY MGNREGA UJJWALA PMAY NSP PMYASASVI PRAGATI किंवा AGRI HEALTH SCHOLARSHIP पाठवा, किंवा प्रश्न लिहा',
+        'ta-IN': 'கிராம சகாயக்: PMKISAN PMFBY KCC SHC PMJAY JSY PMMVY MGNREGA UJJWALA PMAY NSP PMYASASVI PRAGATI அல்லது AGRI HEALTH SCHOLARSHIP அனுப்பவும்',
+        'en-IN': 'GramSahayak: send PMKISAN PMFBY KCC SHC PMJAY JSY PMMVY MGNREGA UJJWALA PMAY NSP PMYASASVI PRAGATI, or AGRI HEALTH SCHOLARSHIP, or your question',
+      };
+      const replyText = helpTexts[lang] || helpTexts['en-IN'];
+      return {
+        replyText,
+        charCount: Array.from(replyText).length,
         matchedSchemeId: null,
         mode: 'help',
         delivery: 'simulated',
       };
     }
-    // Default reply for arbitrary question
+
+    // 3. Free-text Tamil query
+    if (/[஀-௿]/.test(params.body) || lang === 'ta-IN') {
+      const replyText = 'கிராம சகாயக்: தகவல் பெறப்பட்டது. ஜனனி சுரக்ஷா திட்டம் அரசு மருத்துவமனை பிரசவத்திற்கு ₹1400 வரை நிதியுதவி. விவரங்களுக்கு 104 அழைக்கவும்.';
+      return {
+        replyText,
+        charCount: Array.from(replyText).length,
+        matchedSchemeId: 'JSY',
+        mode: 'rag',
+        delivery: 'simulated',
+      };
+    }
+
+    // 4. Free-text Marathi query
+    if (lang === 'mr-IN') {
+      const replyText = 'ग्राम सहायक: चौकशी प्राप्त झाली. पीएम-किसान अंतर्गत वर्षाला ₹6000 अनुदान मिळते. अधिक माहितीसाठी 1800-180-1551 वर कॉल करा किंवा pmkisan.gov.in पहा.';
+      return {
+        replyText,
+        charCount: Array.from(replyText).length,
+        matchedSchemeId: 'PMKISAN',
+        mode: 'rag',
+        delivery: 'simulated',
+      };
+    }
+
+    // 5. Default free text (Hindi / English)
+    const replyText = 'ग्राम सहायक: संदेश प्राप्त हुआ। पीएम-किसान योजना के तहत ₹6000/वर्ष 3 किस्तों में मिलते हैं। हेल्पलाइन 1800-180-1551 या pmkisan.gov.in देखें।';
     return {
-      replyText:
-        'GramSahayak: Enquiry received. PM-KISAN grants Rs 6000/yr. Check https://pmkisan.gov.in or call toll-free 1800-180-1551.',
-      charCount: 119,
+      replyText,
+      charCount: Array.from(replyText).length,
       matchedSchemeId: 'PMKISAN',
-      mode: 'keyword',
+      mode: 'rag',
       delivery: 'simulated',
     };
   }

@@ -114,7 +114,7 @@ test('kill test: RAG down -> fallback with the local card match, Tamil receipt, 
   assert.equal(json.data.source, 'fallback');
   assert.equal(json.data.matchedSchemeId, 'JSY');
   assert.equal(json.data.smsReceipt.smsReceiptText, seedSchemes.getByCode('JSY').sms_summary['ta-IN']);
-  assert.ok(json.data.answerText.startsWith('ஜனனி சுரக்ஷா யோஜனா'));
+  assert.ok(json.data.answerText.startsWith('ஜனனி சுரக்ஷா:'), json.data.answerText);
   assert.ok(events.some((e) => e.type === 'pipeline' && e.step === 'sms_receipt_dispatched'));
 });
 

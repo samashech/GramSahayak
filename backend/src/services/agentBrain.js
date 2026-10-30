@@ -54,7 +54,9 @@ function fallbackAnswer(queryText, { languageCode, category, safety }) {
   if (card) {
     const summary = voiceSafe(smsSummaryFor(card, languageCode) || '');
     const name = localName(card, languageCode);
-    const lead = summary.includes(name) ? summary : `${name}: ${summary}`;
+    // Card summaries start with their own short label ("पीएम-किसान: ..."); add the name only if not.
+    const labelled = summary.includes(name) || /^[^:]{2,40}:/.test(summary);
+    const lead = labelled ? summary : `${name}: ${summary}`;
     return { answerText: `${lead} ${msg.SMS_CLOSING[lang]}`, card };
   }
   return { answerText: msg.NO_VERIFIED_INFO[lang], card: null };

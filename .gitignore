@@ -14,3 +14,4 @@ db/snapshots/
 .vscode/
 # private prompt packs
 *.docx
+*.tsbuildinfo

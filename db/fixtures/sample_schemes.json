@@ -1,0 +1,127 @@
+[
+  {
+    "id": "PMKISAN",
+    "code": "PMKISAN",
+    "name_en": "PM-KISAN Samman Nidhi",
+    "name_hi": "प्रधानमंत्री किसान सम्मान निधि",
+    "name_mr": "प्रधानमंत्री किसान सन्मान निधी",
+    "name_ta": "பிரதமர் கிசான் சம்மான் நிதி",
+    "category": "schemes",
+    "target_role": "farmer",
+    "benefits": "Rs 6,000 per year to each eligible landholding farmer family, paid as 3 instalments of Rs 2,000 every four months directly into the Aadhaar-linked bank account (DBT).",
+    "eligibility": "All landholding farmer families (husband, wife and minor children) whose names are in the state land records. There is no upper limit on land size. e-KYC is mandatory.",
+    "exclusions": "Institutional landholders; families where any member holds or held a constitutional post, is a serving or retired government employee (except Multi Tasking Staff / Class IV / Group D), pays income tax, or receives a monthly pension of Rs 10,000 or more; registered doctors, engineers, lawyers, chartered accountants and architects in practice.",
+    "documents": [
+      "Aadhaar card",
+      "Land record (khatauni / 7/12 extract / patta)",
+      "Aadhaar-linked bank account",
+      "Mobile number for e-KYC OTP"
+    ],
+    "how_to_apply": "Register on pmkisan.gov.in under 'New Farmer Registration', or at the nearest Common Service Centre (CSC), or through the village Patwari / Revenue Officer. Complete e-KYC by OTP, at a CSC, or by face authentication in the PM-KISAN app.",
+    "helpline": "155261",
+    "portal_url": "https://pmkisan.gov.in",
+    "sms_summary": {
+      "en-IN": "PM-KISAN: Rs 6000/yr in 3 instalments of Rs 2000 to landholding farmers. Docs: Aadhaar, land record, bank a/c, eKYC. pmkisan.gov.in Help: 155261",
+      "hi-IN": "पीएम-किसान: भूमिधारक किसान परिवार को ₹6000/वर्ष, 3 किस्तों में। दस्तावेज़: आधार, भूमि रिकॉर्ड, बैंक खाता, eKYC। pmkisan.gov.in हेल्पलाइन: 155261",
+      "mr-IN": "पीएम-किसान: जमीनधारक शेतकरी कुटुंबाला ₹6000/वर्ष, 3 हप्त्यांत. कागदपत्रे: आधार, सातबारा, बँक खाते, eKYC. pmkisan.gov.in हेल्पलाइन: 155261",
+      "ta-IN": "பிஎம்-கிசான்: நில உரிமை விவசாய குடும்பத்திற்கு ஆண்டுக்கு ₹6000, 3 தவணைகளில். ஆவணங்கள்: ஆதார், நில பதிவு, வங்கி கணக்கு. pmkisan.gov.in உதவி: 155261"
+    },
+    "rules": {
+      "occupations": [
+        "farmer"
+      ],
+      "max_land_hectares": null,
+      "bpl_only": false,
+      "gender": null,
+      "pregnant_only": false,
+      "min_age": 18,
+      "max_age": null,
+      "max_annual_income": null,
+      "social_categories": null
+    }
+  },
+  {
+    "id": "JSY",
+    "code": "JSY",
+    "name_en": "Janani Suraksha Yojana",
+    "name_hi": "जननी सुरक्षा योजना",
+    "name_mr": "जननी सुरक्षा योजना",
+    "name_ta": "ஜனனி சுரக்ஷா யோஜனா",
+    "category": "health",
+    "target_role": "asha",
+    "benefits": "Cash assistance for delivery in a government or accredited private health facility. Rural areas: Rs 1,400 to the mother and Rs 600 to the ASHA in Low Performing States (LPS); Rs 700 to the mother and Rs 600 to the ASHA in High Performing States (HPS). Urban areas: Rs 1,000 (LPS) or Rs 600 (HPS) to the mother. Paid by DBT to the mother's bank account.",
+    "eligibility": "In LPS states (UP, Uttarakhand, Bihar, Jharkhand, MP, Chhattisgarh, Assam, Rajasthan, Odisha, J&K): all pregnant women delivering in a government or accredited facility. In HPS states (all others, including Maharashtra and Tamil Nadu): pregnant women from BPL, SC or ST households.",
+    "exclusions": "Deliveries in non-accredited private hospitals; in HPS states, women not from BPL / SC / ST households.",
+    "documents": [
+      "Mother and Child Protection (MCP) card / JSY card",
+      "Aadhaar card",
+      "Bank account (Aadhaar-linked)",
+      "BPL or SC/ST certificate (HPS states)",
+      "Hospital discharge slip"
+    ],
+    "how_to_apply": "Register the pregnancy with the ASHA or ANM at the sub-centre / PHC (early registration, ideally within 12 weeks). The ASHA fills the JSY form; payment is made after institutional delivery.",
+    "helpline": "104",
+    "portal_url": "https://nhm.gov.in",
+    "sms_summary": {
+      "en-IN": "JSY: cash for delivery in govt hospital. Rural mother Rs 1400 (LPS states) or Rs 700 (HPS, BPL/SC/ST). Docs: MCP card, Aadhaar, bank. nhm.gov.in Help: 104",
+      "hi-IN": "जननी सुरक्षा योजना: सरकारी अस्पताल में प्रसव पर ग्रामीण मां को ₹1400 (LPS राज्य) या ₹700 (HPS)। दस्तावेज़: MCP कार्ड, आधार, बैंक। nhm.gov.in हेल्पलाइन: 104",
+      "mr-IN": "जननी सुरक्षा योजना: सरकारी रुग्णालयात प्रसूतीसाठी ग्रामीण मातेला ₹1400 (LPS राज्ये) किंवा ₹700 (HPS). कागदपत्रे: MCP कार्ड, आधार, बँक. nhm.gov.in हेल्पलाइन: 104",
+      "ta-IN": "ஜனனி சுரக்ஷா: அரசு மருத்துவமனை பிரசவத்துக்கு கிராமப்புற தாய்க்கு ₹700 (HPS மாநிலம்) / ₹1400 (LPS). MCP அட்டை, ஆதார், வங்கி. nhm.gov.in உதவி: 104"
+    },
+    "rules": {
+      "occupations": null,
+      "max_land_hectares": null,
+      "bpl_only": false,
+      "gender": "female",
+      "pregnant_only": true,
+      "min_age": null,
+      "max_age": null,
+      "max_annual_income": null,
+      "social_categories": null
+    }
+  },
+  {
+    "id": "NSP",
+    "code": "NSP",
+    "name_en": "National Scholarship Portal",
+    "name_hi": "राष्ट्रीय छात्रवृत्ति पोर्टल",
+    "name_mr": "राष्ट्रीय शिष्यवृत्ती पोर्टल",
+    "name_ta": "தேசிய உதவித்தொகை இணையதளம்",
+    "category": "education",
+    "target_role": "student",
+    "benefits": "One online window to apply for central, state and UGC/AICTE scholarships (pre-matric, post-matric, merit-cum-means, top class and girls' scholarships). Money is paid by DBT to the student's Aadhaar-linked bank account.",
+    "eligibility": "Students from Class 1 to PhD, depending on the scholarship. Most need-based scholarships have a family income limit (commonly Rs 1 lakh to Rs 2.5 lakh per year for SC/ST/OBC/minority schemes) and a minimum mark in the previous exam.",
+    "exclusions": "Students already receiving another central scholarship for the same course; family income above the limit of the chosen scheme.",
+    "documents": [
+      "Aadhaar card (or enrolment ID)",
+      "Income certificate",
+      "Caste certificate (if applicable)",
+      "Previous year marksheet",
+      "Bonafide certificate from the institution",
+      "Aadhaar-linked bank account",
+      "Passport-size photograph"
+    ],
+    "how_to_apply": "Do One Time Registration (OTR) on scholarships.gov.in or the NSP OTR app with Aadhaar and mobile OTP, then log in and fill the application for the scheme you are eligible for before the deadline (usually October-November). The institute and district verify it.",
+    "helpline": "0120-6619540",
+    "portal_url": "https://scholarships.gov.in",
+    "sms_summary": {
+      "en-IN": "National Scholarship Portal: apply for central & state scholarships in one place. Aadhaar, income/caste cert, marksheet. scholarships.gov.in Help: 0120-6619540",
+      "hi-IN": "राष्ट्रीय छात्रवृत्ति पोर्टल: केंद्र व राज्य छात्रवृत्ति के लिए एक जगह आवेदन। आधार, आय/जाति प्रमाणपत्र, अंकपत्र। scholarships.gov.in हेल्पलाइन: 0120-6619540",
+      "mr-IN": "राष्ट्रीय शिष्यवृत्ती पोर्टल: केंद्र व राज्य शिष्यवृत्तींसाठी एकाच ठिकाणी अर्ज. आधार, उत्पन्न/जात दाखला, गुणपत्रक. scholarships.gov.in हेल्पलाइन: 0120-6619540",
+      "ta-IN": "தேசிய உதவித்தொகை இணையதளம்: மத்திய, மாநில உதவித்தொகைக்கு ஒரே இடத்தில் விண்ணப்பம். ஆதார், வருமான/சாதி சான்று. scholarships.gov.in உதவி: 0120-6619540"
+    },
+    "rules": {
+      "occupations": [
+        "student"
+      ],
+      "max_land_hectares": null,
+      "bpl_only": false,
+      "gender": null,
+      "pregnant_only": false,
+      "min_age": null,
+      "max_age": null,
+      "max_annual_income": 250000,
+      "social_categories": null
+    }
+  }
+]

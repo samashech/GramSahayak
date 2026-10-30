@@ -1,0 +1,6 @@
+# Ignore local SQLite database and WAL/SHM journal files
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite-journal

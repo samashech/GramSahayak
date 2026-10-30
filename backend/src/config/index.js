@@ -65,6 +65,7 @@ const config = {
     driver: DB_DRIVERS.includes(dbDriver) ? dbDriver : 'memory',
     databaseUrl: env.DATABASE_URL || '',
     sqlitePath: resolveFromRoot(env.SQLITE_PATH || 'data/gram_sahayak.sqlite'),
+    sqliteSchemaPath: path.join(REPO_ROOT, 'db/schema.sqlite.sql'),
   },
 
   sarvamApiKey: env.SARVAM_API_KEY || '',

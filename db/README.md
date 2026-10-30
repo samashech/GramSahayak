@@ -18,6 +18,15 @@ python3 db/init_sqlite.py --reset
 
 # Install Python dependencies for DB-03..DB-06 (validator, loader, Supabase check, snapshots):
 python3 -m venv db/.venv && db/.venv/bin/pip install -r db/requirements.txt
+
+# Validate the 13-card scheme corpus (DB-03):
+python3 db/validate_seed.py data/seed/schemes.json
+
+# Idempotently load schemes into active DB_DRIVER (sqlite or postgres) and verify parity:
+python3 db/seed_db.py
+python3 db/seed_db.py --check
+python3 db/seed_db.py --dry-run
+python3 db/seed_db.py --reset   # blocked when APP_ENV=production
 ```
 
 ---

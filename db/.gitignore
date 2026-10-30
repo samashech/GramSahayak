@@ -1,0 +1,5 @@
+# Local DB virtualenv, snapshots, and bytecode (inside /db ownership)
+.venv/
+__pycache__/
+*.py[cod]
+snapshots/

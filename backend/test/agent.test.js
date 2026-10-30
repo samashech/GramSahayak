@@ -29,6 +29,7 @@ before(async () => {
     if (ragMode === 'down') return { status: 500, json: { detail: 'boom' } };
     if (ragMode === 'slow') return { delayMs: 1500, json: ragResponse({ answer: 'late' }) };
     if (url !== '/rag/query') return { status: 404 };
+    if (json.query.includes('किसान क्रेडिट')) return { json: ragResponse({ answer: 'पूरी जानकारी एसएमएस द्वारा भेजी जा रही है।', matched: 'KCC' }) };
     if (json.query.includes('किसान')) {
       return { json: ragResponse({ answer: 'सभी भूमिधारक किसान परिवार पात्र हैं। pmkisan.gov.in', matched: 'PMKISAN', sms: 'RAG WROTE THIS', sources: [pmkisanSource] }) };
     }
@@ -71,6 +72,15 @@ test('G1 via RAG: contract AnswerData, SMS receipt is the seed card verbatim (R5
   assert.deepEqual([sent.query, sent.language, sent.for_voice], [G1, 'hi-IN', false]);
 });
 
+test('no category + an explicitly named scheme: RAG gets that scheme category as filter', async () => {
+  await chat({ queryText: G1, languageCode: 'hi-IN', role: 'farmer' });
+  assert.equal(rag.calls.at(-1).json.category, 'schemes');
+  await chat({ queryText: 'गेहूं में पीला रतुआ रोग लगा है, क्या करें?', languageCode: 'hi-IN', role: 'farmer' });
+  assert.equal(rag.calls.at(-1).json.category, undefined, 'no scheme named -> no filter');
+  await chat({ queryText: G1, languageCode: 'hi-IN', category: 'agri', role: 'farmer' });
+  assert.equal(rag.calls.at(-1).json.category, 'agri', 'an explicit user category always wins');
+});
+
 test('history goes to RAG as {role, content}, last 6 turns, and turns are stored', async () => {
   const headers = { 'x-session-id': 'agent-history-01' };
   for (let i = 0; i < 4; i++) await chat({ queryText: `${G1} ${i}`, languageCode: 'hi-IN', role: 'farmer' }, headers);
@@ -95,6 +105,14 @@ test('RAG-04 safety override (confidence 1.0, has 108) is kept; flag still set b
   assert.match(json.data.answerText, /^RAG-04:/);
   assert.deepEqual(json.data.safety, { flagged: true, helplines: ['108'] });
   assert.equal(json.data.matchedSchemeId, null);
+});
+
+test('closing-only RAG answer (empty LLM output) is rebuilt from the matched card', async () => {
+  const { json } = await chat({ queryText: 'किसान क्रेडिट कार्ड कैसे मिलेगा?', languageCode: 'hi-IN', role: 'farmer' });
+  assert.equal(json.data.source, 'fallback');
+  assert.equal(json.data.matchedSchemeId, 'KCC');
+  assert.ok(json.data.answerText.startsWith('किसान क्रेडिट कार्ड:'), json.data.answerText);
+  assert.equal(json.data.smsReceipt.smsReceiptText, seedSchemes.getByCode('KCC').sms_summary['hi-IN']);
 });
 
 test('G4 pregnancy danger signs: RAG answer kept, safety flagged 108 + 102', async () => {

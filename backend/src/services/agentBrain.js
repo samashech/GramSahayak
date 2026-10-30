@@ -46,20 +46,29 @@ function smsReceiptFor(card, languageCode, delivery = 'simulated') {
   };
 }
 
+// Spoken answer built from the card's own SMS summary (verbatim facts, no URL).
+function cardAnswer(card, languageCode) {
+  const summary = voiceSafe(smsSummaryFor(card, languageCode) || '');
+  const name = localName(card, languageCode);
+  // Card summaries start with their own short label ("पीएम-किसान: ..."); add the name only if not.
+  const labelled = summary.includes(name) || /^[^:]{2,40}:/.test(summary);
+  const lead = labelled ? summary : `${name}: ${summary}`;
+  return `${lead} ${msg.SMS_CLOSING[msg.langOf(languageCode)]}`;
+}
+
+// True for an answer that is only a short "details are being sent by SMS" line.
+function isClosingOnly(text) {
+  const t = String(text || '').trim();
+  return !t || (Array.from(t).length < 70 && /(SMS|एसएमएस|எஸ்எம்எஸ்)/i.test(t));
+}
+
 function fallbackAnswer(queryText, { languageCode, category, safety }) {
   const lang = msg.langOf(languageCode);
   if (safety.kind && msg.SAFETY_ANSWERS[safety.kind]) {
     return { answerText: msg.SAFETY_ANSWERS[safety.kind][lang], card: null };
   }
   const card = matchCard(queryText, { category }) || matchCard(queryText);
-  if (card) {
-    const summary = voiceSafe(smsSummaryFor(card, languageCode) || '');
-    const name = localName(card, languageCode);
-    // Card summaries start with their own short label ("पीएम-किसान: ..."); add the name only if not.
-    const labelled = summary.includes(name) || /^[^:]{2,40}:/.test(summary);
-    const lead = labelled ? summary : `${name}: ${summary}`;
-    return { answerText: `${lead} ${msg.SMS_CLOSING[lang]}`, card };
-  }
+  if (card) return { answerText: cardAnswer(card, languageCode), card };
   return { answerText: msg.NO_VERIFIED_INFO[lang], card: null };
 }
 
@@ -84,12 +93,17 @@ async function answerQuery({
 
   const history = sessionKey ? sessionService.toRagHistory(await sessionService.getHistory(sessionKey)) : [];
 
+  // No category chosen (e.g. web voice without a category card) but the user named a scheme:
+  // send that scheme's category as RAG's filter, so retrieval cannot drift to a neighbour
+  // (seen live: "पीएम किसान" unfiltered ranked PMFBY first). RAG retries unfiltered on a weak hit.
+  const ragCategory = category || matchCard(text)?.category || null;
+
   let rag = null;
   let ragError = null;
   if (!config.useMockAi) {
     const t0 = performance.now();
     try {
-      rag = await ragClient.query({ query: text, language: languageCode, category, role, forVoice, history });
+      rag = await ragClient.query({ query: text, language: languageCode, category: ragCategory, role, forVoice, history });
       eventBus.pipeline('chroma_rag_retrieved', performance.now() - t0, { channel, phone });
       eventBus.pipeline('groq_llm_synthesized', rag.latency_ms ?? 0, { channel, phone });
     } catch (err) {
@@ -115,6 +129,14 @@ async function answerQuery({
     card = seedSchemes.getByCode(matchedSchemeId);
     sources = (rag.sources || []).map(sourceRefFromRag);
     source = 'rag';
+    // A call must never speak only "details are sent by SMS": a closing-only RAG answer
+    // (seen with reasoning LLMs whose token budget runs out) is rebuilt from the scheme card.
+    if (!fixed && isClosingOnly(answerText)) {
+      ({ answerText, card } = card ? { answerText: cardAnswer(card, languageCode), card } : fallbackAnswer(text, { languageCode, category, safety }));
+      matchedSchemeId = card ? card.code : null;
+      source = 'fallback';
+      ragError = new Error('RAG returned a closing-only answer');
+    }
   } else {
     ({ answerText, card } = fallbackAnswer(text, { languageCode, category, safety }));
     matchedSchemeId = card ? card.code : null;

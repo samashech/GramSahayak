@@ -22,4 +22,22 @@ async function health({ timeoutMs = 1500 } = {}) {
   }
 }
 
-module.exports = { health };
+// POST /rag/ingest {file_path, category} -> {ingested_chunks, vector_count}; null when RAG is down.
+async function ingest({ filePath, category, timeoutMs = 20000 }) {
+  try {
+    const res = await fetch(`${config.aiRagUrl}/rag/ingest`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file_path: filePath, category }),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const body = await res.json();
+    return { ingested_chunks: body.ingested_chunks ?? null, vector_count: body.vector_count ?? null };
+  } catch (err) {
+    console.warn(`[rag] ingest ${filePath} failed: ${err.message}`);
+    return null;
+  }
+}
+
+module.exports = { health, ingest };

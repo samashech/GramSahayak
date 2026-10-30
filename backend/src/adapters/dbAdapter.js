@@ -18,7 +18,7 @@ let configuredDriver = config.db.driver;
 
 function createDriver(name) {
   if (name === 'postgres') return createPostgresDriver({ databaseUrl: config.db.databaseUrl });
-  if (name === 'sqlite') return createSqliteDriver({ sqlitePath: config.db.sqlitePath });
+  if (name === 'sqlite') return createSqliteDriver({ sqlitePath: config.db.sqlitePath, schemaPath: config.db.sqliteSchemaPath });
   return null;
 }
 

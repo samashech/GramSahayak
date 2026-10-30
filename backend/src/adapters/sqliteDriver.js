@@ -4,8 +4,8 @@ const { PROFILE_COLUMNS, BOOLEAN_PROFILE_COLUMNS } = require('./rows');
 
 // SQLite driver using Node's built-in node:sqlite (no native build step).
 // JSON columns are TEXT, booleans are INTEGER 0/1, timestamps are ISO text.
-// The Database role owns db/schema.sqlite.sql; CREATE IF NOT EXISTS below only
-// guarantees the backend can start before that schema has been applied.
+// The Database role owns db/schema.sqlite.sql (idempotent) and it is applied when present;
+// BOOTSTRAP_SQL is only used when that file is missing, so the backend can still start.
 const BOOTSTRAP_SQL = `
 CREATE TABLE IF NOT EXISTS sessions (
   session_key  TEXT PRIMARY KEY,
@@ -69,7 +69,7 @@ const parseJson = (v, fallback) => {
   }
 };
 
-function createSqliteDriver({ sqlitePath }) {
+function createSqliteDriver({ sqlitePath, schemaPath }) {
   let db;
 
   return {
@@ -80,7 +80,9 @@ function createSqliteDriver({ sqlitePath }) {
       fs.mkdirSync(path.dirname(sqlitePath), { recursive: true });
       db = new DatabaseSync(sqlitePath);
       db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
-      db.exec(BOOTSTRAP_SQL);
+      const useOwnerSchema = Boolean(schemaPath) && fs.existsSync(schemaPath);
+      db.exec(useOwnerSchema ? fs.readFileSync(schemaPath, 'utf8') : BOOTSTRAP_SQL);
+      this.schemaSource = useOwnerSchema ? schemaPath : 'bootstrap';
     },
     async ping() {
       db.prepare('SELECT 1').get();

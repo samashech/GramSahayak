@@ -109,6 +109,7 @@ async def global_exception_handler(_request: Request, exc: Exception) -> JSONRes
     )
 
 
+@app.get("/", response_model=HealthResponse)
 @app.get("/health", response_model=HealthResponse)
 async def get_health() -> HealthResponse:
     return HealthResponse(

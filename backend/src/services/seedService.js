@@ -102,9 +102,24 @@ async function seedDemoUsers({ wipe = false } = {}) {
     }
     if (wipe) await dbAdapter.deleteSession(key);
     await sessionService.updateProfile(key, { ...personaProfile(persona), phone: key }, { phone: key });
+    if (wipe) {
+      for (const turn of starterTurns(persona)) await dbAdapter.saveSessionTurn(key, turn, { phone: key });
+    }
     seeded.push(persona.id);
   }
   return seeded;
+}
+
+// Pending change request: DB-05 moves its starter turns from db/demo_reset.py into
+// demo_personas.json as `starter_history`, so this reset and demo_reset.py restore the same
+// state. Turns keep their fixed timestamps; until the field exists, reset clears history.
+function starterTurns(persona) {
+  if (!Array.isArray(persona.starter_history)) return [];
+  return persona.starter_history.map((t) => {
+    const turn = sessionService.buildTurn(t);
+    if (typeof t.ts === 'string' && !Number.isNaN(Date.parse(t.ts))) turn.ts = t.ts;
+    return turn;
+  });
 }
 
 async function init() {

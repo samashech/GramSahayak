@@ -2,7 +2,6 @@
   "greeting": {
     "stage": "greeting",
     "promptText": "ग्राम सहायक में आपका स्वागत है। Welcome to GramSahayak toll-free citizen helpline.",
-    "promptAudioBase64": null,
     "useBrowserTts": true,
     "inputExpected": "dtmf",
     "callerPhone": "+919829011111",
@@ -16,12 +15,16 @@
         "action": "play_and_collect",
         "digits": 1
       }
+    },
+    "audioBase64": null,
+    "session": {
+      "languageCode": "hi-IN",
+      "category": null
     }
   },
   "language": {
     "stage": "language",
     "promptText": "हिन्दी के लिए 1 दबाएं। मराठीसाठी 2 दाबा. தமிழிற்கு 3 அழுத்தவும். For English press 4.",
-    "promptAudioBase64": null,
     "useBrowserTts": true,
     "dtmfOptions": {
       "1": "hi-IN",
@@ -41,12 +44,16 @@
         "play": "language_menu",
         "valid_digits": "1,2,3,4"
       }
+    },
+    "audioBase64": null,
+    "session": {
+      "languageCode": "hi-IN",
+      "category": null
     }
   },
   "category": {
     "stage": "category",
     "promptText": "सरकारी योजनाओं के लिए 1, फसल व खेती के लिए 2, स्वास्थ्य के लिए 3, छात्रवृत्ति के लिए 4 दबाएं।",
-    "promptAudioBase64": null,
     "useBrowserTts": true,
     "dtmfOptions": {
       "1": "schemes",
@@ -66,12 +73,16 @@
         "play": "category_menu",
         "valid_digits": "1,2,3,4"
       }
+    },
+    "audioBase64": null,
+    "session": {
+      "languageCode": "hi-IN",
+      "category": "schemes"
     }
   },
   "speech": {
     "stage": "speech",
     "promptText": "कृपया बीप के बाद अपना सवाल बोलें या टेक्स्ट में लिखें...",
-    "promptAudioBase64": null,
     "useBrowserTts": true,
     "inputExpected": "speech",
     "callerPhone": "+919829011111",
@@ -85,12 +96,16 @@
         "record_audio": true,
         "max_duration": 20
       }
+    },
+    "audioBase64": null,
+    "session": {
+      "languageCode": "hi-IN",
+      "category": "schemes"
     }
   },
   "answer": {
     "stage": "answer",
     "promptText": "पीएम-किसान योजना के तहत 2 हेक्टेयर तक भूमि वाले पात्र किसान परिवारों को प्रति वर्ष ₹6,000 की वित्तीय सहायता 3 समान किस्तों में दी जाती है। आपके फोन पर एसएमएस रसीद भेज दी गई है।",
-    "promptAudioBase64": null,
     "useBrowserTts": true,
     "inputExpected": "none",
     "callerPhone": "+919829011111",
@@ -138,12 +153,16 @@
         "sms_sent": true,
         "status": 200
       }
+    },
+    "audioBase64": null,
+    "session": {
+      "languageCode": "hi-IN",
+      "category": "schemes"
     }
   },
   "goodbye": {
     "stage": "goodbye",
     "promptText": "ग्राम सहायक से संपर्क करने के लिए धन्यवाद। आपका दिन शुभ हो!",
-    "promptAudioBase64": null,
     "useBrowserTts": true,
     "inputExpected": "none",
     "callerPhone": "+919829011111",
@@ -156,6 +175,11 @@
       "response": {
         "action": "terminate_call"
       }
+    },
+    "audioBase64": null,
+    "session": {
+      "languageCode": "hi-IN",
+      "category": "schemes"
     }
   }
 }

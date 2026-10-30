@@ -415,7 +415,7 @@ export function createMockPipelineStream(
     stepIdx++;
 
     onEvent({
-      type: 'step',
+      type: 'pipeline',
       step: item.step,
       ms: item.ms,
       channel: 'web',

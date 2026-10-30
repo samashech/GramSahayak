@@ -96,11 +96,15 @@ export interface VoiceAnswerData extends AnswerData {
 export interface IvrStep {
   stage: 'greeting' | 'language' | 'category' | 'speech' | 'answer' | 'goodbye';
   promptText: string;
-  promptAudioBase64: string | null;
+  audioBase64: string | null;
   useBrowserTts: boolean;
   dtmfOptions?: Record<string, string>;
   inputExpected: 'dtmf' | 'speech' | 'none';
   callerPhone: string;
+  session: {
+    languageCode: LanguageCode;
+    category: Category | null;
+  };
   answer?: AnswerData & { smsReceipt?: SmsReceipt };
   webhookLog: {
     stage: string;
@@ -111,7 +115,7 @@ export interface IvrStep {
 
 // SSE Pipeline Event from GET /api/stream/events
 export interface SseEvent {
-  type: 'step' | 'dtmf' | 'transcript' | 'sms_receipt' | 'heartbeat';
+  type: 'pipeline' | 'dtmf' | 'transcript' | 'sms' | 'hello';
   step?:
     | 'audio_normalized'
     | 'sarvam_stt_done'
@@ -192,7 +196,7 @@ export interface DemoResetResult {
 
 // Profile API Response
 export interface ProfileResponse {
-  profile: Profile;
+  profile: Profile | null;
   history: Turn[];
 }
 

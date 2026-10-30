@@ -5,93 +5,156 @@
       {
         "id": "PMKISAN",
         "code": "PMKISAN",
-        "name": "पीएम-किसान सम्मान निधि (PM-KISAN)",
+        "name": "प्रधानमंत्री किसान सम्मान निधि",
         "category": "schemes",
         "targetRole": "farmer",
-        "benefits": "₹6,000 प्रति वर्ष 3 समान किस्तों में बैंक खाते में।",
-        "eligibility": "कृषि योग्य भूमि वाले सभी किसान परिवार (2 हेक्टेयर सीमा के भीतर)।",
+        "benefits": "Rs 6,000 per year to each eligible landholding farmer family, paid as 3 instalments of Rs 2,000 every four months directly into the Aadhaar-linked bank account (DBT).",
+        "eligibility": "All landholding farmer families (husband, wife and minor children) whose names are in the state land records. There is no upper limit on land size. e-KYC is mandatory.",
         "documents": [
-          "आधार कार्ड",
-          "खतौनी / भूमि स्वामित्व अभिलेख",
-          "सक्रिय बैंक खाता",
-          "eKYC सत्यापन"
+          "Aadhaar card",
+          "Land record (khatauni / 7/12 extract / patta)",
+          "Aadhaar-linked bank account",
+          "Mobile number for e-KYC OTP"
         ],
-        "howToApply": "pmkisan.gov.in पोर्टल पर नया किसान पंजीकरण करें या सीएससी केंद्र जाएं।",
+        "howToApply": "Register on pmkisan.gov.in under 'New Farmer Registration', or at the nearest Common Service Centre (CSC), or through the village Patwari / Revenue Officer. Complete e-KYC by OTP, at a CSC, or by face authentication in the PM-KISAN app.",
         "helpline": "155261",
         "portalUrl": "https://pmkisan.gov.in",
         "smsSummary": "पीएम-किसान: भूमिधारक किसान परिवार को ₹6000/वर्ष, 3 किस्तों में। दस्तावेज़: आधार, भूमि रिकॉर्ड, बैंक खाता, eKYC। pmkisan.gov.in हेल्पलाइन: 155261"
       },
       {
-        "id": "PMJAY",
-        "code": "PMJAY",
-        "name": "आयुष्मान भारत (PM-JAY)",
-        "category": "health",
+        "id": "PMFBY",
+        "code": "PMFBY",
+        "name": "प्रधानमंत्री फसल बीमा योजना",
+        "category": "agri",
         "targetRole": "farmer",
-        "benefits": "प्रति परिवार प्रति वर्ष ₹5 लाख का द्वितीयक व तृतीयक अस्पताल भर्ती स्वास्थ्य कवर।",
-        "eligibility": "एसईसीसी 2011 सूची में शामिल बीपीएल / वंचित ग्रामीण परिवार।",
+        "benefits": "Crop insurance against loss from natural calamities, pests and diseases, from sowing to post-harvest. Farmer premium is capped at 2% of the sum insured for Kharif crops, 1.5% for Rabi crops and 5% for commercial and horticultural crops; the government pays the rest.",
+        "eligibility": "All farmers growing notified crops in notified areas, including sharecroppers and tenant farmers. Enrolment is voluntary for all farmers, including loanee farmers.",
         "documents": [
-          "राशन कार्ड / बीपीएल कार्ड",
-          "आधार कार्ड"
+          "Aadhaar card",
+          "Land record or tenancy / sharecropping agreement",
+          "Sowing certificate (from Patwari / village officer)",
+          "Bank account passbook"
         ],
-        "howToApply": "mera.pmjay.gov.in पर पात्रता जांचें या नजदीकी सूचीबद्ध अस्पताल जाएं।",
-        "helpline": "14555",
-        "portalUrl": "https://pmjay.gov.in",
-        "smsSummary": "आयुष्मान भारत: ₹5 लाख/वर्ष मुफ्त अस्पताल इलाज प्रति परिवार। दस्तावेज़: आधार, राशन कार्ड। mera.pmjay.gov.in हेल्पलाइन: 14555"
+        "howToApply": "Enrol before the seasonal cut-off date through your bank (loanee farmers), a Common Service Centre, an insurance company agent, or online at pmfby.gov.in. Report crop loss within 72 hours on the Crop Insurance app or helpline.",
+        "helpline": "14447",
+        "portalUrl": "https://pmfby.gov.in",
+        "smsSummary": "फसल बीमा PMFBY: किसान प्रीमियम खरीफ 2%, रबी 1.5%, व्यावसायिक फसल 5%। दस्तावेज़: आधार, भूमि/बुवाई प्रमाण, बैंक खाता। pmfby.gov.in हेल्पलाइन: 14447"
       },
       {
-        "id": "UJJWALA",
-        "code": "UJJWALA",
-        "name": "प्रधानमंत्री उज्ज्वला योजना (PMUY)",
-        "category": "schemes",
+        "id": "KCC",
+        "code": "KCC",
+        "name": "किसान क्रेडिट कार्ड",
+        "category": "agri",
         "targetRole": "farmer",
-        "benefits": "मुफ्त एलपीजी कनेक्शन और पहली रिफिल पर सब्सिडी।",
-        "eligibility": "बीपीएल ग्रामीण परिवार की वयस्क महिला सदस्य।",
+        "benefits": "Short-term crop loan and working capital from banks. With interest subvention, loans up to Rs 3 lakh carry 7% interest, reduced to an effective 4% when repaid on time. Loans up to Rs 2 lakh need no collateral. Also covers animal husbandry and fisheries.",
+        "eligibility": "Owner-cultivator farmers, tenant farmers, oral lessees and sharecroppers, and self-help or joint liability groups of farmers. Also fish farmers and animal husbandry farmers. Age 18 to 75 years (a co-borrower is needed above 60).",
         "documents": [
-          "बीपीएल राशन कार्ड",
-          "आधार कार्ड",
-          "बैंक पासबुक"
+          "Aadhaar card",
+          "Land record or tenancy proof",
+          "Passport-size photograph",
+          "Bank account details",
+          "Filled KCC application form"
         ],
-        "howToApply": "नजदीकी एलपीजी वितरक के पास उज्ज्वला आवेदन पत्र जमा करें।",
-        "helpline": "1906",
-        "portalUrl": "https://pmuy.gov.in",
-        "smsSummary": "उज्ज्वला योजना: मुफ्त एलपीजी गैस कनेक्शन व पहला सिलेंडर। बीपीएल परिवार महिला पात्र। pmuy.gov.in हेल्पलाइन: 1906"
+        "howToApply": "Fill the one-page KCC form (downloadable on pmkisan.gov.in) and submit it at any commercial, cooperative or regional rural bank branch. PM-KISAN beneficiaries get simplified processing.",
+        "helpline": "1800-180-1551",
+        "portalUrl": "https://pmkisan.gov.in",
+        "smsSummary": "किसान क्रेडिट कार्ड: ₹3 लाख तक फसल ऋण, समय पर चुकाने पर 4% ब्याज। दस्तावेज़: आधार, भूमि रिकॉर्ड, फोटो। बैंक या pmkisan.gov.in हेल्पलाइन: 1800-180-1551"
+      },
+      {
+        "id": "SHC",
+        "code": "SHC",
+        "name": "मृदा स्वास्थ्य कार्ड",
+        "category": "agri",
+        "targetRole": "farmer",
+        "benefits": "Free soil testing of your field and a Soil Health Card showing 12 soil parameters (N, P, K, organic carbon, pH, micronutrients and others) with crop-wise fertiliser and manure recommendations. Reduces input cost by avoiding excess fertiliser.",
+        "eligibility": "All farmers. Soil samples are collected from farm plots by the agriculture department; cards are issued per plot.",
+        "documents": [
+          "Aadhaar card",
+          "Land / plot details (survey number)",
+          "Mobile number"
+        ],
+        "howToApply": "Contact the village agriculture extension officer, Krishi Vigyan Kendra or soil testing lab, or register on soilhealth.dac.gov.in. Download the card from the portal or the Soil Health Card app.",
+        "helpline": "1800-180-1551",
+        "portalUrl": "https://soilhealth.dac.gov.in",
+        "smsSummary": "मृदा स्वास्थ्य कार्ड: खेत की मिट्टी की मुफ्त जांच और खाद की सलाह। दस्तावेज़: आधार, खेत का विवरण। soilhealth.dac.gov.in हेल्पलाइन: 1800-180-1551"
+      },
+      {
+        "id": "PMJAY",
+        "code": "PMJAY",
+        "name": "आयुष्मान भारत प्रधानमंत्री जन आरोग्य योजना",
+        "category": "health",
+        "targetRole": "panchayat",
+        "benefits": "Free (cashless) hospital treatment up to Rs 5 lakh per family per year for secondary and tertiary care at empanelled government and private hospitals, including 3 days before and 15 days after hospitalisation. No limit on family size or age.",
+        "eligibility": "Poor and vulnerable families identified by SECC 2011 deprivation criteria and state-added lists (often linked to ration cards). Since October 2024 all senior citizens aged 70 and above are also covered irrespective of income (Ayushman Vay Vandana card).",
+        "documents": [
+          "Aadhaar card",
+          "Ration card",
+          "Mobile number",
+          "PM-JAY letter or family ID if available"
+        ],
+        "howToApply": "Check eligibility and create the Ayushman card at beneficiary.nha.gov.in, in the Ayushman app, at a CSC, or at the Ayushman Mitra desk of any empanelled hospital.",
+        "helpline": "14555",
+        "portalUrl": "https://pmjay.gov.in",
+        "smsSummary": "आयुष्मान भारत PM-JAY: सूचीबद्ध अस्पतालों में प्रति परिवार ₹5 लाख/वर्ष तक मुफ्त इलाज। दस्तावेज़: आधार, राशन कार्ड। pmjay.gov.in हेल्पलाइन: 14555"
       },
       {
         "id": "MGNREGA",
         "code": "MGNREGA",
-        "name": "महात्मा गांधी नरेगा (MGNREGA)",
+        "name": "महात्मा गांधी राष्ट्रीय ग्रामीण रोजगार गारंटी योजना (मनरेगा)",
         "category": "schemes",
-        "targetRole": "farmer",
-        "benefits": "प्रति ग्रामीण परिवार प्रति वित्तीय वर्ष 100 दिनों का गारंटीकृत अकुशल रोजगार।",
-        "eligibility": "ग्रामीण परिवार के सभी वयस्क सदस्य जो अकुशल शारीरिक श्रम करना चाहते हैं।",
+        "targetRole": "panchayat",
+        "benefits": "Up to 100 days of guaranteed wage employment per rural household per financial year for unskilled manual work, at the state-notified wage rate, paid to the bank account. Work within 5 km of the village; if work is not given within 15 days of the application, an unemployment allowance is payable.",
+        "eligibility": "Any adult member (18 years or above) of a rural household willing to do unskilled manual work, holding a job card issued by the Gram Panchayat.",
         "documents": [
-          "जॉब कार्ड आवेदन",
-          "आधार कार्ड",
-          "बैंक खाता विवरण"
+          "Job card (apply at Gram Panchayat)",
+          "Aadhaar card",
+          "Bank or post office account",
+          "Passport-size photograph"
         ],
-        "howToApply": "ग्राम पंचायत कार्यालय में जॉब कार्ड के लिए आवेदन करें।",
-        "helpline": "1800-345-2244",
+        "howToApply": "Apply for a job card at the Gram Panchayat (free, issued within 15 days). Then give a written or oral application for work to the Gram Panchayat and take a dated receipt.",
+        "helpline": "1800-111-555",
         "portalUrl": "https://nrega.nic.in",
-        "smsSummary": "मनरेगा: ग्रामीण परिवार को 100 दिन का गारंटी रोजगार। जॉब कार्ड बनवाएं ग्राम पंचायत से। nrega.nic.in हेल्पलाइन: 1800-345-2244"
+        "smsSummary": "मनरेगा: हर ग्रामीण परिवार को साल में 100 दिन मज़दूरी वाला काम, मांगने के 15 दिन में। दस्तावेज़: जॉब कार्ड, आधार, बैंक खाता। nrega.nic.in हेल्पलाइन: 1800-111-555"
+      },
+      {
+        "id": "UJJWALA",
+        "code": "UJJWALA",
+        "name": "प्रधानमंत्री उज्ज्वला योजना",
+        "category": "schemes",
+        "targetRole": "panchayat",
+        "benefits": "A deposit-free LPG connection in the name of the woman of the household, with the first refill and a stove free of cost under Ujjwala 2.0. A targeted subsidy of Rs 300 per 14.2 kg cylinder for up to 12 refills a year.",
+        "eligibility": "An adult woman (18 years or above) from a poor household: SECC 2011 list, SC/ST, PMAY-Gramin beneficiary, Antyodaya Anna Yojana, forest dweller, most backward class, tea garden or island household, or a poor household declared under the 14-point declaration. No existing LPG connection in the household.",
+        "documents": [
+          "KYC form",
+          "Aadhaar card of the applicant",
+          "Ration card / document showing family composition",
+          "Aadhaar of adult family members",
+          "Bank account details"
+        ],
+        "howToApply": "Apply online at pmuy.gov.in or at the nearest LPG distributor (Indane, Bharat Gas or HP Gas) with the KYC documents.",
+        "helpline": "1800-233-3555",
+        "portalUrl": "https://www.pmuy.gov.in",
+        "smsSummary": "उज्ज्वला: गरीब परिवार की 18+ महिला को मुफ्त LPG कनेक्शन, पहला सिलेंडर व चूल्हा; ₹300/सिलेंडर सब्सिडी। आधार, राशन कार्ड। pmuy.gov.in हेल्पलाइन: 1800-233-3555"
       },
       {
         "id": "PMAY",
         "code": "PMAY",
-        "name": "प्रधानमंत्री आवास योजना ग्रामीण (PMAY-G)",
+        "name": "प्रधानमंत्री आवास योजना - ग्रामीण",
         "category": "schemes",
-        "targetRole": "farmer",
-        "benefits": "पक्के मकान निर्माण के लिए मैदानी क्षेत्रों में ₹1.20 लाख की सीधी वित्तीय सहायता।",
-        "eligibility": "बेघर या कच्चे/जीर्ण-शीर्ण मकानों में रहने वाले बीपीएल परिवार।",
+        "targetRole": "panchayat",
+        "benefits": "Rs 1.20 lakh in plain areas and Rs 1.30 lakh in hilly, difficult and NE areas to build a pucca house of at least 25 sq m, paid in instalments to the bank account. Plus 90-95 days of MGNREGA wages and Rs 12,000 for a toilet under Swachh Bharat Mission-Gramin.",
+        "eligibility": "Rural households that are houseless or live in kutcha or dilapidated houses, identified through SECC 2011 / Awaas+ survey and verified by the Gram Sabha.",
         "documents": [
-          "आधार कार्ड",
-          "बैंक खाता विवरण",
-          "बीपीएल सूची प्रमाण",
-          "जॉब कार्ड"
+          "Aadhaar card",
+          "MGNREGA job card",
+          "Bank account details",
+          "Swachh Bharat Mission (SBM) registration number",
+          "Consent letter for using Aadhaar"
         ],
-        "howToApply": "ग्राम सभा प्राथमिकता सूची और ब्लॉक विकास कार्यालय के माध्यम से।",
+        "howToApply": "Beneficiaries are selected from the Awaas+ / SECC list and approved by the Gram Sabha. Contact the Gram Panchayat or Block office to check your name; track status on pmayg.nic.in.",
         "helpline": "1800-11-6446",
         "portalUrl": "https://pmayg.nic.in",
-        "smsSummary": "पीएम आवास ग्रामीण: पक्का घर बनाने के लिए ₹1.20 लाख तक सहायता। आधार, बैंक, जॉब कार्ड। pmayg.nic.in हेल्पलाइन: 1800-11-6446"
+        "smsSummary": "आवास योजना-ग्रामीण: बेघर/कच्चे घर वाले परिवार को पक्का घर बनाने हेतु ₹1.20 लाख (पहाड़ी क्षेत्र ₹1.30 लाख)। आधार, जॉब कार्ड। pmayg.nic.in हेल्पलाइन: 1800-11-6446"
       }
     ],
     "ineligibleSchemes": [
@@ -99,47 +162,124 @@
         "scheme": {
           "id": "JSY",
           "code": "JSY",
-          "name": "जननी सुरक्षा योजना (JSY)",
+          "name": "जननी सुरक्षा योजना",
           "category": "health",
           "targetRole": "asha",
-          "benefits": "सरकारी स्वास्थ्य केंद्र में प्रसव कराने पर नकद सहायता।",
-          "eligibility": "गर्भवती महिलाएं जो संस्थागत प्रसव कराती हैं।",
+          "benefits": "Cash assistance for delivery in a government or accredited private health facility. Rural areas: Rs 1,400 to the mother and Rs 600 to the ASHA in Low Performing States (LPS); Rs 700 to the mother and Rs 600 to the ASHA in High Performing States (HPS). Urban areas: Rs 1,000 (LPS) or Rs 600 (HPS) to the mother. Paid by DBT to the mother's bank account.",
+          "eligibility": "In LPS states (UP, Uttarakhand, Bihar, Jharkhand, MP, Chhattisgarh, Assam, Rajasthan, Odisha, J&K): all pregnant women delivering in a government or accredited facility. In HPS states (all others, including Maharashtra and Tamil Nadu): pregnant women from BPL, SC or ST households.",
           "documents": [
-            "मातृ एवं शिशु सुरक्षा (MCP) कार्ड",
-            "आधार कार्ड",
-            "बैंक पासबुक"
+            "Mother and Child Protection (MCP) card / JSY card",
+            "Aadhaar card",
+            "Bank account (Aadhaar-linked)",
+            "BPL or SC/ST certificate (HPS states)",
+            "Hospital discharge slip"
           ],
-          "howToApply": "आशा दीदी के माध्यम से प्राथमिक स्वास्थ्य केंद्र (PHC) में पंजीकरण।",
+          "howToApply": "Register the pregnancy with the ASHA or ANM at the sub-centre / PHC (early registration, ideally within 12 weeks). The ASHA fills the JSY form; payment is made after institutional delivery.",
           "helpline": "104",
           "portalUrl": "https://nhm.gov.in",
-          "smsSummary": "जननी सुरक्षा योजना: सरकारी अस्पताल में प्रसव पर ₹1400 सहायता। nhm.gov.in हेल्पलाइन: 104"
+          "smsSummary": "जननी सुरक्षा योजना: सरकारी अस्पताल में प्रसव पर ग्रामीण मां को ₹1400 (LPS राज्य) या ₹700 (HPS)। दस्तावेज़: MCP कार्ड, आधार, बैंक। nhm.gov.in हेल्पलाइन: 104"
         },
-        "reason": "केवल वर्तमान में गर्भवती महिलाओं के लिए लागू है (आवेदक गर्भवती नहीं है)।"
+        "reason": "केवल गर्भवती महिलाओं के लिए"
       },
       {
         "scheme": {
           "id": "PMMVY",
           "code": "PMMVY",
-          "name": "प्रधानमंत्री मातृ वंदना योजना (PMMVY)",
+          "name": "प्रधानमंत्री मातृ वंदना योजना",
           "category": "health",
           "targetRole": "asha",
-          "benefits": "गर्भवती एवं धात्री माताओं को ₹5,000 की मातृत्व लाभ राशि।",
-          "eligibility": "गर्भवती महिलाएं और स्तनपान कराने वाली माताएं (पहले बच्चे हेतु)।",
+          "benefits": "Rs 5,000 for the first child in two instalments (Rs 3,000 after pregnancy registration and at least one antenatal check-up within 6 months; Rs 2,000 after birth registration and the first cycle of vaccination). Rs 6,000 in one instalment if the second child is a girl. Paid by DBT.",
+          "eligibility": "Pregnant women and lactating mothers aged 19 or above, from households meeting at least one criterion: SC/ST, BPL ration card, PM-JAY card, e-Shram card, MGNREGA job card, KCC farmer woman, women with 40% or more disability, ANM / ASHA / Anganwadi worker, or net family income below Rs 8 lakh per year.",
           "documents": [
-            "मातृ एवं शिशु सुरक्षा (MCP) कार्ड",
-            "आधार कार्ड",
-            "बैंक खाता विवरण"
+            "Aadhaar card",
+            "MCP card (with LMP date and ANC record)",
+            "Aadhaar-linked bank or post office account",
+            "Proof of one eligibility criterion (BPL / caste / job card / income)",
+            "Child's birth certificate (second instalment)"
           ],
-          "howToApply": "आंगनवाड़ी केंद्र या pmmvy.wcd.gov.in पर ऑनलाइन।",
-          "helpline": "1098",
+          "howToApply": "Register through the Anganwadi worker or ASHA, or online at pmmvy.wcd.gov.in (citizen login). Register within 270 days of the last menstrual period for the first instalment.",
+          "helpline": "14408",
           "portalUrl": "https://pmmvy.wcd.gov.in",
-          "smsSummary": "मातृ वंदना योजना: पहले बच्चे के जन्म पर ₹5000 मातृत्व सहायता। pmmvy.wcd.gov.in हेल्पलाइन: 1098"
+          "smsSummary": "मातृ वंदना योजना: पहले बच्चे पर ₹5000 (2 किस्त), दूसरी संतान बेटी हो तो ₹6000। दस्तावेज़: आधार, MCP कार्ड, बैंक खाता। pmmvy.wcd.gov.in हेल्पलाइन: 14408"
         },
-        "reason": "केवल वर्तमान में गर्भवती या स्तनपान कराने वाली माताओं के लिए लागू है।"
+        "reason": "केवल गर्भवती महिलाओं के लिए"
+      },
+      {
+        "scheme": {
+          "id": "NSP",
+          "code": "NSP",
+          "name": "राष्ट्रीय छात्रवृत्ति पोर्टल",
+          "category": "education",
+          "targetRole": "student",
+          "benefits": "One online window to apply for central, state and UGC/AICTE scholarships (pre-matric, post-matric, merit-cum-means, top class and girls' scholarships). Money is paid by DBT to the student's Aadhaar-linked bank account.",
+          "eligibility": "Students from Class 1 to PhD, depending on the scholarship. Most need-based scholarships have a family income limit (commonly Rs 1 lakh to Rs 2.5 lakh per year for SC/ST/OBC/minority schemes) and a minimum mark in the previous exam.",
+          "documents": [
+            "Aadhaar card (or enrolment ID)",
+            "Income certificate",
+            "Caste certificate (if applicable)",
+            "Previous year marksheet",
+            "Bonafide certificate from the institution",
+            "Aadhaar-linked bank account",
+            "Passport-size photograph"
+          ],
+          "howToApply": "Do One Time Registration (OTR) on scholarships.gov.in or the NSP OTR app with Aadhaar and mobile OTP, then log in and fill the application for the scheme you are eligible for before the deadline (usually October-November). The institute and district verify it.",
+          "helpline": "0120-6619540",
+          "portalUrl": "https://scholarships.gov.in",
+          "smsSummary": "राष्ट्रीय छात्रवृत्ति पोर्टल: केंद्र व राज्य छात्रवृत्ति के लिए एक जगह आवेदन। आधार, आय/जाति प्रमाणपत्र, अंकपत्र। scholarships.gov.in हेल्पलाइन: 0120-6619540"
+        },
+        "reason": "केवल छात्र के लिए"
+      },
+      {
+        "scheme": {
+          "id": "PMYASASVI",
+          "code": "PMYASASVI",
+          "name": "पीएम यशस्वी छात्रवृत्ति",
+          "category": "education",
+          "targetRole": "student",
+          "benefits": "PM Young Achievers Scholarship Award Scheme for Vibrant India: pre-matric scholarship for Classes 9-10, post-matric scholarship for Class 11 onwards, and Top Class School / College scholarships covering full tuition and living expenses for students in notified top institutions.",
+          "eligibility": "Students from OBC, Economically Backward Class (EBC) and De-notified / Nomadic Tribe (DNT) communities with annual family income up to Rs 2.5 lakh, studying in a recognised school or college.",
+          "documents": [
+            "Aadhaar card",
+            "OBC / EBC / DNT certificate",
+            "Income certificate (up to Rs 2.5 lakh)",
+            "Previous year marksheet",
+            "Bonafide certificate",
+            "Aadhaar-linked bank account"
+          ],
+          "howToApply": "Apply on the National Scholarship Portal (scholarships.gov.in) after One Time Registration; choose the PM YASASVI component for your class.",
+          "helpline": "0120-6619540",
+          "portalUrl": "https://scholarships.gov.in",
+          "smsSummary": "पीएम यशस्वी: OBC, EBC, DNT छात्रों को छात्रवृत्ति, पारिवारिक आय ₹2.5 लाख/वर्ष तक। NSP पर आवेदन। scholarships.gov.in हेल्पलाइन: 0120-6619540"
+        },
+        "reason": "केवल छात्र के लिए; अधिकतम आयु 18 वर्ष"
+      },
+      {
+        "scheme": {
+          "id": "PRAGATI",
+          "code": "PRAGATI",
+          "name": "AICTE प्रगति छात्रवृत्ति (छात्राओं के लिए)",
+          "category": "education",
+          "targetRole": "student",
+          "benefits": "Rs 50,000 per year for every year of study (up to 4 years for degree, 3 years for diploma; 3 and 2 years for lateral entry) to meet fees, books, equipment and other costs. About 5,000 scholarships each year (2,500 degree and 2,500 diploma).",
+          "eligibility": "Girl students admitted to the first year (or second year by lateral entry) of an AICTE-approved degree or diploma course. Annual family income up to Rs 8 lakh. Maximum two girls per family.",
+          "documents": [
+            "Aadhaar card",
+            "Class 10 / 12 marksheet",
+            "Admission letter and fee receipt",
+            "Income certificate (up to Rs 8 lakh)",
+            "Caste certificate (if applicable)",
+            "Aadhaar-linked bank account"
+          ],
+          "howToApply": "Apply on the National Scholarship Portal (scholarships.gov.in) under the AICTE Pragati scheme after One Time Registration; the institute verifies the application.",
+          "helpline": "0120-6619540",
+          "portalUrl": "https://scholarships.gov.in",
+          "smsSummary": "AICTE प्रगति: AICTE डिग्री/डिप्लोमा की छात्राओं को ₹50,000/वर्ष, पारिवारिक आय ₹8 लाख तक। NSP पर आवेदन। scholarships.gov.in हेल्पलाइन: 0120-6619540"
+        },
+        "reason": "केवल छात्र के लिए"
       }
     ],
-    "totalMatched": 5,
-    "recommendedAction": "आप 5 प्रमुख योजनाओं के लिए पात्र हैं। सबसे पहले ग्राम पंचायत या सीएससी जाकर पीएम-किसान और आयुष्मान कार्ड बनवाएं।"
+    "totalMatched": 8,
+    "recommendedAction": "आप 8 योजनाओं के लिए पात्र हैं। सबसे पहले ग्राम पंचायत या सीएससी जाकर प्रधानमंत्री किसान सम्मान निधि और आयुष्मान भारत का लाभ उठाएं।"
   },
   "error": null,
   "timestamp": "2026-10-31T08:00:00.000Z"

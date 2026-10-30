@@ -92,7 +92,7 @@ Error shape: `{"success": false, "data": null, "error": {"code": "ERR_CODE", "me
 | B-11 | `DATABASE_URL` (DB-04, H5); RAG hosting decision (RAG-08); frontend origin (FE-10) | SQLite; RAG on laptop + tunnel |
 | any | seed corrections (LD-02, H10) | keep current seed, flag unverified |
 
-Status at H0 (2026-10-30): DB-01 not done — no `main`. A-00..B-02 were built ahead of it; the backend's `docs/api-contract.md` and `.gitignore` must be reconciled with DB-01's (theirs win) when `main` lands, by merging main into `backend` (no force-push).
+Status (2026-10-30): DB-01 done on `main`/`dev` (built on top of the backend commits; nothing to reconcile). DB-02 schema on `feat/db-setup` matches B-02 (0 differences); the sqlite driver applies `db/schema.sqlite.sql` when present. Still waiting: DB-05 `demo_personas.json` (B-03 uses the contract section 12 fallback), RAG-01/RAG-03 for B-06, LD-01 for B-07 field names.
 
 ### Scope
 I own only `/backend` (plus K-tasks: `/data/seed`, `/docs/architecture-blueprint.md`, `/docs/db-integration-for-senior.md`, `/docs/endpoint-map.md`, root `.env.example`). Anything else -> CONTRACT CHANGE REQUEST.

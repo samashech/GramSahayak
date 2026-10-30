@@ -216,14 +216,14 @@
     "eligibility": "Pregnant women and lactating mothers aged 19 or above, from households meeting at least one criterion: SC/ST, BPL ration card, PM-JAY card, e-Shram card, MGNREGA job card, KCC farmer woman, women with 40% or more disability, ANM / ASHA / Anganwadi worker, or net family income below Rs 8 lakh per year.",
     "exclusions": "Women in regular employment with central or state government or PSUs, or receiving similar maternity benefit under any law.",
     "documents": ["Aadhaar card", "MCP card (with LMP date and ANC record)", "Aadhaar-linked bank or post office account", "Proof of one eligibility criterion (BPL / caste / job card / income)", "Child's birth certificate (second instalment)"],
-    "how_to_apply": "Register through the Anganwadi worker or ASHA, or online at pmmvy.wcd.gov.in (citizen login). Register within 270 days of the last menstrual period for the first instalment.",
-    "helpline": "14408",
+    "how_to_apply": "Register through the Anganwadi worker or ASHA, or online at pmmvy.wcd.gov.in (citizen login). Register within 270 days of the last menstrual period for the first instalment. Helpline: 1515 (Mission Shakti / PMMVY toll-free; the earlier number was 14408).",
+    "helpline": "1515",
     "portal_url": "https://pmmvy.wcd.gov.in",
     "sms_summary": {
-      "en-IN": "PMMVY: Rs 5000 for 1st child in 2 instalments; Rs 6000 if 2nd child is a girl. Women 19+. Docs: Aadhaar, MCP card, bank. pmmvy.wcd.gov.in Help: 14408",
-      "hi-IN": "मातृ वंदना योजना: पहले बच्चे पर ₹5000 (2 किस्त), दूसरी संतान बेटी हो तो ₹6000। दस्तावेज़: आधार, MCP कार्ड, बैंक खाता। pmmvy.wcd.gov.in हेल्पलाइन: 14408",
-      "mr-IN": "मातृ वंदना योजना: पहिल्या अपत्यासाठी ₹5000 (2 हप्ते), दुसरी मुलगी झाल्यास ₹6000. कागदपत्रे: आधार, MCP कार्ड, बँक खाते. pmmvy.wcd.gov.in हेल्पलाइन: 14408",
-      "ta-IN": "மாத்ரு வந்தனா: முதல் குழந்தைக்கு ₹5000 (2 தவணை), 2வது பெண் குழந்தைக்கு ₹6000. ஆவணங்கள்: ஆதார், MCP அட்டை, வங்கி. pmmvy.wcd.gov.in உதவி: 14408"
+      "en-IN": "PMMVY: Rs 5000 for 1st child in 2 instalments; Rs 6000 if 2nd child is a girl. Women 19+. Docs: Aadhaar, MCP card, bank. pmmvy.wcd.gov.in Help: 1515",
+      "hi-IN": "मातृ वंदना योजना: पहले बच्चे पर ₹5000 (2 किस्त), दूसरी संतान बेटी हो तो ₹6000। दस्तावेज़: आधार, MCP कार्ड, बैंक खाता। pmmvy.wcd.gov.in हेल्पलाइन: 1515",
+      "mr-IN": "मातृ वंदना योजना: पहिल्या अपत्यासाठी ₹5000 (2 हप्ते), दुसरी मुलगी झाल्यास ₹6000. कागदपत्रे: आधार, MCP कार्ड, बँक खाते. pmmvy.wcd.gov.in हेल्पलाइन: 1515",
+      "ta-IN": "மாத்ரு வந்தனா: முதல் குழந்தைக்கு ₹5000 (2 தவணை), 2வது பெண் குழந்தைக்கு ₹6000. ஆவணங்கள்: ஆதார், MCP அட்டை, வங்கி. pmmvy.wcd.gov.in உதவி: 1515"
     },
     "rules": {
       "occupations": null,

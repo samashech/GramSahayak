@@ -6,7 +6,7 @@
 
 | # | Card | Claim | Why risky |
 |---|---|---|---|
-| 1 | PMMVY | helpline `14408` | least certain number in the seed |
+| 1 | PMMVY | helpline `1515` (was `14408`) | updated 2026-10-31 per LD-02 note (MWCD/Mission Shakti toll-free 1515); human confirmation still required |
 | 2 | MGNREGA | helpline `1800-111-555` | national number; states also run their own |
 | 3 | UJJWALA | helpline `1800-233-3555`; Rs 300/refill subsidy, 12 refills | subsidy amount changes by Cabinet decision |
 | 4 | KCC | Rs 3 lakh subvention limit, 4% effective, Rs 2 lakh collateral-free | Budget 2025 announced raising the limit to Rs 5 lakh; check what is in force |

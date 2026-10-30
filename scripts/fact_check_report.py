@@ -56,7 +56,7 @@ TOP_10_RISKIEST_CLAIMS = [
         "rank": 1,
         "code": "PMMVY",
         "claim_type": "helpline",
-        "value_in_seed": "14408",
+        "value_in_seed": "1515",
         "source_url": "https://pmmvy.wcd.gov.in / https://wcd.gov.in (to confirm)",
         "agent_precheck": "MWCD updated PMMVY/Mission Shakti toll-free helpline to 1515 (14408 was the earlier number). Confirm whether to keep 14408 for seed/test stability or note 14408 / 1515.",
     },

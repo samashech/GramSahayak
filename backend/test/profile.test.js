@@ -44,7 +44,9 @@ test('x-demo-user resolves to the persona phone and shows web + ivr + sms in one
   const { json } = await app.call('GET', '/api/profile', { headers: { ...SID, 'x-demo-user': 'asha-ta' } });
   assert.equal(json.data.profile.role, 'asha');
   assert.equal(json.data.profile.language, 'ta-IN');
-  assert.deepEqual(json.data.history.map((t) => t.channel), ['ivr', 'sms']);
+  // Persona starter_history (web turns, CCR-04) comes first when the seed file has it.
+  const starter = (require('../src/services/seedService').getPersona('asha-ta').starter_history || []).map(() => 'web');
+  assert.deepEqual(json.data.history.map((t) => t.channel), [...starter, 'ivr', 'sms']);
 });
 
 test('unknown x-demo-user is rejected', async () => {

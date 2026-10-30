@@ -55,8 +55,29 @@ test('POST /api/schemes/ingest saves a JSON card to data/raw; ragIngest null whi
   assert.equal(status, 201);
   assert.match(json.data.savedPath, /^data\/raw\/TESTCARD-.*\.json$/);
   assert.equal(json.data.ragIngest, null);
-  rawCreated.push(json.data.savedPath, json.data.savedPath.replace(/\.json$/, '.md'));
+  rawCreated.push(json.data.savedPath);
   assert.ok(fs.existsSync(path.join(config.repoRoot, json.data.savedPath)));
+  const twin = json.data.savedPath.replace(/\.json$/, '.md');
+  assert.ok(!fs.existsSync(path.join(config.repoRoot, twin)), 'one file per upload (RAG re-ingests all of data/raw)');
+});
+
+test('ingest refuses cards that would shadow a seed scheme or break the SMS limit', async () => {
+  const seedCode = await app.call('POST', '/api/schemes/ingest', { body: { code: 'PMKISAN', name_en: 'Fake', category: 'schemes' } });
+  assert.equal(seedCode.status, 400);
+  assert.match(seedCode.json.error.message, /seed scheme/);
+  const longSms = await app.call('POST', '/api/schemes/ingest', {
+    body: { code: 'NEWONE', name_en: 'New', category: 'agri', sms_summary: { 'hi-IN': 'क'.repeat(161) } },
+  });
+  assert.equal(longSms.status, 400);
+  assert.match(longSms.json.error.message, /over 160/);
+  const badJsonFile = new FormData();
+  badJsonFile.append('file', new Blob([JSON.stringify({ hello: 'world' })]), 'notacard.json');
+  assert.equal((await app.call('POST', '/api/schemes/ingest', { form: badJsonFile })).status, 400);
+  const fakeSeedFile = new FormData();
+  fakeSeedFile.append('file', new Blob([JSON.stringify({ code: 'JSY', name_en: 'x', category: 'health' })]), 'jsy.json');
+  assert.equal((await app.call('POST', '/api/schemes/ingest', { form: fakeSeedFile })).status, 400);
+  const leftovers = fs.readdirSync(config.paths.uploadsDir).filter((f) => !f.startsWith('.'));
+  assert.deepEqual(leftovers, [], 'rejected uploads are not left behind');
 });
 
 test('POST /api/schemes/ingest accepts a multipart .md file and rejects bad input', async () => {

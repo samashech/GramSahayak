@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Validate /data/seed/demo_personas.json and reset/verify demo persona sessions & profiles (DB-05).
+"""Validate /data/seed/demo_personas.json and reset/verify demo persona sessions & profiles (DB-05 + CCR-04).
 
 Usage:
-    python3 db/demo_reset.py                 # upsert 5 personas + 2 starter turns, prune old logs
+    python3 db/demo_reset.py                 # upsert 5 personas + starter_history turns, prune old logs
     python3 db/demo_reset.py --check         # compare DB rows against demo_personas.json (0 diffs = exit 0)
     python3 db/demo_reset.py --validate-only # validate demo_personas.json against JSON Schema only
     python3 db/demo_reset.py --driver sqlite|postgres
@@ -64,127 +64,9 @@ PROFILE_COMPARE_FIELDS = (
     "district",
 )
 
-# Deterministic starter Turn timestamps so running demo_reset.py twice changes zero bytes in DB.
-STARTER_TS_USER = "2026-10-31T00:00:00.000Z"
-STARTER_TS_ASSISTANT = "2026-10-31T00:00:02.000Z"
-
-# Realistic grounded starter conversations per persona (Contract §5 Turn shape, §12 notes, Appendix G1/G2/G5/G7).
-PERSONA_STARTER_TURNS: dict[str, list[dict[str, Any]]] = {
-    "farmer-hi": [
-        {
-            "ts": STARTER_TS_USER,
-            "channel": "web",
-            "speaker": "user",
-            "text": "पीएम किसान योजना के लिए कौन पात्र है?",
-            "category": "schemes",
-            "language": "hi-IN",
-        },
-        {
-            "ts": STARTER_TS_ASSISTANT,
-            "channel": "web",
-            "speaker": "assistant",
-            "text": (
-                "सभी भूमिधारक किसान परिवार पीएम-किसान सम्मान निधि के पात्र हैं। इसमें हर वर्ष ₹6,000 "
-                "तीन किस्तों (₹2,000 प्रति किस्त) में आधार से जुड़े बैंक खाते में मिलते हैं। "
-                "पोर्टल: pmkisan.gov.in, हेल्पलाइन: 155261।"
-            ),
-            "category": "schemes",
-            "language": "hi-IN",
-        },
-    ],
-    "farmer-mr": [
-        {
-            "ts": STARTER_TS_USER,
-            "channel": "web",
-            "speaker": "user",
-            "text": "कापसावर गुलाबी बोंडअळी आली आहे, काय करावे?",
-            "category": "agri",
-            "language": "mr-IN",
-        },
-        {
-            "ts": STARTER_TS_ASSISTANT,
-            "channel": "web",
-            "speaker": "assistant",
-            "text": (
-                "कापसावरील गुलाबी बोंडअळीसाठी एकात्मिक कीड व्यवस्थापन (IPM) वापरा: फेरोमोन सापळे लावा "
-                "आणि प्रादुर्भावग्रस्त फुले व बोंडे गोळा करून नष्ट करा. तज्ज्ञ सल्ल्यासाठी कृषी विज्ञान केंद्र "
-                "(KVK) किंवा किसान कॉल सेंटर 1800-180-1551 वर संपर्क साधा."
-            ),
-            "category": "agri",
-            "language": "mr-IN",
-        },
-    ],
-    "asha-ta": [
-        {
-            "ts": STARTER_TS_USER,
-            "channel": "web",
-            "speaker": "user",
-            "text": "24 வயது கர்ப்பிணிப் பெண்ணுக்கு ஜனனி சுரக்ஷா யோஜனா திட்டத்தில் எவ்வளவு பணம் கிடைக்கும்?",
-            "category": "health",
-            "language": "ta-IN",
-        },
-        {
-            "ts": STARTER_TS_ASSISTANT,
-            "channel": "web",
-            "speaker": "assistant",
-            "text": (
-                "ஜனனி சுரக்ஷா யோஜனா (JSY) திட்டத்தில் அரசு மருத்துவமனை பிரசவத்துக்கு கிராமப்புற தாய்க்கு "
-                "₹700 (HPS மாநிலம்) அல்லது ₹1,400 (LPS மாநிலம்) வங்கி கணக்கில் வழங்கப்படும். "
-                "MCP அட்டை மற்றும் ஆதார் தேவை; nhm.gov.in அல்லது உதவி எண் 104."
-            ),
-            "category": "health",
-            "language": "ta-IN",
-        },
-    ],
-    "student-hi": [
-        {
-            "ts": STARTER_TS_USER,
-            "channel": "web",
-            "speaker": "user",
-            "text": "नेशनल स्कॉलरशिप पोर्टल पर आवेदन कैसे करें?",
-            "category": "education",
-            "language": "hi-IN",
-        },
-        {
-            "ts": STARTER_TS_ASSISTANT,
-            "channel": "web",
-            "speaker": "assistant",
-            "text": (
-                "scholarships.gov.in या NSP OTR ऐप पर आधार और मोबाइल OTP से One Time Registration (OTR) "
-                "करें, फिर लॉगिन करके छात्रवृत्ति आवेदन भरें। आवश्यक दस्तावेज़: आधार, आय व जाति प्रमाणपत्र, "
-                "पिछली मार्कशीट और बैंक खाता। हेल्पलाइन: 0120-6619540।"
-            ),
-            "category": "education",
-            "language": "hi-IN",
-        },
-    ],
-    "panchayat-hi": [
-        {
-            "ts": STARTER_TS_USER,
-            "channel": "web",
-            "speaker": "user",
-            "text": "ग्राम पंचायत में मनरेगा जॉब कार्ड और 100 दिन के काम के लिए कैसे आवेदन करें?",
-            "category": "schemes",
-            "language": "hi-IN",
-        },
-        {
-            "ts": STARTER_TS_ASSISTANT,
-            "channel": "web",
-            "speaker": "assistant",
-            "text": (
-                "ग्रामीण परिवार के 18 वर्ष या अधिक आयु के सदस्य ग्राम पंचायत में आधार, बैंक खाता और फोटो देकर "
-                "निःशुल्क मनरेगा जॉब कार्ड बनवा सकते हैं। काम मांगने के 15 दिन में साल में 100 दिन तक रोजगार "
-                "मिलता है। पोर्टल: nrega.nic.in, हेल्पलाइन: 1800-111-555।"
-            ),
-            "category": "schemes",
-            "language": "hi-IN",
-        },
-    ],
-}
-
 
 def validate_personas(personas: Any, schema: dict[str, Any]) -> list[str]:
-    """Validate /data/seed/demo_personas.json against db/demo_personas.schema.json + uniqueness."""
+    """Validate /data/seed/demo_personas.json against db/demo_personas.schema.json + uniqueness & turn parity."""
     errors: list[str] = []
     try:
         from jsonschema import Draft202012Validator
@@ -214,15 +96,27 @@ def validate_personas(personas: Any, schema: dict[str, Any]) -> list[str]:
 
     for p in personas:
         pid = p.get("id", "?")
-        turns = PERSONA_STARTER_TURNS.get(pid)
-        if not turns or len(turns) != 2:
-            errors.append(f"Missing 2 starter Turn objects in demo_reset.py for {pid!r}")
-        else:
-            for t in turns:
-                if t.get("language") != p.get("language"):
-                    errors.append(
-                        f"Starter turn language {t.get('language')!r} != persona {pid} language {p.get('language')!r}"
-                    )
+        turns = p.get("starter_history")
+        if not isinstance(turns, list) or len(turns) != 2:
+            errors.append(f"Persona {pid!r} must include a 2-turn 'starter_history' array")
+            continue
+        speakers = [t.get("speaker") for t in turns if isinstance(t, dict)]
+        if speakers != ["user", "assistant"]:
+            errors.append(
+                f"Persona {pid!r} starter_history speakers must be ['user', 'assistant'], got {speakers!r}"
+            )
+        for idx, t in enumerate(turns):
+            if not isinstance(t, dict):
+                continue
+            if t.get("channel") != "web":
+                errors.append(
+                    f"Persona {pid!r} starter_history[{idx}].channel must be 'web', got {t.get('channel')!r}"
+                )
+            if t.get("language") != p.get("language"):
+                errors.append(
+                    f"Persona {pid!r} starter_history[{idx}].language {t.get('language')!r} "
+                    f"!= persona language {p.get('language')!r}"
+                )
 
     return errors
 
@@ -287,12 +181,12 @@ def check_personas_in_db(
     sessions_by_key: dict[str, dict[str, Any]],
     profiles_by_key: dict[str, dict[str, Any]],
 ) -> list[str]:
-    """Compare DB sessions & user_profiles rows against demo_personas.json + starter turns."""
+    """Compare DB sessions & user_profiles rows against demo_personas.json (including starter_history)."""
     diffs: list[str] = []
     for p in personas:
         pid = p["id"]
         key = p["phone"]
-        expected_turns = PERSONA_STARTER_TURNS[pid]
+        expected_turns = p["starter_history"]
 
         sess = sessions_by_key.get(key)
         if not sess:
@@ -309,8 +203,8 @@ def check_personas_in_db(
                 diffs.append(f"[{pid}] sessions.history is not a valid JSON array")
             elif hist != expected_turns:
                 diffs.append(
-                    f"[{pid}] sessions.history differs (expected 2 starter web turns in {p['language']}, "
-                    f"got {len(hist)} turn(s))"
+                    f"[{pid}] sessions.history differs (expected {len(expected_turns)} starter_history "
+                    f"web turns in {p['language']}, got {len(hist)} turn(s))"
                 )
 
         prof = profiles_by_key.get(key)
@@ -388,9 +282,8 @@ def reset_sqlite_personas(
         conn.execute("PRAGMA foreign_keys = ON;")
         with conn:
             for p in personas:
-                pid = p["id"]
                 key = p["phone"]
-                turns = PERSONA_STARTER_TURNS[pid]
+                turns = p["starter_history"]
                 turns_json = json.dumps(turns, ensure_ascii=False)
 
                 cur_sess = existing_sessions.get(key)
@@ -511,9 +404,8 @@ def reset_postgres_personas(
         with conn:
             with conn.cursor() as cur:
                 for p in personas:
-                    pid = p["id"]
                     key = p["phone"]
-                    turns = PERSONA_STARTER_TURNS[pid]
+                    turns = p["starter_history"]
 
                     cur_sess = existing_sessions.get(key)
                     sess_matches = (
@@ -597,7 +489,7 @@ def reset_postgres_personas(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Validate /data/seed/demo_personas.json and reset/check demo personas in DB (DB-05)."
+        description="Validate /data/seed/demo_personas.json and reset/check demo personas in DB (DB-05 + CCR-04)."
     )
     parser.add_argument(
         "--personas",

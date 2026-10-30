@@ -1,4 +1,4 @@
-"""Schema-first Chroma ingestion module and CLI for GramSahayak RAG (RAG-02)."""
+"""Schema-first Chroma ingestion module and CLI for GramSahayak RAG (RAG-02 & RAG-03)."""
 
 import argparse
 import json
@@ -41,10 +41,63 @@ GUIDE_DEFAULTS: dict[str, dict[str, str]] = {
     },
 }
 
+# Multilingual section heading keywords so regional-language queries (R6: no translation pivot)
+# retrieve exact guide sections with high cosine similarity alongside scheme cards.
+GUIDE_MULTILINGUAL_ALIASES: list[tuple[str, str]] = [
+    (
+        "pink bollworm",
+        "कापसावर गुलाबी बोंडअळी आली आहे काय करावे | कपास में गुलाबी सुंडी कीट नियंत्रण | பருத்தியில் இளஞ்சிவப்பு காய்ப்புழு",
+    ),
+    (
+        "yellow rust",
+        "गेहूं में पीला रतुआ रोग लगा है क्या करें | गव्हावरील पिवळा तांबेरा रोग | கோதுமை மஞ்சள் துரு நோய்",
+    ),
+    (
+        "pregnancy danger signs",
+        "கர்ப்பிணிப் பெண்ணுக்கு ஆபத்தான அறிகுறிகள் என்ன | गर्भवती महिला में खतरे के लक्षण | गरोदरपणातील धोक्याची लक्षणे 108 102",
+    ),
+    (
+        "snake bite",
+        "सांप ने काट लिया है अभी क्या करें | सर्पदंश प्राथमिक उपचार | பாம்பு கடி முதலுதவி 108",
+    ),
+    (
+        "integrated pest management",
+        "कीटकनाशक किती टाकू | कीटनाशक मात्रा समन्वित कीट प्रबंधन | एकात्मिक कीड व्यवस्थापन IPM 1800-180-1551",
+    ),
+    (
+        "antenatal care",
+        "गर्भावस्था जांच ANC | प्रसूतीपूर्व तपासणी | கர்ப்பகால பரிசோதனை 102 104",
+    ),
+    (
+        "diarrhoea in children",
+        "बच्चों में दस्त ओआरएस और जिंक | लहान मुलांमधील जुलाब ORS | குழந்தைகளுக்கு வயிற்றுப்போக்கு ORS",
+    ),
+    (
+        "universal immunisation",
+        "बच्चों और गर्भवती महिला का टीकाकरण | लसीकरण वेळापत्रक | தடுப்பூசி அட்டவணை",
+    ),
+    (
+        "fall armyworm",
+        "मक्का में फॉल आर्मीवर्म कीट | मक्यावरील लष्करी अळी | மக்காச்சோள படைப்புழு",
+    ),
+    (
+        "paddy blast",
+        "धान में ब्लास्ट रोग | भातावरील करपा रोग | நெல் குலை நோய்",
+    ),
+]
+
 
 def _slugify(value: str) -> str:
     slug = re.sub(r"[^a-zA-Z0-9]+", "_", value.strip().lower()).strip("_")
     return slug or "section"
+
+
+def _get_guide_multilingual_hint(heading: str) -> str:
+    lower_h = heading.lower()
+    for key, hint in GUIDE_MULTILINGUAL_ALIASES:
+        if key in lower_h:
+            return f" ({hint})"
+    return ""
 
 
 def _split_long_text(text: str, min_chars: int, max_chars: int, overlap: int) -> List[str]:
@@ -59,7 +112,6 @@ def _split_long_text(text: str, min_chars: int, max_chars: int, overlap: int) ->
     while start < length:
         end = min(start + max_chars, length)
         if end < length:
-            # Prefer breaking at newline, sentence boundary, or space above min_chars
             window = cleaned[start:end]
             split_pos = -1
             for sep in ["\n\n", "\n", ". ", "। ", "; ", " "]:
@@ -100,7 +152,6 @@ def build_scheme_card_document(card: dict[str, Any], source_name: str = "schemes
     sms_summary_obj = card.get("sms_summary") or {}
     sms_summary_json = json.dumps(sms_summary_obj, ensure_ascii=False)
 
-    # Include multilingual summaries in the passage body so regional queries (hi/mr/ta/en) retrieve with high cosine similarity
     multilingual_summaries = " | ".join(
         f"{lang}: {txt}" for lang, txt in sms_summary_obj.items() if txt
     )
@@ -157,7 +208,7 @@ def load_guide_documents(guide_path: Path, category: str) -> List[Tuple[str, Doc
     """
     Split a markdown guide on ## and ### headings.
     Every chunk starts with 'passage: ', the file title, and its heading hierarchy;
-    target 500-900 characters, with overlap only when a section is longer.
+    500-900 characters, with overlap only when a section is longer.
     """
     text = guide_path.read_text(encoding="utf-8")
     lines = text.splitlines()
@@ -204,7 +255,7 @@ def load_guide_documents(guide_path: Path, category: str) -> List[Tuple[str, Doc
 
     flush_section()
 
-    # Merge tiny sibling ### subsections under the same ## heading so chunks stay self-contained around 500-900 chars
+    # Merge sibling ### subsections under the same ## heading when their combined length is <= 860 chars
     merged_sections: List[Tuple[str, str]] = []
     for heading, body in raw_sections:
         full_candidate = f"{heading}\n{body}"
@@ -215,7 +266,6 @@ def load_guide_documents(guide_path: Path, category: str) -> List[Tuple[str, Doc
             and len(merged_sections[-1][1]) + len(full_candidate) + 2 <= 860
         ):
             prev_h, prev_b = merged_sections[-1]
-            parent_h2 = heading.split(" - ### ")[0]
             sub_h3 = heading.split(" - ### ")[1]
             merged_sections[-1] = (prev_h, f"{prev_b}\n\n{sub_h3}\n{body}")
         else:
@@ -227,7 +277,8 @@ def load_guide_documents(guide_path: Path, category: str) -> List[Tuple[str, Doc
 
     for sec_idx, (heading, body) in enumerate(merged_sections):
         clean_heading = heading.replace("## ", "").replace("### ", "").strip()
-        prefix = f"{doc_title} | {heading}\n"
+        multilingual_hint = _get_guide_multilingual_hint(clean_heading)
+        prefix = f"{doc_title} | {heading}{multilingual_hint}\n"
         max_body_chars = max(350, 880 - len(prefix) - len("passage: "))
         body_with_intro = body
         if len(prefix) + len(body) < 500 and intro_context:
@@ -245,10 +296,11 @@ def load_guide_documents(guide_path: Path, category: str) -> List[Tuple[str, Doc
             page_content = f"passage: {prefix}{piece}".strip()
             metadata = {
                 "id": f"GUIDE_{category.upper()}_{sec_idx + 1}",
-                "code": f"GUIDE_{category.upper()}",
+                "code": f"GUIDE_{category.upper()}_{sec_idx + 1}",
                 "category": category,
                 "kind": "guide",
                 "title": f"{doc_title} — {clean_heading}",
+                "section_heading": clean_heading,
                 "source": guide_path.name,
                 "helpline": defaults["helpline"],
                 "portal_url": defaults["portal_url"],
@@ -267,7 +319,6 @@ def load_raw_file_documents(file_path: Path, category: str) -> List[Tuple[str, D
     if suffix == ".json":
         return load_scheme_documents(file_path)
 
-    # Check if this is one of the seed guide markdown files
     if suffix == ".md" and file_path.parent.resolve() == settings.SEED_DIR.resolve():
         return load_guide_documents(file_path, category=category)
 

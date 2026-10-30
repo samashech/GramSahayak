@@ -77,6 +77,7 @@ const config = {
     apiKeyId: env.CLOUDTALK_API_KEY_ID || '',
     apiSecret: env.CLOUDTALK_API_SECRET || '',
     webhookSecret: env.CLOUDTALK_WEBHOOK_SECRET || '',
+    baseUrl: 'https://my.cloudtalk.io',
   },
 
   paths: {

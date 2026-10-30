@@ -29,6 +29,8 @@ before(async () => {
     if (ragMode === 'down') return { status: 500, json: { detail: 'boom' } };
     if (ragMode === 'slow') return { delayMs: 1500, json: ragResponse({ answer: 'late' }) };
     if (url !== '/rag/query') return { status: 404 };
+    if (json.query.includes('Tractor')) return { json: ragResponse({ answer: 'Ujjwala text', matched: 'UJJWALA', confidence: 0.834 }) };
+    if (json.query.includes('KCC')) return { json: ragResponse({ answer: 'PM-KISAN text', matched: 'PMKISAN' }) };
     if (json.query.includes('किसान क्रेडिट')) return { json: ragResponse({ answer: 'पूरी जानकारी एसएमएस द्वारा भेजी जा रही है।', matched: 'KCC' }) };
     if (json.query.includes('किसान')) {
       return { json: ragResponse({ answer: 'सभी भूमिधारक किसान परिवार पात्र हैं। pmkisan.gov.in', matched: 'PMKISAN', sms: 'RAG WROTE THIS', sources: [pmkisanSource] }) };
@@ -113,6 +115,24 @@ test('closing-only RAG answer (empty LLM output) is rebuilt from the matched car
   assert.equal(json.data.matchedSchemeId, 'KCC');
   assert.ok(json.data.answerText.startsWith('किसान क्रेडिट कार्ड:'), json.data.answerText);
   assert.equal(json.data.smsReceipt.smsReceiptText, seedSchemes.getByCode('KCC').sms_summary['hi-IN']);
+});
+
+test('fake named scheme: no neighbouring card or receipt; a named real scheme overrides RAG (LD-04 F1/F2)', async () => {
+  const fake = await chat({ queryText: 'Tell me about the PM Free Tractor Yojana', languageCode: 'en-IN', role: 'farmer' });
+  assert.deepEqual([fake.json.data.matchedSchemeId, fake.json.data.smsReceipt], [null, null]);
+  assert.equal(fake.json.data.answerText, msg.UNKNOWN_SCHEME['en-IN']);
+  const named = await chat({ queryText: 'How do I get a KCC loan?', languageCode: 'en-IN', role: 'farmer' });
+  assert.equal(named.json.data.matchedSchemeId, 'KCC');
+  assert.equal(named.json.data.smsReceipt.smsReceiptText, seedSchemes.getByCode('KCC').sms_summary['en-IN']);
+  for (const [l, t] of Object.entries(msg.UNKNOWN_SCHEME)) assert.ok(Array.from(t).length <= 160, l);
+});
+
+test('SMS safety replies keep the helpline inside one SMS (LD-04 D7)', async () => {
+  const { answerForSms } = require('../src/services/agentBrain');
+  const r = await answerForSms({ queryText: 'कीटकनाशक किती टाकू', languageCode: 'mr-IN', sessionKey: '+919822022222' });
+  assert.equal(r.replyText, msg.SAFETY_ANSWERS.doseAgri['mr-IN']);
+  assert.match(r.replyText, /1800-180-1551/);
+  for (const kind of Object.values(msg.SAFETY_ANSWERS)) for (const t of Object.values(kind)) assert.ok(Array.from(t).length <= 160);
 });
 
 test('G4 pregnancy danger signs: RAG answer kept, safety flagged 108 + 102', async () => {

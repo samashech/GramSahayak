@@ -167,6 +167,15 @@ const NO_VERIFIED_INFO = {
   'ta-IN': 'இது குறித்த சரிபார்க்கப்பட்ட தகவல் இப்போது எங்களிடம் இல்லை. கிசான் அழைப்பு மையம் 1800-180-1551 அல்லது சுகாதார உதவி எண் 104 ஐ அழைக்கவும்.',
 };
 
+// Asked about a named scheme that is not one of the 13 seed cards (fake or state scheme):
+// never answer with a neighbouring card (LD-04 F1/F2).
+const UNKNOWN_SCHEME = {
+  'en-IN': 'We have no verified information on a scheme by this name. We cover 13 central schemes; send HELP or ask at your nearest CSC or Gram Panchayat.',
+  'hi-IN': 'इस नाम की योजना की सत्यापित जानकारी हमारे पास नहीं है। हम 13 केंद्रीय योजनाओं की जानकारी देते हैं; HELP भेजें या नज़दीकी CSC / ग्राम पंचायत से पूछें।',
+  'mr-IN': 'या नावाच्या योजनेची सत्यापित माहिती आमच्याकडे नाही. आम्ही 13 केंद्रीय योजनांची माहिती देतो; HELP पाठवा किंवा जवळच्या CSC / ग्रामपंचायतीत विचारा.',
+  'ta-IN': 'இந்தப் பெயரில் உள்ள திட்டம் பற்றி சரிபார்த்த தகவல் இல்லை. 13 மத்திய திட்டங்கள் மட்டும்; HELP அனுப்பவும் அல்லது CSC / கிராம பஞ்சாயத்தில் கேட்கவும்.',
+};
+
 const SMS_CLOSING = {
   'en-IN': 'Full details are being sent by SMS.',
   'hi-IN': 'पूरी जानकारी SMS से भेजी जा रही है।',
@@ -222,6 +231,7 @@ module.exports = {
   SMS_HELP,
   SAFETY_ANSWERS,
   NO_VERIFIED_INFO,
+  UNKNOWN_SCHEME,
   SMS_CLOSING,
   IVR,
 };

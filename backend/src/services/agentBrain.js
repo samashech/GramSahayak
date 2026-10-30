@@ -20,6 +20,8 @@ const { localName, smsSummaryFor } = require('./schemeView');
 
 const MAX_QUERY_CHARS = 2000;
 const REQUIRED_HELPLINE = { emergency: '108', doseAgri: '1800-180-1551', doseMedical: '104' };
+// The user is asking about a scheme by name ("... Yojana", "योजना", "திட்டம்").
+const SCHEME_WORD_RE = /(yojana|yojna|scheme|योजना|योजने|யோஜனா|திட்ட)/i;
 const DOMAIN_RE = /\s*\b(?:https?:\/\/)?[\w.-]+\.(?:gov|nic|org|com)\.in\b\S*/gi;
 // RAG's voice cleanup can turn "pmkisan.gov.in" into "pmkisan, gov, in" before stripping URLs.
 const SPLIT_DOMAIN_RE = /,?\s*\b[\w-]+,\s*(?:gov|nic),\s*in\b/gi;
@@ -144,6 +146,18 @@ async function answerQuery({
     card = seedSchemes.getByCode(matchedSchemeId);
     sources = (rag.sources || []).map(sourceRefFromRag);
     source = 'rag';
+    // A scheme the user names explicitly wins over RAG's ranking (deterministic, R7); a named scheme
+    // that is not one of the 13 cards gets "no verified information", never a neighbouring card.
+    const named = fixed ? null : matchCard(text);
+    if (named && named.code !== matchedSchemeId) {
+      card = named;
+      matchedSchemeId = named.code;
+      answerText = cardAnswer(named, languageCode);
+    } else if (!fixed && !named && card && SCHEME_WORD_RE.test(text)) {
+      card = null;
+      matchedSchemeId = null;
+      answerText = msg.UNKNOWN_SCHEME[msg.langOf(languageCode)];
+    }
     // A call must never speak only "details are sent by SMS": a closing-only RAG answer
     // (seen with reasoning LLMs whose token budget runs out) is rebuilt from the scheme card.
     if (!fixed && isClosingOnly(answerText)) {
@@ -205,6 +219,9 @@ async function answerForSms({ queryText, languageCode, sessionKey, maxChars = co
   const answer = await answerQuery({
     queryText, languageCode, channel: 'sms', sessionKey, phone: sessionKey, forVoice: true, persist: false,
   });
+  // Safety replies must keep their helpline inside one SMS: use the short fixed text (all <=160).
+  const kind = safetyService.screen(queryText).kind;
+  if (kind) return { replyText: msg.SAFETY_ANSWERS[kind][msg.langOf(languageCode)], matchedSchemeId: null };
   const replyText = answer.smsReceipt?.smsReceiptText
     || (Array.from(answer.answerText).length <= maxChars ? answer.answerText : `${Array.from(answer.answerText).slice(0, maxChars - 1).join('')}…`);
   return { replyText, matchedSchemeId: answer.matchedSchemeId };

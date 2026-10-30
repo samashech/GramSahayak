@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gramsahayak.local/schemas/demo_personas.schema.json",
-  "title": "GramSahayak Demo Personas (Contract v1 Section 12)",
-  "description": "Validates /data/seed/demo_personas.json (5 judge demo presets for x-demo-user).",
+  "title": "GramSahayak Demo Personas (Contract v1 Section 12 + CCR-04 starter_history)",
+  "description": "Validates /data/seed/demo_personas.json (5 judge demo presets for x-demo-user, including 2 starter web Turn objects each).",
   "type": "array",
   "minItems": 5,
   "maxItems": 5,
@@ -10,6 +10,59 @@
     "$ref": "#/$defs/DemoPersona"
   },
   "$defs": {
+    "LanguageCode": {
+      "type": "string",
+      "enum": [
+        "hi-IN",
+        "mr-IN",
+        "ta-IN",
+        "en-IN",
+        "te-IN",
+        "bn-IN",
+        "gu-IN",
+        "kn-IN",
+        "ml-IN",
+        "pa-IN",
+        "od-IN"
+      ]
+    },
+    "StarterTurn": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ts",
+        "channel",
+        "speaker",
+        "text",
+        "category",
+        "language"
+      ],
+      "properties": {
+        "ts": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$"
+        },
+        "channel": {
+          "type": "string",
+          "const": "web"
+        },
+        "speaker": {
+          "type": "string",
+          "enum": ["user", "assistant"]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category": {
+          "type": ["string", "null"],
+          "enum": ["schemes", "agri", "health", "education", null]
+        },
+        "language": {
+          "$ref": "#/$defs/LanguageCode"
+        }
+      }
+    },
     "DemoPersona": {
       "type": "object",
       "additionalProperties": false,
@@ -26,7 +79,8 @@
         "gender",
         "pregnant",
         "annual_income",
-        "social_category"
+        "social_category",
+        "starter_history"
       ],
       "properties": {
         "id": {
@@ -52,20 +106,7 @@
           "enum": ["farmer", "asha", "panchayat", "student"]
         },
         "language": {
-          "type": "string",
-          "enum": [
-            "hi-IN",
-            "mr-IN",
-            "ta-IN",
-            "en-IN",
-            "te-IN",
-            "bn-IN",
-            "gu-IN",
-            "kn-IN",
-            "ml-IN",
-            "pa-IN",
-            "od-IN"
-          ]
+          "$ref": "#/$defs/LanguageCode"
         },
         "occupation": {
           "type": "string",
@@ -106,6 +147,14 @@
         "social_category": {
           "type": "string",
           "enum": ["general", "obc", "sc", "st"]
+        },
+        "starter_history": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "$ref": "#/$defs/StarterTurn"
+          }
         }
       }
     }

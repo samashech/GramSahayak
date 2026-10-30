@@ -1,0 +1,12 @@
+{
+  "success": true,
+  "data": {
+    "replyText": "पीएम-किसान: भूमिधारक किसान परिवार को ₹6000/वर्ष, 3 किस्तों में। दस्तावेज़: आधार, भूमि रिकॉर्ड, बैंक खाता, eKYC। pmkisan.gov.in हेल्पलाइन: 155261",
+    "charCount": 144,
+    "matchedSchemeId": "PMKISAN",
+    "mode": "keyword",
+    "delivery": "simulated"
+  },
+  "error": null,
+  "timestamp": "2026-10-31T08:00:00.000Z"
+}

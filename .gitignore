@@ -1,0 +1,16 @@
+# Contract section 11: never commit secrets or build output
+node_modules/
+.env
+.env.local
+.venv/
+__pycache__/
+chroma_db/
+.next/
+uploads/
+*.sqlite
+db/snapshots/
+.DS_Store
+.idea/
+.vscode/
+# private prompt packs
+*.docx

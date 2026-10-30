@@ -69,6 +69,7 @@ const config = {
   },
 
   sarvamApiKey: env.SARVAM_API_KEY || '',
+  sarvamBaseUrl: 'https://api.sarvam.ai',
   llmApiKey: env.LLM_API_KEY || '',
   llmModel: env.LLM_MODEL || 'llama-3.3-70b-versatile',
 

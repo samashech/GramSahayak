@@ -132,6 +132,83 @@ const SMS_HELP = {
   'ta-IN': 'கிராம சகாயக்: PMKISAN PMFBY KCC SHC PMJAY JSY PMMVY MGNREGA UJJWALA PMAY NSP PMYASASVI PRAGATI அல்லது AGRI HEALTH SCHOLARSHIP அனுப்பவும்',
 };
 
+// ---- Agent brain (B-06): fixed safe answers, never model output ----
+const SAFETY_ANSWERS = {
+  emergency: {
+    'en-IN': 'This is an emergency. Call 108 for an ambulance now and go to the nearest government hospital. Do not try home remedies.',
+    'hi-IN': 'यह आपात स्थिति है। तुरंत 108 पर एम्बुलेंस बुलाएं और नज़दीकी सरकारी अस्पताल जाएं। घरेलू उपचार न करें।',
+    'mr-IN': 'ही आपत्कालीन स्थिती आहे. लगेच 108 वर रुग्णवाहिका बोलवा आणि जवळच्या सरकारी रुग्णालयात जा. घरगुती उपाय करू नका.',
+    'ta-IN': 'இது அவசர நிலை. உடனே 108 ஆம்புலன்ஸை அழைத்து அருகிலுள்ள அரசு மருத்துவமனைக்குச் செல்லுங்கள். வீட்டு வைத்தியம் செய்ய வேண்டாம்.',
+  },
+  pregnancy: {
+    'en-IN': 'These can be pregnancy danger signs. Go to the nearest health centre now and call 102 or 108 for an ambulance.',
+    'hi-IN': 'ये गर्भावस्था के खतरे के लक्षण हो सकते हैं। तुरंत नज़दीकी स्वास्थ्य केंद्र जाएं, 102 या 108 पर एम्बुलेंस बुलाएं।',
+    'mr-IN': 'ही गर्भधारणेतील धोक्याची लक्षणे असू शकतात. लगेच जवळच्या आरोग्य केंद्रात जा, 102 किंवा 108 वर रुग्णवाहिका बोलवा.',
+    'ta-IN': 'இவை கர்ப்பகால ஆபத்து அறிகுறிகளாக இருக்கலாம். உடனே அருகிலுள்ள சுகாதார நிலையத்திற்குச் செல்லுங்கள், 102 அல்லது 108 ஆம்புலன்ஸை அழைக்கவும்.',
+  },
+  doseAgri: {
+    'en-IN': 'We do not give pesticide doses or brands. For the right advice, contact the Krishi Vigyan Kendra or Kisan Call Centre 1800-180-1551.',
+    'hi-IN': 'हम कीटनाशक की मात्रा या ब्रांड नहीं बताते। सही सलाह के लिए कृषि विज्ञान केंद्र या किसान कॉल सेंटर 1800-180-1551 पर संपर्क करें।',
+    'mr-IN': 'आम्ही कीटकनाशकाची मात्रा किंवा ब्रँड सांगत नाही. योग्य सल्ल्यासाठी कृषी विज्ञान केंद्र किंवा किसान कॉल सेंटर 1800-180-1551 वर संपर्क करा.',
+    'ta-IN': 'பூச்சிக்கொல்லி அளவு அல்லது பிராண்டை நாங்கள் சொல்வதில்லை. சரியான ஆலோசனைக்கு வேளாண் அறிவியல் மையம் அல்லது கிசான் அழைப்பு மையம் 1800-180-1551 ஐ அழைக்கவும்.',
+  },
+  doseMedical: {
+    'en-IN': 'We do not give medicine doses. Please ask a doctor or the nearest health centre, or call 104.',
+    'hi-IN': 'हम दवा की खुराक नहीं बताते। कृपया डॉक्टर या नज़दीकी स्वास्थ्य केंद्र से पूछें, या 104 पर कॉल करें।',
+    'mr-IN': 'आम्ही औषधाचा डोस सांगत नाही. कृपया डॉक्टर किंवा जवळच्या आरोग्य केंद्राला विचारा, किंवा 104 वर कॉल करा.',
+    'ta-IN': 'மருந்து அளவை நாங்கள் சொல்வதில்லை. மருத்துவரிடம் அல்லது அருகிலுள்ள சுகாதார நிலையத்தில் கேளுங்கள், அல்லது 104 ஐ அழைக்கவும்.',
+  },
+};
+
+const NO_VERIFIED_INFO = {
+  'en-IN': 'We do not have verified information on this right now. Please call Kisan Call Centre 1800-180-1551 or the health helpline 104.',
+  'hi-IN': 'अभी हमारे पास इस विषय पर सत्यापित जानकारी नहीं है। कृपया किसान कॉल सेंटर 1800-180-1551 या स्वास्थ्य हेल्पलाइन 104 पर कॉल करें।',
+  'mr-IN': 'सध्या आमच्याकडे या विषयावर सत्यापित माहिती नाही. कृपया किसान कॉल सेंटर 1800-180-1551 किंवा आरोग्य हेल्पलाईन 104 वर कॉल करा.',
+  'ta-IN': 'இது குறித்த சரிபார்க்கப்பட்ட தகவல் இப்போது எங்களிடம் இல்லை. கிசான் அழைப்பு மையம் 1800-180-1551 அல்லது சுகாதார உதவி எண் 104 ஐ அழைக்கவும்.',
+};
+
+const SMS_CLOSING = {
+  'en-IN': 'Full details are being sent by SMS.',
+  'hi-IN': 'पूरी जानकारी SMS से भेजी जा रही है।',
+  'mr-IN': 'संपूर्ण माहिती SMS ने पाठवली जात आहे.',
+  'ta-IN': 'முழு விவரங்கள் SMS மூலம் அனுப்பப்படுகின்றன.',
+};
+
+// ---- IVR prompts (B-07, contract section 7) ----
+const IVR = {
+  greeting: 'ग्राम सहायक में आपका स्वागत है। हिंदी के लिए 1 दबाएं। मराठीसाठी 2 दाबा. தமிழுக்கு 3 அழுத்தவும்.',
+  categoryMenu: {
+    'en-IN': 'Press 1 for government schemes, 2 for farming, 3 for health, 4 for scholarships.',
+    'hi-IN': 'सरकारी योजना के लिए 1, खेती के लिए 2, स्वास्थ्य के लिए 3, छात्रवृत्ति के लिए 4 दबाएं।',
+    'mr-IN': 'सरकारी योजनांसाठी 1, शेतीसाठी 2, आरोग्यासाठी 3, शिष्यवृत्तीसाठी 4 दाबा.',
+    'ta-IN': 'அரசு திட்டங்களுக்கு 1, விவசாயத்துக்கு 2, சுகாதாரத்துக்கு 3, உதவித்தொகைக்கு 4 அழுத்தவும்.',
+  },
+  speak: {
+    'en-IN': 'Please speak your question after the beep.',
+    'hi-IN': 'बीप के बाद अपना सवाल बोलें।',
+    'mr-IN': 'बीपनंतर तुमचा प्रश्न बोला.',
+    'ta-IN': 'பீப் ஒலிக்குப் பிறகு உங்கள் கேள்வியைச் சொல்லுங்கள்.',
+  },
+  invalid: {
+    'en-IN': 'Invalid choice.',
+    'hi-IN': 'गलत बटन।',
+    'mr-IN': 'चुकीचे बटण.',
+    'ta-IN': 'தவறான எண்.',
+  },
+  silence: {
+    'en-IN': 'We did not hear you.',
+    'hi-IN': 'हमें आपकी आवाज़ नहीं मिली।',
+    'mr-IN': 'तुमचा आवाज आला नाही.',
+    'ta-IN': 'உங்கள் குரல் கேட்கவில்லை.',
+  },
+  goodbye: {
+    'en-IN': 'Thank you. The details have been sent by SMS. Goodbye.',
+    'hi-IN': 'धन्यवाद। जानकारी SMS से भेजी गई है। नमस्ते।',
+    'mr-IN': 'धन्यवाद. माहिती SMS ने पाठवली आहे. नमस्कार.',
+    'ta-IN': 'நன்றி. விவரங்கள் SMS மூலம் அனுப்பப்பட்டன. வணக்கம்.',
+  },
+};
+
 module.exports = {
   langOf,
   fill,
@@ -143,4 +220,8 @@ module.exports = {
   RECOMMENDED_ACTION,
   SMS_CATEGORY_REPLIES,
   SMS_HELP,
+  SAFETY_ANSWERS,
+  NO_VERIFIED_INFO,
+  SMS_CLOSING,
+  IVR,
 };

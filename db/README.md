@@ -32,6 +32,11 @@ python3 db/seed_db.py --reset   # blocked when APP_ENV=production
 python3 db/demo_reset.py --validate-only
 python3 db/demo_reset.py        # blocked when APP_ENV=production
 python3 db/demo_reset.py --check
+
+# Check Postgres (Supabase :6543) & SQLite connectivity, latency, and row counts (DB-04):
+python3 db/check_connection.py
+python3 db/check_connection.py --bootstrap-postgres   # apply schema + seed 13 schemes + reset 5 personas on Postgres
+python3 db/check_connection.py --require-postgres     # require both Postgres and SQLite healthy
 ```
 
 ---

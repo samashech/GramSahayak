@@ -18,7 +18,11 @@ from langchain_core.documents import Document
 from app.config import settings
 from app.llm import invoke_lcel_answer, llm_state
 from app.prompts import GUIDE_LOCALISED_SUMMARIES, VOICE_CLOSING_BY_LANG
-from app.safety import check_safety_override
+from app.safety import (
+    build_out_of_scope_override,
+    check_safety_override,
+    sanitize_retrieved_context,
+)
 from app.schemas import (
     RagIngestRequest,
     RagIngestResponse,
@@ -426,15 +430,29 @@ class RagEngine:
         """Execute the LangChain retrieval-and-answer chain (RAG-03)."""
         t0 = time.perf_counter()
 
-        # Check safety overrides (hook for RAG-04)
-        safety_override = check_safety_override(req.query, req.language, req.category)
+        # Check safety, dose refusal, prompt-injection, and explicit out-of-scope overrides (RAG-04)
+        safety_override = check_safety_override(
+            req.query,
+            req.language,
+            req.category,
+            for_voice=req.for_voice,
+        )
         if safety_override is not None:
             elapsed_ms = int((time.perf_counter() - t0) * 1000)
+            logger.info(
+                "RAG /rag/query SAFETY/OOS override lang=%s cat=%s role=%s voice=%s conf=%.2f total=%dms",
+                req.language,
+                req.category,
+                req.role,
+                req.for_voice,
+                safety_override.get("confidence", 1.0),
+                elapsed_ms,
+            )
             return RagQueryResponse(
                 answer=safety_override["answer"],
                 sources=safety_override.get("sources", []),
-                matched_scheme_id=None,
-                sms_summary=None,
+                matched_scheme_id=safety_override.get("matched_scheme_id"),
+                sms_summary=safety_override.get("sms_summary"),
                 confidence=safety_override.get("confidence", 1.0),
                 mode=safety_override.get("mode", llm_state.current_mode),
                 latency_ms=elapsed_ms,
@@ -479,6 +497,27 @@ class RagEngine:
             )
 
         top_doc, top_sim = scored[0]
+        has_guide_match = any(
+            doc.metadata.get("kind") == "guide" and sim >= (settings.RAG_MATCH_THRESHOLD - 0.015)
+            for doc, sim in scored
+        )
+        # RAG-04 requirement 3: out-of-scope when top similarity < RAG_MATCH_THRESHOLD - 0.15
+        # (or below RAG_MATCH_THRESHOLD when no guide chunk matches in multilingual-e5-small space)
+        if top_sim < (settings.RAG_MATCH_THRESHOLD - 0.15) or (
+            top_sim < settings.RAG_MATCH_THRESHOLD and not has_guide_match
+        ):
+            oos = build_out_of_scope_override(req.language, for_voice=req.for_voice)
+            elapsed_ms = int((time.perf_counter() - t0) * 1000)
+            return RagQueryResponse(
+                answer=oos["answer"],
+                sources=[],
+                matched_scheme_id=None,
+                sms_summary=None,
+                confidence=top_sim,
+                mode=llm_state.current_mode,
+                latency_ms=elapsed_ms,
+            )
+
         matched_scheme_id: Optional[str] = None
         sms_summary: Optional[str] = None
 
@@ -508,7 +547,7 @@ class RagEngine:
                         portal=str(doc.metadata.get("portal_url") or "https://pmkisan.gov.in"),
                     )
                 )
-            clean_chunk = doc.page_content.removeprefix("passage: ").strip()
+            clean_chunk = sanitize_retrieved_context(doc.page_content.removeprefix("passage: ").strip())
             context_blocks.append(f"[{idx}] ({src_id}, score={sim:.3f}):\n{clean_chunk}")
 
         context_str = "\n\n".join(context_blocks)

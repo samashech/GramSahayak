@@ -27,9 +27,9 @@ async function startStub(handler) {
 }
 
 // A contract-shaped /rag/query response (contract section 9).
-function ragResponse({ answer, matched = null, sms = null, sources = [], mode = 'llm' }) {
+function ragResponse({ answer, matched = null, sms = null, sources = [], mode = 'llm', confidence }) {
   return {
-    answer, sources, matched_scheme_id: matched, sms_summary: sms, confidence: matched ? 0.91 : 0.42, mode, latency_ms: 120,
+    answer, sources, matched_scheme_id: matched, sms_summary: sms, confidence: confidence ?? (matched ? 0.91 : 0.42), mode, latency_ms: 120,
   };
 }
 

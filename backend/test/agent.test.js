@@ -33,6 +33,7 @@ before(async () => {
       return { json: ragResponse({ answer: 'सभी भूमिधारक किसान परिवार पात्र हैं। pmkisan.gov.in', matched: 'PMKISAN', sms: 'RAG WROTE THIS', sources: [pmkisanSource] }) };
     }
     if (json.query.includes('ஆபத்தான')) return { json: ragResponse({ answer: 'இரத்தப்போக்கு, வலிப்பு ஆகியவை ஆபத்து அறிகுறிகள்.' }) };
+    if (json.query.includes('साँप')) return { json: ragResponse({ answer: 'RAG-04: तुरंत 108 एम्बुलेंस पर कॉल करें, मरीज को शांत रखें।', confidence: 1.0, mode: 'extractive' }) };
     return { json: ragResponse({ answer: 'model text that must not be used for safety cases' }) };
   });
   sarvam = await startStub(({ url }) => {
@@ -87,6 +88,13 @@ test('S1 snake bite: fixed emergency answer, flagged 108, no card, even though R
   assert.equal(json.data.matchedSchemeId, null);
   assert.equal(json.data.smsReceipt, null);
   assert.ok(json.data.answerText.indexOf('108') < 40, '108 first');
+});
+
+test('RAG-04 safety override (confidence 1.0, has 108) is kept; flag still set by the gateway', async () => {
+  const { json } = await chat({ queryText: 'साँप ने काट लिया, क्या करूँ?', languageCode: 'hi-IN', role: 'farmer' });
+  assert.match(json.data.answerText, /^RAG-04:/);
+  assert.deepEqual(json.data.safety, { flagged: true, helplines: ['108'] });
+  assert.equal(json.data.matchedSchemeId, null);
 });
 
 test('G4 pregnancy danger signs: RAG answer kept, safety flagged 108 + 102', async () => {

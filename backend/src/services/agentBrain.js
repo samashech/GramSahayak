@@ -18,6 +18,7 @@ const { localName, smsSummaryFor } = require('./schemeView');
 // Returns AnswerData (contract section 6).
 
 const MAX_QUERY_CHARS = 2000;
+const REQUIRED_HELPLINE = { emergency: '108', doseAgri: '1800-180-1551', doseMedical: '104' };
 const DOMAIN_RE = /\s*\b(?:https?:\/\/)?[\w.-]+\.(?:gov|nic|org|com)\.in\b\S*/gi;
 
 const sourceRefFromRag = (s) => ({
@@ -103,9 +104,13 @@ async function answerQuery({
   let sources;
   let source;
   if (rag) {
-    // Emergencies and dose requests always get the fixed safe text, even when RAG answers.
+    // Emergencies and dose requests never get model text. RAG-04's own fixed safety answer
+    // (returned with confidence 1.0, no LLM) is kept when it carries the required helpline;
+    // anything else is replaced by the gateway's fixed text.
     const fixed = ['emergency', 'doseAgri', 'doseMedical'].includes(safety.kind);
-    answerText = fixed ? msg.SAFETY_ANSWERS[safety.kind][msg.langOf(languageCode)] : String(rag.answer || '');
+    const ragAnswer = String(rag.answer || '');
+    const ragSafetyOverride = rag.confidence >= 0.999 && ragAnswer.includes(REQUIRED_HELPLINE[safety.kind]);
+    answerText = fixed && !ragSafetyOverride ? msg.SAFETY_ANSWERS[safety.kind][msg.langOf(languageCode)] : ragAnswer;
     matchedSchemeId = fixed ? null : rag.matched_scheme_id ?? null;
     card = seedSchemes.getByCode(matchedSchemeId);
     sources = (rag.sources || []).map(sourceRefFromRag);

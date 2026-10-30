@@ -237,6 +237,32 @@ class RagEngine:
         if not self._embed_ready.is_set():
             self._embed_ready.wait(timeout=timeout)
 
+    def sync_existing_raw_categories_to_manifest(self) -> None:
+        """Preserve any existing source->category metadata from Chroma into raw_manifest.json before reset (CCR-06)."""
+        if self.chroma_client is None:
+            return
+        try:
+            collection = self.chroma_client.get_or_create_collection(
+                name=settings.CHROMA_COLLECTION,
+                metadata={"hnsw:space": "cosine"},
+            )
+            if collection.count() == 0:
+                return
+            existing = collection.get(include=["metadatas"])
+            metadatas = existing.get("metadatas") or []
+            from ingest import GUIDE_CATEGORY_MAP, record_raw_file_category
+
+            seed_sources = set(GUIDE_CATEGORY_MAP.keys()) | {"schemes.json"}
+            for meta in metadatas:
+                if not isinstance(meta, dict):
+                    continue
+                src = str(meta.get("source") or "").strip()
+                cat = str(meta.get("category") or "").strip()
+                if src and src not in seed_sources and cat:
+                    record_raw_file_category(settings.RAW_DIR / src, cat)
+        except Exception as exc:
+            logger.warning("Failed to snapshot existing raw categories from Chroma: %s", exc)
+
     def reset_collection(self) -> None:
         """Delete and recreate the Chroma collection."""
         self.ensure_embeddings_ready()
@@ -300,13 +326,14 @@ class RagEngine:
         self.ensure_embeddings_ready()
         target_path = self._resolve_repo_path(req.file_path)
 
-        from ingest import load_raw_file_documents
+        from ingest import load_raw_file_documents, record_raw_file_category
 
         try:
             items = load_raw_file_documents(target_path, category=req.category)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+        record_raw_file_category(target_path, req.category)
         ingested_count = self.upsert_documents(items)
         return RagIngestResponse(
             ingested_chunks=ingested_count,

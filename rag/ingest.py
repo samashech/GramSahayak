@@ -22,6 +22,78 @@ GUIDE_CATEGORY_MAP: dict[str, str] = {
     "education.md": "education",
 }
 
+VALID_CATEGORIES = {"schemes", "agri", "health", "education"}
+
+
+def _raw_manifest_path() -> Path:
+    settings.CHROMA_DIR.mkdir(parents=True, exist_ok=True)
+    return settings.CHROMA_DIR / "raw_manifest.json"
+
+
+def load_raw_category_manifest() -> dict[str, str]:
+    """Load persisted per-file category mapping for files ingested via POST /rag/ingest (CCR-06)."""
+    manifest: dict[str, str] = {}
+    for candidate in (_raw_manifest_path(), settings.RAW_DIR / ".manifest.json"):
+        if candidate.exists():
+            try:
+                data = json.loads(candidate.read_text(encoding="utf-8"))
+                if isinstance(data, dict):
+                    for k, v in data.items():
+                        if isinstance(k, str) and isinstance(v, str) and v in VALID_CATEGORIES:
+                            manifest[k] = v
+            except Exception as exc:
+                logger.warning("Failed to read raw category manifest %s: %s", candidate, exc)
+    return manifest
+
+
+def record_raw_file_category(file_path: Path, category: str) -> None:
+    """Persist the assigned category for a file ingested via POST /rag/ingest so re-indexing preserves it (CCR-06)."""
+    if category not in VALID_CATEGORIES:
+        return
+    manifest = load_raw_category_manifest()
+    manifest[file_path.name] = category
+    try:
+        rel_key = file_path.resolve().relative_to(settings.REPO_ROOT.resolve()).as_posix()
+        manifest[rel_key] = category
+    except ValueError:
+        pass
+    try:
+        _raw_manifest_path().write_text(
+            json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+    except Exception as exc:
+        logger.warning("Failed to persist raw category manifest: %s", exc)
+
+
+def resolve_raw_file_category(raw_file: Path, manifest: Optional[dict[str, str]] = None) -> str:
+    """Resolve category for a file in /data/raw: JSON card category -> manifest -> filename token -> 'schemes'."""
+    if raw_file.suffix.lower() == ".json":
+        try:
+            data = json.loads(raw_file.read_text(encoding="utf-8"))
+            card = data[0] if isinstance(data, list) and data else data
+            if isinstance(card, dict) and card.get("category") in VALID_CATEGORIES:
+                return str(card["category"])
+        except Exception:
+            pass
+
+    active_manifest = manifest if manifest is not None else load_raw_category_manifest()
+    try:
+        rel_key = raw_file.resolve().relative_to(settings.REPO_ROOT.resolve()).as_posix()
+        if rel_key in active_manifest:
+            return active_manifest[rel_key]
+    except ValueError:
+        pass
+    if raw_file.name in active_manifest:
+        return active_manifest[raw_file.name]
+
+    stem_lower = raw_file.stem.lower()
+    for cat in ("agri", "health", "education", "schemes"):
+        if re.search(rf"(?:^|[_\-\s]){cat}(?:$|[_\-\s])", stem_lower) or stem_lower.startswith(cat):
+            return cat
+
+    return "schemes"
+
 GUIDE_DEFAULTS: dict[str, dict[str, str]] = {
     "agri": {
         "helpline": "1800-180-1551",
@@ -374,9 +446,15 @@ def collect_all_seed_documents() -> List[Tuple[str, Document]]:
             all_items.extend(load_guide_documents(guide_file, category=category))
 
     if settings.RAW_DIR.exists():
+        manifest = load_raw_category_manifest()
         for raw_file in sorted(settings.RAW_DIR.iterdir()):
-            if raw_file.is_file() and raw_file.suffix.lower() in {".pdf", ".txt", ".md", ".json"}:
-                all_items.extend(load_raw_file_documents(raw_file, category="schemes"))
+            if (
+                raw_file.is_file()
+                and not raw_file.name.startswith(".")
+                and raw_file.suffix.lower() in {".pdf", ".txt", ".md", ".json"}
+            ):
+                resolved_category = resolve_raw_file_category(raw_file, manifest=manifest)
+                all_items.extend(load_raw_file_documents(raw_file, category=resolved_category))
 
     return all_items
 
@@ -387,6 +465,9 @@ def run_seed_ingest(reset: bool = False) -> dict[str, Any]:
 
     t0 = time.perf_counter()
     rag_engine.ensure_initialized_sync()
+
+    # Snapshot any existing source->category mappings from Chroma before resetting collection (CCR-06)
+    rag_engine.sync_existing_raw_categories_to_manifest()
 
     if reset:
         rag_engine.reset_collection()

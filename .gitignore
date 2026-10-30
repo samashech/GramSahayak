@@ -1,5 +1,7 @@
 # Contract section 11: never commit secrets or build output
+node_modules
 node_modules/
+frontend/node_modules
 .env
 .env.local
 .venv/

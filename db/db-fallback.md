@@ -137,3 +137,21 @@ cd backend && npm start
 **Nothing.**
 - Every `/api/*` endpoint (`GET /api/schemes`, `POST /api/eligibility`, `GET/POST /api/profile`, `POST /api/chat`, `POST /api/voice-chat`, `POST /api/ivr-simulate`, `POST /api/sms-simulate`, `POST /api/demo/reset`) returns the **exact same `{success: true, data, error: null, timestamp}` JSON envelope**, the exact same 13 schemes, and the exact same 5 judge personas with their 2-turn `starter_history`.
 - No error banner, no blank state, and no latency spike appears on the Frontend (`:3000`). Only `GET /api/health` (`data.db.driver`) reflects `"postgres"`, `"sqlite"`, or `"memory"` for operator visibility.
+
+---
+
+## 6. Snapshot & Restore Drill (`DB-06`) — verified 2026-10-31
+
+```bash
+python3 db/snapshot.py                     # DB_DRIVER (memory -> sqlite): tables.json + .sqlite copy
+python3 db/snapshot.py --driver postgres   # Supabase (read-only); DATABASE_URL from backend/.env or .env
+rm data/gram_sahayak.sqlite                # the "disaster"
+python3 db/restore.py                      # latest snapshot -> SQLite (46 ms measured)
+python3 db/demo_reset.py --driver sqlite --check   # expect: 0 differences
+```
+
+- Snapshots live in `db/snapshots/<UTC>-<driver>/` (git-ignored). A Supabase snapshot can be restored into SQLite
+  (venue Wi-Fi cut rule DR-04): `python3 db/restore.py --driver sqlite --snapshot db/snapshots/<...>-postgres`.
+- `restore.py` replaces all rows in one transaction and refuses when `APP_ENV=production` unless `--force`.
+- Measured drill: snapshot -> delete file -> restore in 46 ms -> `demo_reset --check` 0 differences; Supabase
+  snapshot -> SQLite restore -> 0 differences.

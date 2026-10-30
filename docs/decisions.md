@@ -36,6 +36,7 @@
 | `2026-10-31 H10` | `DEC-12` | **PMMVY helpline 1515** | Seed helpline changed `14408` -> `1515` (MWCD/Mission Shakti toll-free per LD-02 note); `14408` kept as a note in `how_to_apply` and `health.md`. Human confirmation against the official portal still required (LD-02). | `be`, `db`, `lead` |
 | `2026-10-31 H10` | `DEC-13` | **Takeover brief vs contract** | Contract wins (DR-01): endpoint names stay `/api/voice-chat`, `/api/ivr-simulate {stage, dtmfDigit}`, no `/api/demo/personas`; SSE sends unnamed `data:{type,...}` events (contract section 6). The brief's "PM-KISAN 2 ha limit" trap is NOT encoded: PM-KISAN has no land ceiling (seed + LD-02). LD-04 instead checks that land/eligibility questions are never decided by the LLM (R4). | `fe`, `be`, `lead` |
 | `2026-10-31 H10` | `DEC-14` | **Reproducible installs** | `frontend/package-lock.json` restored (it was lost with the CCR-05 root cleanup, so `npm ci` failed). `rag/.venv` = Python 3.11 + CPU-only torch via `uv` (no CUDA download). `scripts/start-demo.sh` starts all three tiers. | `fe`, `rag`, `lead` |
+| `2026-10-31 H10` | `DEC-15` | **RAG readiness = warm** | `/health` is `"ok"` only after model load + seed ingest + 4 warm-up retrievals (was: as soon as Chroma opened, so the first query blocked during warm-up). Cold start ~6.6 s (empty index), RSS ~913 MB -> laptop + tunnel (DR-05). | `rag`, `be` |
 
 ---
 

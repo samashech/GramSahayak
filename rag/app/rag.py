@@ -294,17 +294,22 @@ class RagEngine:
         with self._init_lock:
             t0 = time.perf_counter()
             self._open_chroma_client()
-            self.ready = True
+            # Not `ready` here: during server startup this runs mid-ingest; readiness is set by
+            # _load_embedding_model after ingest + warm-up (RAG-07).
             if not self._embed_ready.is_set():
                 self._load_embedding_model(t0, auto_ingest_if_empty=False)
 
     def initialize(self) -> None:
-        """Open persistent ChromaDB collection immediately and load embedding model at startup."""
+        """Open persistent ChromaDB collection immediately and load embedding model at startup.
+
+        RAG-07: `ready` (GET /health status "ok") is set only after the model is loaded, the seed is
+        ingested and a warm-up retrieval has run, so the first real query never pays the cold start.
+        """
         with self._init_lock:
             t0 = time.perf_counter()
             self._open_chroma_client()
-            self.ready = True
             if self._embed_ready.is_set():
+                self.ready = True
                 return
 
         loader_thread = threading.Thread(
@@ -360,9 +365,31 @@ class RagEngine:
                 from ingest import run_seed_ingest
 
                 run_seed_ingest(reset=False)
+
+            self._warm_up()
+            self.ready = True
+            logger.info("RAG ready (cold start %d ms)", int((time.perf_counter() - t0) * 1000))
         except Exception as exc:
             logger.error("Failed to load embedding model '%s': %s", settings.EMBED_MODEL, exc)
             self._embed_ready.set()
+
+    # One retrieval per demo language warms tokenizer, model and HNSW index (RAG-07).
+    _WARM_UP_QUERIES = (
+        "पीएम किसान योजना के लिए कौन पात्र है?",
+        "कापसावर गुलाबी बोंडअळी आली आहे, काय करावे?",
+        "ஜனனி சுரக்ஷா யோஜனா திட்டத்தில் எவ்வளவு பணம் கிடைக்கும்?",
+        "How do I apply on the National Scholarship Portal?",
+    )
+
+    def _warm_up(self) -> None:
+        t_warm = time.perf_counter()
+        for q in self._WARM_UP_QUERIES:
+            try:
+                self.search_chunks_timed(q, category=None, k=3)
+            except Exception as exc:  # warm-up must never block startup
+                logger.warning("Warm-up query failed: %s", exc)
+                return
+        logger.info("Warm-up: %d retrievals in %d ms", len(self._WARM_UP_QUERIES), int((time.perf_counter() - t_warm) * 1000))
 
     def ensure_embeddings_ready(self, timeout: float = 30.0) -> None:
         if not self._embed_ready.is_set():

@@ -1,0 +1,14 @@
+**/node_modules
+**/.venv
+**/__pycache__
+**/.env
+**/.env.*
+!.env.example
+rag/chroma_db
+frontend
+.git
+.demo-logs
+*.sqlite
+db/snapshots
+backend/uploads
+*.docx

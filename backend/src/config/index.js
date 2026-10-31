@@ -106,6 +106,8 @@ const config = {
     webhookSecret: env.CLOUDTALK_WEBHOOK_SECRET || '',
     baseUrl: 'https://my.cloudtalk.io',
   },
+  // Bearer token the Sarvam voice agent's HTTPS tool sends to POST /api/agent/answer (DEC-19).
+  agentToolToken: env.AGENT_TOOL_TOKEN || '',
 
   paths: {
     seedDir: path.join(REPO_ROOT, 'data/seed'),

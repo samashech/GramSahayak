@@ -54,6 +54,12 @@ flowchart LR
 
 Contract and rules: [`docs/api-contract.md`](docs/api-contract.md) (source of truth) · [`docs/architecture-blueprint.md`](docs/architecture-blueprint.md) · [`docs/decisions.md`](docs/decisions.md).
 
+## Live demo
+
+Frontend https://gramsahayak-puce.vercel.app (`/voice`, `/ivr`, `/sms`, `/eligibility`, `/live`) · backend
+https://gramsahayak-api.azurewebsites.net/api/health · how it is deployed: [`deploy/README.md`](deploy/README.md) ·
+real phone calls through a Sarvam voice agent: [`docs/sarvam-voice-agent.md`](docs/sarvam-voice-agent.md).
+
 ## Quickstart
 
 ```bash

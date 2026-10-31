@@ -1,5 +1,10 @@
 # Deployment (DEC-19): Vercel + Azure App Service + Supabase
 
+Live (2026-10-31): frontend https://gramsahayak-puce.vercel.app · backend https://gramsahayak-api.azurewebsites.net
+(App Service B1, India South Central / Hyderabad: Azure for Students only allows eastasia, indiasouthcentral,
+koreacentral, indonesiacentral, uaenorth). e2e against the backend: 20/21; G8 misses 300 ms only by the
+laptop-to-Azure round trip (~270 ms).
+
 ```
 Browser ──► Vercel (Next.js, frontend/) ──NEXT_PUBLIC_API_URL──► Azure App Service (one container)
                                                                  ├─ Node gateway  :8080 (public, HTTPS)
@@ -11,12 +16,13 @@ Sarvam voice agent ──► /api/agent/answer ───────────
 
 Why: the RAG needs ~0.9 GB RAM (free 512 MB tiers fail); Hugging Face Docker Spaces need PRO. Azure for
 Students (GitHub Student Developer Pack) gives $100 credit without a card; App Service B1 (1.75 GB) uses
-about $13/month of it, always on, HTTPS included, Central India next to Supabase.
+about $13/month of it, always on, HTTPS included, Hyderabad next to Supabase (Mumbai).
 
 ## One-time setup
 
 1. **Azure:** activate Azure for Students (education.github.com/pack → Microsoft Azure), then
-   `sudo pacman -S azure-cli` and `az login --use-device-code`.
+   `uv tool install --python 3.12 azure-cli` (no sudo) and `az login --use-device-code`.
+   Student subscriptions allow only some regions: `AZ_LOCATION=indiasouthcentral bash deploy/azure.sh`.
 2. **Image:** pushing to `dev` runs `.github/workflows/backend-image.yml` (backend tests, then build) and
    publishes `ghcr.io/<owner>/gramsahayak-backend`. Once, on GitHub → your profile → Packages →
    `gramsahayak-backend` → Package settings → Change visibility → **Public** (Azure pulls it without a token).
@@ -28,7 +34,7 @@ about $13/month of it, always on, HTTPS included, Central India next to Supabase
    vercel env add NEXT_PUBLIC_USE_MOCKS production   # false
    vercel --prod
    ```
-5. **CORS:** `FRONTEND_ORIGIN=https://<project>.vercel.app bash deploy/azure.sh` (re-run is safe).
+5. **CORS:** `AZ_LOCATION=indiasouthcentral FRONTEND_ORIGIN=https://<project>.vercel.app bash deploy/azure.sh` (re-run is safe).
 6. **Phone calls:** `docs/sarvam-voice-agent.md`.
 
 ## Updating

@@ -68,12 +68,16 @@ bash scripts/start-demo.sh           # --sqlite (no Supabase) · --mock-ai (gold
 # 2. open
 #   http://localhost:3000/voice   (Tab 1)   /ivr (Tab 2)   /sms (Tab 3)   /eligibility (Tab 4)
 #   http://localhost:3000/live    projector view          http://localhost:5000/api/docs   API
+
+# 3. phone on the same Wi-Fi (HTTPS so the microphone works; /api is proxied, only :3000 is reachable)
+bash scripts/start-demo.sh --lan     # prints https://<wifi-ip>:3000/voice; accept the self-signed certificate once
 ```
 
 | Variable | Where | Meaning |
 |---|---|---|
 | `DB_DRIVER`, `DATABASE_URL` | `backend/.env` | `postgres` + Supabase pooler URL (port 6543); falls back to SQLite / memory automatically |
-| `SARVAM_API_KEY` | `backend/.env` | Sarvam STT/TTS; without it speech-to-text uses Groq Whisper and speech output uses the browser |
+| `SARVAM_API_KEY`, `SARVAM_TTS_MODEL`, `SARVAM_TTS_SPEAKER` | root or `backend/.env` | Sarvam voice output `bulbul:v3` (web + call) and STT fallback; without it answers are spoken by the browser |
+| `STT_ORDER` | root `.env` | speech-to-text providers in order, default `groq,sarvam` (API only, never the browser) |
 | `LLM_API_KEY`, `LLM_MODEL`, `LLM_FALLBACK_MODELS`, `MOCK_LLM` | root `.env` | Groq for RAG answers (qwen3.8-27b, fallbacks on rate limit) and Whisper speech-to-text (DEC-16/17); `MOCK_LLM=true` = extractive only |
 | `CLOUDTALK_*` | `backend/.env` | real calls/SMS; without them delivery is `simulated` |
 | `USE_MOCK_AI`, `DEMO_MODE` | `backend/.env` | golden-cache-only mode; enables `POST /api/demo/reset` |
@@ -122,8 +126,8 @@ responses: [`docs/endpoint-map.md`](docs/endpoint-map.md); OpenAPI at `/api/docs
 | Supabase Postgres | **Real** (pooler :6543), with automatic SQLite / memory fallback |
 | RAG: LangChain + Chroma + multilingual-e5 over the seed | **Real**, running locally; answers written by Groq `qwen3.8-27b` grounded in the retrieved cards/guides (eval 9/9 in llm mode); on Groq rate limits it tries two other models, then extractive (DEC-16). Questions are sent to Groq. |
 | Golden demo cache | **Real**, recorded from the live RAG service (`scripts/build-golden-cache.js`) |
-| Speech-to-text | **Real**: Groq Whisper `whisper-large-v3` (hi/mr/ta/en, verified with recorded audio); recordings are sent to Groq. Sarvam `saarika:v2.5` is integrated and used first when `SARVAM_API_KEY` is set (not live-tested) |
-| Speech output | Browser speech synthesis (voices depend on the OS); Sarvam `bulbul:v2` TTS when `SARVAM_API_KEY` is set (not live-tested) |
+| Speech-to-text | **Real**, API only: Groq Whisper `whisper-large-v3` first (hi/mr/ta/en, verified with recorded audio), Sarvam `saarika:v2.5` as fallback (live-tested). Recordings are sent to Groq / Sarvam. The browser's speech recognition is not used |
+| Speech output | **Real**: Sarvam `bulbul:v3` (voice `priya`) for web answers and every IVR prompt; call prompts are pre-rendered at boot. A voice turn takes ~6 s end to end (target 4.5 s). Browser speech synthesis only if Sarvam fails |
 | Phone call | **Simulated**: browser IVR runs the same controller as the CloudTalk webhooks (webhooks tested locally with `scripts/test-webhooks.sh`; no live number) |
 | SMS delivery to a phone | **Simulated** (`delivery: "simulated"` everywhere); real sending needs CloudTalk credentials and DLT templates |
 | Scheme facts, helplines, Marathi/Tamil text | Written from public knowledge, **pending human verification** ([`docs/fact-check-worksheet.md`](docs/fact-check-worksheet.md), [`docs/localisation-review.md`](docs/localisation-review.md)) |
@@ -160,5 +164,5 @@ scripts/    start-demo.sh · e2e.sh · test-webhooks.sh · safety_audit.py · bu
 ## Team & roadmap
 
 Built in 24 hours by a five-role team (Frontend, Backend, Database, RAG, Lead) on one shared contract, then integrated and
-hardened by one developer (DEC-10). Next: a real CloudTalk number with DLT-registered SMS, Sarvam voices live, more languages
+hardened by one developer (DEC-10). Next: a real CloudTalk number with DLT-registered SMS, streaming speech to cut voice latency, more languages
 and state schemes, and a district pilot with CSC / Panchayat operators.

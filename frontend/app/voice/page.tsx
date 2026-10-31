@@ -324,35 +324,7 @@ export default function VoicePage() {
         setRecordingSeconds((prev) => prev + 1);
       }, 1000);
 
-      // Optional Web Speech API Recognition for live transcript hint
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRec) {
-        try {
-          const rec = new SpeechRec();
-          rec.continuous = true;
-          rec.interimResults = true;
-          rec.lang = languageCode;
-
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          rec.onresult = (ev: any) => {
-            let interim = '';
-            for (let i = ev.resultIndex; i < ev.results.length; ++i) {
-              interim += ev.results[i][0].transcript;
-            }
-            if (interim) setSpeechHint(interim);
-          };
-
-          rec.onerror = () => {
-            // Non-fatal recognition fallback
-          };
-
-          rec.start();
-          speechRecognitionRef.current = rec;
-        } catch {
-          // ignore recognition init errors
-        }
-      }
+      // Speech is transcribed only on the gateway (Groq Whisper / Sarvam API), never by the browser.
     } catch (err: unknown) {
       console.warn('Microphone permission denied or unavailable:', err);
       setMicError('कृपया माइक्रोफ़ोन अनुमति दें (Please allow microphone access)');
@@ -377,12 +349,11 @@ export default function VoicePage() {
       }
     }
 
-    const currentHint = speechHint;
 
     mediaRecorderRef.current.onstop = () => {
       const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
       setIsRecording(false);
-      executeQuery('', audioBlob, currentHint);
+      executeQuery('', audioBlob);
     };
 
     mediaRecorderRef.current.stop();

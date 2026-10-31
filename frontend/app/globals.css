@@ -10,25 +10,25 @@
  *  Secondary bg      #DED2BC
  */
 :root {
-  --background: #f4ebdd;
-  --foreground: #293c2d;
-  --card: #fbf6ee;
-  --card-foreground: #293c2d;
-  --popover: #fbf6ee;
-  --popover-foreground: #293c2d;
-  --primary: #49664b;
+  /* GramSahayak premium palette: pale yellow + natural green, square minimal components. */
+  --background: #f7f5e8;
+  --foreground: #303b2c;
+  --card: #fffdf5;
+  --card-foreground: #303b2c;
+  --popover: #fffdf5;
+  --popover-foreground: #303b2c;
+  --primary: #526b45;
   --primary-foreground: #ffffff;
-  --primary-dark: #293c2d;
-  --secondary: #ded2bc;
-  --secondary-foreground: #293c2d;
-  --muted: #ded2bc;
-  /* Darkened for WCAG AA contrast on the cream background. */
-  --muted-foreground: #4f5a4f;
-  --accent: #b49a68;
-  --accent-foreground: #293c2d;
-  --border: #d4c6ab;
-  --ring: #49664b;
-  --radius: 1rem;
+  --primary-dark: #344b35;
+  --secondary: #efedd9;
+  --secondary-foreground: #303b2c;
+  --muted: #efedd9;
+  --muted-foreground: #5e604f; /* #777866 darkened slightly for WCAG AA on #F7F5E8 */
+  --accent: #f1e6b8;
+  --accent-foreground: #303b2c;
+  --border: #dddcc5;
+  --ring: #526b45;
+  --radius: 0.5rem;
 }
 
 @theme inline {
@@ -50,10 +50,34 @@
   --color-border: var(--border);
   --color-ring: var(--ring);
 
-  --radius-sm: calc(var(--radius) - 6px);
-  --radius-md: calc(var(--radius) - 4px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* Square language: 4-8px corners everywhere (circles via rounded-full stay round). */
+  --radius-xs: 4px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
+  --radius-2xl: 8px;
+  --radius-3xl: 8px;
+
+  /* Existing pages use Tailwind palettes: remap them onto the GramSahayak palette (no blue/purple/neon). */
+  --color-emerald-50: #f8f0d4; --color-emerald-100: #f1e6b8; --color-emerald-200: #dddcc5; --color-emerald-300: #b9c4a6; --color-emerald-400: #7f9670; --color-emerald-500: #5f7a51; --color-emerald-600: #526b45; --color-emerald-700: #344b35; --color-emerald-800: #2c3f2d; --color-emerald-900: #253526; --color-emerald-950: #1d2a1e;
+  --color-green-50: #f8f0d4; --color-green-100: #f1e6b8; --color-green-200: #dddcc5; --color-green-300: #b9c4a6; --color-green-400: #7f9670; --color-green-500: #5f7a51; --color-green-600: #526b45; --color-green-700: #344b35; --color-green-800: #2c3f2d; --color-green-900: #253526; --color-green-950: #1d2a1e;
+  --color-teal-50: #f8f0d4; --color-teal-100: #f1e6b8; --color-teal-200: #dddcc5; --color-teal-300: #b9c4a6; --color-teal-400: #7f9670; --color-teal-500: #5f7a51; --color-teal-600: #526b45; --color-teal-700: #344b35; --color-teal-800: #2c3f2d; --color-teal-900: #253526; --color-teal-950: #1d2a1e;
+  --color-lime-50: #f8f0d4; --color-lime-100: #f1e6b8; --color-lime-200: #dddcc5; --color-lime-300: #b9c4a6; --color-lime-400: #7f9670; --color-lime-500: #5f7a51; --color-lime-600: #526b45; --color-lime-700: #344b35; --color-lime-800: #2c3f2d; --color-lime-900: #253526; --color-lime-950: #1d2a1e;
+  --color-sky-50: #f8f0d4; --color-sky-100: #f1e6b8; --color-sky-200: #dddcc5; --color-sky-300: #b9c4a6; --color-sky-400: #7f9670; --color-sky-500: #5f7a51; --color-sky-600: #526b45; --color-sky-700: #344b35; --color-sky-800: #2c3f2d; --color-sky-900: #253526; --color-sky-950: #1d2a1e;
+  --color-blue-50: #f8f0d4; --color-blue-100: #f1e6b8; --color-blue-200: #dddcc5; --color-blue-300: #b9c4a6; --color-blue-400: #7f9670; --color-blue-500: #5f7a51; --color-blue-600: #526b45; --color-blue-700: #344b35; --color-blue-800: #2c3f2d; --color-blue-900: #253526; --color-blue-950: #1d2a1e;
+  --color-indigo-50: #f8f0d4; --color-indigo-100: #f1e6b8; --color-indigo-200: #dddcc5; --color-indigo-300: #b9c4a6; --color-indigo-400: #7f9670; --color-indigo-500: #5f7a51; --color-indigo-600: #526b45; --color-indigo-700: #344b35; --color-indigo-800: #2c3f2d; --color-indigo-900: #253526; --color-indigo-950: #1d2a1e;
+  --color-violet-50: #f8f0d4; --color-violet-100: #f1e6b8; --color-violet-200: #dddcc5; --color-violet-300: #b9c4a6; --color-violet-400: #7f9670; --color-violet-500: #5f7a51; --color-violet-600: #526b45; --color-violet-700: #344b35; --color-violet-800: #2c3f2d; --color-violet-900: #253526; --color-violet-950: #1d2a1e;
+  --color-purple-50: #f8f0d4; --color-purple-100: #f1e6b8; --color-purple-200: #dddcc5; --color-purple-300: #b9c4a6; --color-purple-400: #7f9670; --color-purple-500: #5f7a51; --color-purple-600: #526b45; --color-purple-700: #344b35; --color-purple-800: #2c3f2d; --color-purple-900: #253526; --color-purple-950: #1d2a1e;
+  --color-cyan-50: #f8f0d4; --color-cyan-100: #f1e6b8; --color-cyan-200: #dddcc5; --color-cyan-300: #b9c4a6; --color-cyan-400: #7f9670; --color-cyan-500: #5f7a51; --color-cyan-600: #526b45; --color-cyan-700: #344b35; --color-cyan-800: #2c3f2d; --color-cyan-900: #253526; --color-cyan-950: #1d2a1e;
+  --color-amber-50: #fffdf5; --color-amber-100: #f8f0d4; --color-amber-200: #f1e6b8; --color-amber-300: #e6d595; --color-amber-400: #d9c27a; --color-amber-500: #c9ad5f; --color-amber-600: #a88d45; --color-amber-700: #7d6a35; --color-amber-800: #5c4f2a; --color-amber-900: #403820; --color-amber-950: #2b2616;
+  --color-yellow-50: #fffdf5; --color-yellow-100: #f8f0d4; --color-yellow-200: #f1e6b8; --color-yellow-300: #e6d595; --color-yellow-400: #d9c27a; --color-yellow-500: #c9ad5f; --color-yellow-600: #a88d45; --color-yellow-700: #7d6a35; --color-yellow-800: #5c4f2a; --color-yellow-900: #403820; --color-yellow-950: #2b2616;
+  --color-orange-50: #fffdf5; --color-orange-100: #f8f0d4; --color-orange-200: #f1e6b8; --color-orange-300: #e6d595; --color-orange-400: #d9c27a; --color-orange-500: #c9ad5f; --color-orange-600: #a88d45; --color-orange-700: #7d6a35; --color-orange-800: #5c4f2a; --color-orange-900: #403820; --color-orange-950: #2b2616;
+  --color-zinc-50: #fffdf5; --color-zinc-100: #f7f5e8; --color-zinc-200: #efedd9; --color-zinc-300: #dddcc5; --color-zinc-400: #a9a993; --color-zinc-500: #777866; --color-zinc-600: #5e604f; --color-zinc-700: #4a4d3f; --color-zinc-800: #3a3f33; --color-zinc-900: #303b2c; --color-zinc-950: #232b20;
+  --color-stone-50: #fffdf5; --color-stone-100: #f7f5e8; --color-stone-200: #efedd9; --color-stone-300: #dddcc5; --color-stone-400: #a9a993; --color-stone-500: #777866; --color-stone-600: #5e604f; --color-stone-700: #4a4d3f; --color-stone-800: #3a3f33; --color-stone-900: #303b2c; --color-stone-950: #232b20;
+  --color-gray-50: #fffdf5; --color-gray-100: #f7f5e8; --color-gray-200: #efedd9; --color-gray-300: #dddcc5; --color-gray-400: #a9a993; --color-gray-500: #777866; --color-gray-600: #5e604f; --color-gray-700: #4a4d3f; --color-gray-800: #3a3f33; --color-gray-900: #303b2c; --color-gray-950: #232b20;
+  --color-neutral-50: #fffdf5; --color-neutral-100: #f7f5e8; --color-neutral-200: #efedd9; --color-neutral-300: #dddcc5; --color-neutral-400: #a9a993; --color-neutral-500: #777866; --color-neutral-600: #5e604f; --color-neutral-700: #4a4d3f; --color-neutral-800: #3a3f33; --color-neutral-900: #303b2c; --color-neutral-950: #232b20;
+  --color-slate-50: #fffdf5; --color-slate-100: #f7f5e8; --color-slate-200: #efedd9; --color-slate-300: #dddcc5; --color-slate-400: #a9a993; --color-slate-500: #777866; --color-slate-600: #5e604f; --color-slate-700: #4a4d3f; --color-slate-800: #3a3f33; --color-slate-900: #303b2c; --color-slate-950: #232b20;
 
   /*
    * Font stack: Latin glyphs come from Noto Sans, Devanagari (Hindi/Marathi)

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Noto_Sans, Noto_Sans_Devanagari, Noto_Sans_Tamil } from 'next/font/google';
+import { Noto_Sans, Noto_Sans_Devanagari, Noto_Sans_Gujarati, Noto_Sans_Tamil } from 'next/font/google';
 import { AppProvider } from '@/context/AppContext';
 import { LanguageProvider } from '@/components/providers/language-provider';
 import { TopBar } from '@/components/navigation/TopBar';
@@ -16,6 +16,12 @@ const notoSans = Noto_Sans({
 const notoDevanagari = Noto_Sans_Devanagari({
   subsets: ['devanagari'],
   variable: '--font-noto-devanagari',
+  display: 'swap',
+});
+
+const notoGujarati = Noto_Sans_Gujarati({
+  subsets: ['gujarati'],
+  variable: '--font-noto-gujarati',
   display: 'swap',
 });
 
@@ -46,9 +52,9 @@ export default function RootLayout({
   return (
     <html
       lang="hi"
-      className={`${notoSans.variable} ${notoDevanagari.variable} ${notoTamil.variable}`}
+      className={`${notoSans.variable} ${notoDevanagari.variable} ${notoGujarati.variable} ${notoTamil.variable}`}
     >
-      <body className="min-h-screen bg-[#FDFBF7] text-zinc-900 antialiased font-sans flex flex-col">
+      <body className="min-h-screen bg-background text-foreground antialiased font-sans flex flex-col overflow-x-hidden">
         <AppProvider>
           <LanguageProvider initialLanguage="hi">
             <TopBar />

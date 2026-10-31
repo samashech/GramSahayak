@@ -21,6 +21,7 @@ const eventBus = require('../services/eventBus');
 //   answer    -> spoken answer + SMS receipt
 //   goodbye   -> call ended
 // Invalid digit: re-prompt the same stage twice, then default (hi-IN / schemes).
+// Voice agent (DEC-18): after an answer the caller can speak again (another answer) or hang up.
 // Silence (no digit / no speech): re-prompt once, then goodbye.
 
 const MAX_INVALID = 2;
@@ -47,8 +48,9 @@ function getCall(phone) {
 
 const lang = (call) => msg.langOf(call.languageCode);
 
+// Fixed prompts (menus, beep, goodbye) come from the TTS cache; answers are spoken fresh.
 async function step(call, stage, promptText, { phone, telephony, answer = null }) {
-  const voice = await voicePipeline.speak(promptText, call.languageCode, { telephony, channel: 'ivr', phone });
+  const voice = await voicePipeline.speak(promptText, call.languageCode, { telephony, channel: 'ivr', phone, cache: !answer });
   return {
     stage,
     promptText,
@@ -66,8 +68,8 @@ async function callIncoming({ callerPhone, telephony = false }) {
   const profile = await sessionService.getProfile(phone);
   if (profile?.language) call.languageCode = profile.language;
   await dbAdapter.logCallOrSms({ sessionKey: phone, phone, channel: 'ivr', eventType: 'call_incoming', detail: { telephony } });
-  // One multilingual menu, spoken with the Hindi voice.
-  const voice = await voicePipeline.speak(msg.IVR.greeting, 'hi-IN', { telephony, channel: 'ivr', phone });
+  // One multilingual menu: each language's part spoken by a voice of that language (cached).
+  const voice = await voicePipeline.speakParts(msg.IVR.greetingParts, { telephony, channel: 'ivr', phone });
   return {
     stage: 'greeting',
     promptText: msg.IVR.greeting,
@@ -162,7 +164,8 @@ async function processSpeech({ callerPhone, recordingUrl, audioPath, text, langu
     });
     call.stage = 'answer';
     call.silence = 0;
-    return step(call, 'answer', answer.answerText, { phone, telephony, answer });
+    // Voice agent: after the answer the caller may ask another question by voice, or hang up.
+    return step(call, 'answer', `${answer.answerText} ${msg.IVR.followUp[lang(call)]}`, { phone, telephony, answer });
   } finally {
     if (downloaded) fs.rm(downloaded, { force: true }, () => {});
   }

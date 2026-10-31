@@ -68,7 +68,7 @@ test('simulator: full call G5 (Tamil, health) follows contract section 7 and ret
   const s = await sim({ callerPhone: CALLER, stage: 'speech', text: G5 });
   const a = s.json.data.answer;
   assert.equal(s.json.data.stage, 'answer');
-  assert.equal(s.json.data.promptText, a.answerText);
+  assert.equal(s.json.data.promptText, `${a.answerText} ${msg.IVR.followUp['ta-IN']}`, 'answer + invitation to ask again');
   assert.equal(a.matchedSchemeId, 'JSY');
   assert.equal(a.source, 'fallback', 'RAG is down in this test');
   assert.equal(a.smsReceipt.smsReceiptText, seedSchemes.getByCode('JSY').sms_summary['ta-IN']);
@@ -78,6 +78,17 @@ test('simulator: full call G5 (Tamil, health) follows contract section 7 and ret
   assert.deepEqual([bye.json.data.stage, bye.json.data.promptText], ['goodbye', msg.IVR.goodbye['ta-IN']]);
   const turns = await sessionService.getHistory(CALLER);
   assert.deepEqual(turns.slice(-2).map((t) => [t.channel, t.speaker]), [['ivr', 'user'], ['ivr', 'assistant']]);
+});
+
+test('voice agent: after an answer the caller can ask another question by voice', async () => {
+  await sim({ callerPhone: CALLER, stage: 'greeting' });
+  await sim({ callerPhone: CALLER, stage: 'language', dtmfDigit: '1' });
+  await sim({ callerPhone: CALLER, stage: 'category', dtmfDigit: '3' });
+  const first = await sim({ callerPhone: CALLER, stage: 'speech', text: 'जननी सुरक्षा योजना में कितना पैसा मिलता है?' });
+  assert.equal(first.json.data.answer.matchedSchemeId, 'JSY');
+  const second = await sim({ callerPhone: CALLER, stage: 'speech', text: 'आयुष्मान कार्ड कैसे बनेगा?' });
+  assert.deepEqual([second.json.data.stage, second.json.data.answer.matchedSchemeId], ['answer', 'PMJAY']);
+  assert.equal((await sim({ callerPhone: CALLER, stage: 'goodbye' })).json.data.stage, 'goodbye');
 });
 
 test('invalid digit: re-prompt the same stage twice, then default hi-IN / schemes', async () => {

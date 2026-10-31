@@ -87,6 +87,13 @@ const config = {
 
   sarvamApiKey: env.SARVAM_API_KEY || '',
   sarvamBaseUrl: 'https://api.sarvam.ai',
+  // bulbul:v2 was retired by Sarvam (HTTP 400 "deprecated"); v3 has its own speaker set.
+  sarvamTtsModel: env.SARVAM_TTS_MODEL || 'bulbul:v3',
+  sarvamTtsSpeaker: env.SARVAM_TTS_SPEAKER || 'priya',
+  sarvamSttModel: env.SARVAM_STT_MODEL || 'saarika:v2.5',
+  // Speech-to-text providers in order (DEC-18): Groq Whisper measured ~0.35 s vs Sarvam ~1.5 s and more
+  // accurate on our hi/mr/ta samples; Sarvam is the API fallback. Set STT_ORDER=sarvam,groq to flip.
+  sttOrder: (env.STT_ORDER || 'groq,sarvam').split(',').map((s) => s.trim()).filter(Boolean),
   llmApiKey: env.LLM_API_KEY || '',
   llmModel: env.LLM_MODEL || 'llama-3.3-70b-versatile',
   // Speech-to-text fallback when Sarvam is not configured: Groq Whisper with the same LLM_API_KEY.

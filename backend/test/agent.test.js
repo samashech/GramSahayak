@@ -235,7 +235,7 @@ test('voice-chat with Sarvam: STT -> agent -> TTS, voice answer has no URL', asy
   assert.equal(stt.headers['api-subscription-key'], 'test-key');
   assert.match(stt.raw.toString('latin1'), /saarika:v2\.5/);
   const tts = sarvam.calls.find((c) => c.url === '/text-to-speech').json;
-  assert.deepEqual([tts.model, tts.speech_sample_rate, tts.target_language_code], ['bulbul:v2', 22050, 'hi-IN']);
+  assert.deepEqual([tts.model, tts.speech_sample_rate, tts.target_language_code], ['bulbul:v3', 22050, 'hi-IN']);
   assert.equal(rag.calls[0].json.for_voice, true);
 });
 

@@ -17,10 +17,10 @@ LANGUAGE_NAMES: dict[str, str] = {
 }
 
 ROLE_HINTS: dict[str, str] = {
-    "farmer": "crops, money and insurance",
-    "asha": "checklists for field work",
-    "panchayat": "documents and where to apply",
-    "student": "deadlines and portal steps",
+    "farmer": "a small farmer: talk about crops, money and insurance in plain words",
+    "asha": "an ASHA worker helping village families: give clear field checklists",
+    "panchayat": "a Panchayat/CSC operator helping others: say which documents and where to apply",
+    "student": "a rural student or parent: give deadlines and simple application steps",
 }
 
 # Exact system text specified in RAG-03 requirement 3
@@ -33,17 +33,23 @@ SYSTEM_PROMPT_TEMPLATE = (
     "Never decide a person's eligibility from numbers; state the official criteria and suggest the Eligibility Checker or the CSC. "
     "Medical: no diagnosis or doses; for danger signs say go to the nearest health centre now and call 108 (ambulance) or 102 (pregnancy ambulance). "
     "Agriculture: no pesticide brand or dose; give the IPM steps from the context and refer to the Krishi Vigyan Kendra or Kisan Call Centre 1800-180-1551. "
-    "The user role is {role}: {role_hint}."
+    "The user role is {role}: {role_hint}. "
+    "STYLE (the listener may have little schooling): talk like a kind village helper, not like a government notice. "
+    "Give the direct answer in the first sentence. Use everyday {language_name} words and short sentences (about 15 words each); "
+    "avoid official jargon and English terms, and if a scheme name or term is needed, say what it means in simple words. "
+    "Address the person respectfully. Say what to do next: where to go (CSC, Gram Panchayat, bank, ASHA/ANM, Krishi Vigyan Kendra), "
+    "what to carry, and which number to call."
 )
 
 VOICE_INSTRUCTION = (
-    "Maximum 3 short sentences. Plain text only: no lists, markdown, URLs or emojis. "
+    "This answer is spoken on a phone call. Maximum 3 short sentences. Plain text only: no lists, markdown, URLs or emojis. "
     "Write amounts and phone numbers in digits exactly as in CONTEXT. End by saying the details are being sent by SMS."
 )
 
 TEXT_INSTRUCTION = (
-    "Answer in at most 5 short sentences of plain text (no markdown, headings, bullets or URLs), clear and strictly "
-    "grounded in the CONTEXT, in {language_name} ({language}). Include the relevant helpline number from CONTEXT."
+    "Answer in at most 5 short sentences of plain text (no markdown, no bold, no headings, no URLs), strictly grounded in "
+    "the CONTEXT, in {language_name} ({language}). If the person must do something, give simple numbered steps "
+    "(1. 2. 3.), one short line each. End with the helpline number from CONTEXT."
 )
 
 VOICE_CLOSING_BY_LANG: dict[str, str] = {

@@ -186,6 +186,18 @@ const SMS_CLOSING = {
 // ---- IVR prompts (B-07, contract section 7) ----
 const IVR = {
   greeting: 'ग्राम सहायक में आपका स्वागत है। हिंदी के लिए 1 दबाएं। मराठीसाठी 2 दाबा. தமிழுக்கு 3 அழுத்தவும்.',
+  // The same greeting split by language, so each part is spoken by a voice of that language.
+  greetingParts: [
+    ['hi-IN', 'ग्राम सहायक में आपका स्वागत है। हिंदी के लिए 1 दबाएं।'],
+    ['mr-IN', 'मराठीसाठी 2 दाबा.'],
+    ['ta-IN', 'தமிழுக்கு 3 அழுத்தவும்.'],
+  ],
+  followUp: {
+    'en-IN': 'To ask another question, speak after the beep, or hang up.',
+    'hi-IN': 'दूसरा सवाल पूछने के लिए बीप के बाद बोलें, या फ़ोन रख दें।',
+    'mr-IN': 'दुसरा प्रश्न विचारण्यासाठी बीपनंतर बोला, किंवा फोन ठेवा.',
+    'ta-IN': 'வேறு கேள்வி கேட்க பீப் ஒலிக்குப் பிறகு பேசுங்கள், அல்லது அழைப்பை முடிக்கவும்.',
+  },
   categoryMenu: {
     'en-IN': 'Press 1 for government schemes, 2 for farming, 3 for health, 4 for scholarships.',
     'hi-IN': 'सरकारी योजना के लिए 1, खेती के लिए 2, स्वास्थ्य के लिए 3, छात्रवृत्ति के लिए 4 दबाएं।',

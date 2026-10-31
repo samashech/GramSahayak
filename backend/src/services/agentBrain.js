@@ -200,14 +200,15 @@ async function answerQuery({
       { channel, speaker: 'assistant', text: answerText, category: answer.category, language: languageCode },
     ], { phone });
   }
-  await dbAdapter.logCallOrSms({
+  // Logs never delay the reply (logCallOrSms swallows its own errors).
+  dbAdapter.logCallOrSms({
     sessionKey, phone, channel, eventType: { fallback: 'fallback', cache: 'cache_hit' }[source] || 'answer',
     detail: { matchedSchemeId: answer.matchedSchemeId, source, safety: answer.safety.flagged, ragError: ragError?.message ?? null },
     latencyMs: answer.latencyMs,
   });
   // On the SMS channel the reply itself is the SMS; the parser logs sms_out.
   if (smsReceipt && channel !== 'sms') {
-    await dbAdapter.logCallOrSms({ sessionKey, phone, channel, eventType: 'sms_receipt', detail: { text: smsReceipt.smsReceiptText, delivery: smsReceipt.delivery } });
+    dbAdapter.logCallOrSms({ sessionKey, phone, channel, eventType: 'sms_receipt', detail: { text: smsReceipt.smsReceiptText, delivery: smsReceipt.delivery } });
     eventBus.pipeline('sms_receipt_dispatched', 0, { channel, phone, text: smsReceipt.smsReceiptText });
   }
   return answer;

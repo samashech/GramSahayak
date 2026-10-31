@@ -4,15 +4,14 @@ const { config, LANGUAGES } = require('../config');
 
 // Sarvam AI speech layer (R3: only Node calls Sarvam).
 //   STT  saarika:v2.5  POST /speech-to-text  (multipart: file, model, language_code)
-//   TTS  bulbul:v2     POST /text-to-speech  (8 kHz for telephony, 22.05 kHz for the web)
+//   TTS  bulbul:v3     POST /text-to-speech  (8 kHz for telephony, 22.05 kHz for the web; v2 retired)
 //   MT   mayura:v1     POST /translate       (optional; never used before retrieval, R6)
 // Auth header: api-subscription-key. Every function degrades instead of throwing to the user:
 // STT throws (caller falls back to transcriptHint / text), TTS returns null (browser TTS).
 
 const STT_TIMEOUT_MS = 8000;
-const TTS_TIMEOUT_MS = 6000;
+const TTS_TIMEOUT_MS = 10000;
 const TTS_MAX_CHARS = 500;
-const TTS_SPEAKER = 'anushka';
 
 const isConfigured = () => Boolean(config.sarvamApiKey);
 const headers = () => ({ 'api-subscription-key': config.sarvamApiKey });
@@ -49,7 +48,7 @@ async function speechToText(wavBuffer, languageCode) {
   if (!isConfigured()) throw new Error('SARVAM_API_KEY is not set');
   const form = new FormData();
   form.append('file', new Blob([wavBuffer], { type: 'audio/wav' }), 'audio.wav');
-  form.append('model', 'saarika:v2.5');
+  form.append('model', config.sarvamSttModel);
   form.append('language_code', LANGUAGES.includes(languageCode) ? languageCode : 'unknown');
   const res = await fetch(`${config.sarvamBaseUrl}/speech-to-text`, {
     method: 'POST', headers: headers(), body: form, signal: AbortSignal.timeout(STT_TIMEOUT_MS),
@@ -68,8 +67,8 @@ async function textToSpeech(text, languageCode, { telephony = false } = {}) {
     const body = await postJson('/text-to-speech', {
       text: Array.from(text).slice(0, TTS_MAX_CHARS).join(''),
       target_language_code: LANGUAGES.includes(languageCode) ? languageCode : 'hi-IN',
-      speaker: TTS_SPEAKER,
-      model: 'bulbul:v2',
+      speaker: config.sarvamTtsSpeaker,
+      model: config.sarvamTtsModel,
       speech_sample_rate: telephony ? 8000 : 22050,
     }, TTS_TIMEOUT_MS);
     return Array.isArray(body.audios) && body.audios[0] ? body.audios[0] : null;

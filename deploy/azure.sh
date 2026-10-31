@@ -14,7 +14,9 @@ PLAN="${AZ_PLAN:-gramsahayak-plan}"
 APP="${AZ_APP:-gramsahayak-api}"
 LOCATION="${AZ_LOCATION:-centralindia}" # Supabase is in Mumbai (ap-south-1)
 OWNER="$(git -C "$ROOT" remote get-url origin | sed -E 's#.*github.com[:/]([^/]+)/.*#\1#' | tr '[:upper:]' '[:lower:]')"
-IMAGE="${AZ_IMAGE:-ghcr.io/$OWNER/gramsahayak-backend:latest}"
+# Pin the image to the pushed commit: App Service caches ":latest" and a restart does not re-pull it.
+SHA="$(git -C "$ROOT" rev-parse origin/dev 2>/dev/null || true)"
+IMAGE="${AZ_IMAGE:-ghcr.io/$OWNER/gramsahayak-backend:${SHA:-latest}}"
 FRONTEND_ORIGIN="${FRONTEND_ORIGIN:-}"
 
 envval() { # first non-empty value of $1 in backend/.env then .env

@@ -26,6 +26,18 @@ const REQUIRED_HELPLINE = { emergency: '108', doseAgri: '1800-180-1551', doseMed
 // this deterministic check removes any slip (LD-04 L1/L2).
 const VERDICT_RE = /(you are (not )?eligible|you (will|won't|do not|don't) (qualify|get it)|आप (पात्र|योग्य) (हैं|नहीं)|तुम्ही पात्र (आहात|नाही)|તમે (પાત્ર|લાયક) (છો|નથી)|நீங்கள் தகுதி(யானவர்|யற்றவர்|யுடையவர்|பெறுவீர்கள்|பெற மாட்டீர்கள்))/i;
 
+const noVerifiedInfo = (languageCode) => msg.NO_VERIFIED_INFO[languageCode] || msg.NO_VERIFIED_INFO[msg.langOf(languageCode)];
+
+// Share of letters in the answer that belong to the requested language's script (Devanagari for
+// hi/mr, Gujarati, Tamil). Extractive mode can return English guide text for a Hindi question.
+const SCRIPT_RE = { 'hi-IN': /[\u0900-\u097F]/g, 'mr-IN': /[\u0900-\u097F]/g, 'gu-IN': /[\u0A80-\u0AFF]/g, 'ta-IN': /[\u0B80-\u0BFF]/g };
+function inLanguageScript(text, languageCode) {
+  const re = SCRIPT_RE[languageCode];
+  if (!re) return true;
+  const letters = (text.match(/\p{L}/gu) || []).length;
+  return letters === 0 || (text.match(re) || []).length / letters >= 0.5;
+}
+
 function withoutVerdict(text, languageCode) {
   if (!VERDICT_RE.test(text)) return text;
   const kept = text.split(/(?<=[.।!?])\s+/).filter((sentence) => !VERDICT_RE.test(sentence));
@@ -95,7 +107,7 @@ function degradedAnswer(queryText, { languageCode, category, safety, forVoice, c
     return hit && { answerText: hit.answerText, card: seedSchemes.getByCode(hit.matchedSchemeId), sources: hit.sources, source: 'cache' };
   };
   return (cacheFirst ? fromCache() || fromCard() : fromCard() || fromCache())
-    || { answerText: msg.NO_VERIFIED_INFO[lang], card: null, sources: [], source: 'fallback' };
+    || { answerText: noVerifiedInfo(languageCode), card: null, sources: [], source: 'fallback' };
 }
 
 function validateInput({ queryText, languageCode, category, role, channel }) {
@@ -168,13 +180,17 @@ async function answerQuery({
       card = null;
       matchedSchemeId = null;
       answerText = msg.UNKNOWN_SCHEME[msg.langOf(languageCode)];
+    } else if (!fixed && rag.mode === 'extractive' && !inLanguageScript(answerText, languageCode)) {
+      // LLM rate-limited and the extractive text is in English: a Hindi caller cannot use it (DEC-20).
+      ({ answerText, card, sources, source } = degradedAnswer(text, { languageCode, category, safety, forVoice }));
+      matchedSchemeId = card ? card.code : null;
     } else if (!fixed && !named && card && rag.mode === 'extractive') {
       // Extractive mode (LLM rate-limited) cannot judge relevance and card scores do not separate real
       // from unrelated questions (DEC-20: a Tamil state scheme matched JSY at 0.81). Without the scheme
       // being named, say so honestly instead of reading out a neighbouring card.
       card = null;
       matchedSchemeId = null;
-      answerText = msg.NO_VERIFIED_INFO[msg.langOf(languageCode)];
+      answerText = noVerifiedInfo(languageCode);
     }
     // A call must never speak only "details are sent by SMS": a closing-only RAG answer
     // (seen with reasoning LLMs whose token budget runs out) is rebuilt from the scheme card.

@@ -4,7 +4,7 @@
 # and the ghcr.io package set to public.
 #   bash deploy/azure.sh                       # create or update, then print the URL + agent token
 #   AZ_APP=my-name AZ_LOCATION=southindia bash deploy/azure.sh
-# Secrets are read from backend/.env and .env (first non-empty value wins, like the gateway) and sent
+# Secrets are read from .env and backend/.env (first non-empty value wins, like the RAG service) and sent
 # as App Settings through a temp file: they are never printed or put on a command line.
 set -euo pipefail
 
@@ -19,9 +19,9 @@ SHA="$(git -C "$ROOT" rev-parse origin/dev 2>/dev/null || true)"
 IMAGE="${AZ_IMAGE:-ghcr.io/$OWNER/gramsahayak-backend:${SHA:-latest}}"
 FRONTEND_ORIGIN="${FRONTEND_ORIGIN:-}"
 
-envval() { # first non-empty value of $1 in backend/.env then .env
+envval() { # first non-empty value of $1 in .env then backend/.env (RAG's order: root .env wins)
   local f v
-  for f in "$ROOT/backend/.env" "$ROOT/.env"; do
+  for f in "$ROOT/.env" "$ROOT/backend/.env"; do
     [[ -f "$f" ]] || continue
     v="$( (grep -E "^$1=" "$f" || true) | tail -1 | cut -d= -f2- | sed -E 's/^["'\'']|["'\'']$//g')"
     [[ -n "$v" ]] && { printf '%s' "$v"; return 0; }

@@ -125,6 +125,18 @@ def _sms_summary_of(doc: Document, language: str) -> Optional[str]:
         return None
 
 
+def _names_scheme(text: str, doc: Document) -> bool:
+    """True when the answer mentions this scheme card by any of its names or its code."""
+    names = [doc.metadata.get(k) for k in ("name_en", "name_hi", "name_mr", "name_ta", "code")]
+    return any(n and len(str(n)) >= 3 and str(n).split(" (")[0] in text for n in names)
+
+
+def _scheme_named_in(text: str, scored: List[Tuple[Document, float]]) -> Optional[Document]:
+    """The single retrieved scheme card the answer names, else None (none or ambiguous)."""
+    named = {str(d.metadata.get("code")): d for d, _ in scored if d.metadata.get("kind") == "scheme" and _names_scheme(text, d)}
+    return next(iter(named.values())) if len(named) == 1 else None
+
+
 def _cap_text_sentences(text: str, max_sentences: int = 5) -> str:
     """Text answers: at most 5 sentences; keep the first 4 and the last (it carries the helpline)."""
     sentences = [x for x in re.split(r"(?<=[.।!?])\s+", text.strip()) if x.strip()]
@@ -810,6 +822,12 @@ class RagEngine:
                         matched_scheme_id = None
                         sms_summary = None
                     elif chosen.metadata.get("kind") == "scheme":
+                        # Cross-check the citation: an answer about "Kisan Credit Card" that cites the PMFBY
+                        # block (wrong number) gets the card it actually names (seen live, DEC-20).
+                        named_doc = _scheme_named_in(answer_text, scored)
+                        if named_doc is not None and not _names_scheme(answer_text, chosen):
+                            chosen = named_doc
+                            chosen_source = str(chosen.metadata.get("code") or chosen.metadata.get("id"))
                         matched_scheme_id = chosen_source
                         sms_summary = _sms_summary_of(chosen, req.language)
                     elif matched_scheme_id and chosen.metadata.get("category") != top_doc.metadata.get("category"):

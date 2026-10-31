@@ -9,7 +9,7 @@ export function awaitedInput(stage: IvrStep['stage'] | undefined): IvrInput {
     case 'greeting': return 'language';
     case 'language': return 'category';
     case 'category': return 'speech';
-    case 'answer': return 'goodbye';
+    case 'answer': return 'speech'; // voice agent: the caller may ask again; hanging up sends goodbye
     default: return 'none';
   }
 }

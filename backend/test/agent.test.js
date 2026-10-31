@@ -29,6 +29,8 @@ before(async () => {
     if (ragMode === 'down') return { status: 500, json: { detail: 'boom' } };
     if (ragMode === 'slow') return { delayMs: 1500, json: ragResponse({ answer: 'late' }) };
     if (url !== '/rag/query') return { status: 404 };
+    if (json.query.includes('3 hectares')) return { json: ragResponse({ answer: 'Yes, you are eligible because there is no land limit. You get Rs 6,000 a year.', matched: 'PMKISAN' }) };
+    if (json.query.includes('உரிமைத்')) return { json: ragResponse({ answer: 'JSY card text', matched: 'JSY', mode: 'extractive', confidence: 0.8085 }) };
     if (json.query.includes('Tractor')) return { json: ragResponse({ answer: 'Ujjwala text', matched: 'UJJWALA', confidence: 0.834 }) };
     if (json.query.includes('KCC')) return { json: ragResponse({ answer: 'PM-KISAN text', matched: 'PMKISAN' }) };
     if (json.query.includes('किसान क्रेडिट')) return { json: ragResponse({ answer: 'पूरी जानकारी एसएमएस द्वारा भेजी जा रही है।', matched: 'KCC' }) };
@@ -269,4 +271,17 @@ test('voice-chat without Sarvam uses transcriptHint and browser TTS; with neithe
   const fail = await app.call('POST', '/api/voice-chat', { form: bare });
   assert.equal(fail.status, 422);
   assert.equal(fail.json.error.code, 'ERR_STT_FAILED');
+});
+
+test('extractive mode (LLM rate-limited): an unnamed card is not read out, the caller hears "no verified information" (DEC-20)', async () => {
+  const { json } = await chat({ queryText: 'கலைஞர் மகளிர் உரிமைத் தொகை எப்படி பெறுவது?', languageCode: 'ta-IN', role: 'asha' });
+  assert.equal(json.data.matchedSchemeId, null);
+  assert.equal(json.data.smsReceipt, null);
+  assert.equal(json.data.answerText, msg.NO_VERIFIED_INFO['ta-IN']);
+});
+
+test('R4 guard: a model sentence saying "you are eligible" is replaced by the Eligibility Checker pointer', async () => {
+  const { json } = await chat({ queryText: 'I have 3 hectares, do I get PM-KISAN?', languageCode: 'en-IN', role: 'farmer' });
+  assert.doesNotMatch(json.data.answerText, /you are eligible/i);
+  assert.match(json.data.answerText, /Rs 6,000 a year\. The Eligibility Checker or your nearest CSC will confirm/);
 });

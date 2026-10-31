@@ -1,5 +1,6 @@
 """Groq LLM client wrapper, LCEL chain builder, and 60s retry state tracker for GramSahayak RAG (RAG-03 & RAG-05)."""
 
+import json
 import logging
 import re
 import time
@@ -13,6 +14,8 @@ from langchain_groq import ChatGroq
 from app.config import settings
 from app.prompts import (
     LANGUAGE_NAMES,
+    LANGUAGE_RULES,
+    OUTPUT_INSTRUCTION,
     ROLE_HINTS,
     TEXT_INSTRUCTION,
     VOICE_INSTRUCTION,
@@ -150,12 +153,13 @@ def invoke_lcel_answer(
         VOICE_INSTRUCTION
         if for_voice
         else TEXT_INSTRUCTION.format(language_name=language_name, language=language)
-    )
+    ) + " " + OUTPUT_INSTRUCTION
     lc_history = trim_history_messages(history, max_messages=6, max_chars=1200)
 
     inputs = {
             "language_name": language_name,
             "language": language,
+            "language_rule": LANGUAGE_RULES.get(language, f"Write only in {language_name}."),
             "role": role,
             "role_hint": role_hint,
             "format_instruction": format_instruction,
@@ -176,3 +180,27 @@ def invoke_lcel_answer(
     # Reasoning models may prefix hidden thinking; never pass it on.
     answer = re.sub(r"<think>.*?</think>", "", answer, flags=re.S)
     return answer.strip()
+
+
+def parse_answer_json(raw: str) -> tuple[str, str | None, bool]:
+    """Split the model's {"answer", "source"} JSON (DEC-20) -> (answer, source id or None, parsed?).
+
+    A reply that is not JSON is used as plain answer text (parsed=False), so the caller keeps its old
+    scheme-matching rule instead of trusting a missing source.
+    """
+    text = re.sub(r"^```(?:json)?|```$", "", raw.strip(), flags=re.M).strip()
+    match = re.search(r"\{.*\}", text, flags=re.S)
+    if match:
+        try:
+            obj = json.loads(match.group(0))
+            answer = str(obj.get("answer") or "").strip()
+            source = str(obj.get("source") or "").strip()
+            if answer:
+                return answer, (None if source.lower() in ("", "none", "null") else source), True
+        except (ValueError, AttributeError):
+            pass
+    # Cut off by the token limit: '{"answer": "...' with no closing quote. Keep the answer text.
+    partial = re.match(r'\s*\{\s*"answer"\s*:\s*"(.*?)(?:"\s*,\s*"source".*|"\s*\}?\s*)?$', text, flags=re.S)
+    if partial and partial.group(1).strip():
+        return partial.group(1).strip(), None, False
+    return text, None, False

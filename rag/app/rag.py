@@ -17,7 +17,7 @@ from huggingface_hub import try_to_load_from_cache
 from langchain_core.documents import Document
 
 from app.config import settings
-from app.llm import invoke_lcel_answer, llm_state
+from app.llm import invoke_lcel_answer, llm_state, parse_answer_json
 from app.prompts import (
     GUIDE_LOCALISED_SUMMARIES,
     SYSTEM_PROMPT_TEMPLATE,
@@ -107,6 +107,30 @@ def _is_prompt_intact() -> bool:
         "1800-180-1551",
     )
     return all(clause in SYSTEM_PROMPT_TEMPLATE for clause in required_clauses)
+
+
+_LLM_BLOCK_CHARS = 900
+_HELPLINE_WORD = {"hi-IN": "हेल्पलाइन", "mr-IN": "हेल्पलाइन", "gu-IN": "હેલ્પલાઇન", "ta-IN": "உதவி எண்", "en-IN": "Helpline"}
+
+
+def _sms_summary_of(doc: Document, language: str) -> Optional[str]:
+    """The card's sms_summary in the request language (en-IN fallback), from Chroma metadata."""
+    raw_sms = doc.metadata.get("sms_summary")
+    if not raw_sms:
+        return None
+    try:
+        sms_map = json.loads(raw_sms) if isinstance(raw_sms, str) else raw_sms
+        return sms_map.get(language) or sms_map.get("en-IN")
+    except Exception:
+        return None
+
+
+def _cap_text_sentences(text: str, max_sentences: int = 5) -> str:
+    """Text answers: at most 5 sentences; keep the first 4 and the last (it carries the helpline)."""
+    sentences = [x for x in re.split(r"(?<=[.।!?])\s+", text.strip()) if x.strip()]
+    if len(sentences) <= max_sentences:
+        return text.strip()
+    return " ".join(sentences[: max_sentences - 1] + sentences[-1:])
 
 
 def _clean_for_voice(text: str, language: str) -> str:
@@ -653,15 +677,18 @@ class RagEngine:
                 self.query_cache.set(cache_key, resp.model_dump())
             return resp
 
-        # 3. Embed + Retrieve from Chroma
-        top_k = 3 if req.for_voice else settings.RAG_TOP_K
+        # 3. Embed + Retrieve from Chroma. The LLM picks the block that really answers (DEC-20), so voice
+        # gets the same top-k as text: with 3 near-equal scores the right chunk was often missing.
+        top_k = settings.RAG_TOP_K
         scored, embed_ms, retrieve_ms = self.search_chunks_timed(
             req.query,
             category=req.category,
             k=top_k,
         )
 
-        if req.category and (not scored or scored[0][1] < settings.RAG_MATCH_THRESHOLD):
+        if req.category:
+            # The chosen category (IVR digit / web chip) is a hint, not a wall: a crop question asked under
+            # "schemes" must still reach the agriculture guide. Merge the best unfiltered hits.
             unfiltered_scored, emb2_ms, ret2_ms = self.search_chunks_timed(
                 req.query,
                 category=None,
@@ -669,8 +696,13 @@ class RagEngine:
             )
             embed_ms += emb2_ms
             retrieve_ms += ret2_ms
-            if unfiltered_scored and (not scored or unfiltered_scored[0][1] > scored[0][1] + 0.02):
+            if not scored or (unfiltered_scored and unfiltered_scored[0][1] > scored[0][1] + 0.02):
                 scored = unfiltered_scored
+            else:
+                seen = {id(d) for d, _ in scored}
+                keys = {d.page_content for d, _ in scored}
+                extra = [(d, sim) for d, sim in unfiltered_scored if id(d) not in seen and d.page_content not in keys]
+                scored = sorted(scored + extra[:2], key=lambda pair: pair[1], reverse=True)
 
         if not scored:
             oos = build_out_of_scope_override(req.language, for_voice=req.for_voice)
@@ -714,13 +746,7 @@ class RagEngine:
 
         if top_doc.metadata.get("kind") == "scheme" and top_sim >= settings.RAG_MATCH_THRESHOLD:
             matched_scheme_id = str(top_doc.metadata.get("code") or top_doc.metadata.get("id"))
-            raw_sms = top_doc.metadata.get("sms_summary")
-            if raw_sms:
-                try:
-                    sms_map = json.loads(raw_sms) if isinstance(raw_sms, str) else raw_sms
-                    sms_summary = sms_map.get(req.language) or sms_map.get("en-IN")
-                except Exception:
-                    sms_summary = None
+            sms_summary = _sms_summary_of(top_doc, req.language)
 
         sources: List[SourceItem] = []
         seen_ids: set[str] = set()
@@ -742,6 +768,8 @@ class RagEngine:
             context_blocks.append(f"[{idx}] ({src_id}, score={sim:.3f}):\n{clean_chunk}")
 
         llm_blocks = context_blocks[: settings.LLM_CONTEXT_CHUNKS] if settings.LLM_CONTEXT_CHUNKS > 0 else context_blocks
+        # Groq free tier = 8,000 tokens/min per model: cap each block so one question stays ~1,200 tokens.
+        llm_blocks = [b if len(b) <= _LLM_BLOCK_CHARS else b[:_LLM_BLOCK_CHARS].rsplit(" ", 1)[0] + " ..." for b in llm_blocks]
         context_str = "\n\n".join(llm_blocks)
         llm_ms = 0.0
 
@@ -749,16 +777,52 @@ class RagEngine:
         if llm_state.can_attempt_groq:
             t_llm0 = time.perf_counter()
             try:
-                answer_text = invoke_lcel_answer(
+                answer_text, chosen_source, parsed = parse_answer_json(invoke_lcel_answer(
                     question=req.query,
                     context=context_str,
                     language=req.language,
                     role=req.role,
                     for_voice=req.for_voice,
                     history=req.history,
-                )
+                ))
+                if parsed:
+                    # The scheme (and its SMS receipt) is the one the answer is based on; a guide-based or
+                    # general answer gets no scheme card, never a neighbouring one (DEC-20).
+                    # The model may name the block by id ("KCC") or by its number ("2" / "[2]").
+                    ref = (chosen_source or "").strip()
+                    ids = [str(d.metadata.get("code") or d.metadata.get("id")) for d, _ in scored]
+                    named_id = next((i for i in sorted(set(ids), key=len, reverse=True) if re.search(rf"(?<![A-Z_]){re.escape(i)}(?![A-Z_0-9])", ref)), None)
+                    number = re.match(r"\[?(\d+)\]?", ref)
+                    if named_id:  # "JSY", "(JSY, score=...)", "1 (JSY)"
+                        chosen = scored[ids.index(named_id)][0]
+                    elif number and 1 <= int(number.group(1)) <= len(scored):  # "2", "[2]"
+                        chosen = scored[int(number.group(1)) - 1][0]
+                    else:
+                        chosen = None
+                    chosen_source = str(chosen.metadata.get("code") or chosen.metadata.get("id")) if chosen is not None else None
+                    chosen_sim = next((sim for d, sim in scored if d is chosen), 0.0)
+                    if chosen is None:
+                        # The model used no block ("no verified information"): never attach a card or receipt.
+                        matched_scheme_id = None
+                        sms_summary = None
+                    elif chosen.metadata.get("kind") == "scheme" and chosen_sim < settings.RAG_MATCH_THRESHOLD:
+                        # Same bar as before DEC-20: a weakly related card (state scheme we do not hold) is no match.
+                        matched_scheme_id = None
+                        sms_summary = None
+                    elif chosen.metadata.get("kind") == "scheme":
+                        matched_scheme_id = chosen_source
+                        sms_summary = _sms_summary_of(chosen, req.language)
+                    elif matched_scheme_id and chosen.metadata.get("category") != top_doc.metadata.get("category"):
+                        # A guide from another topic (crop question vs a health card ranked first): no scheme card.
+                        matched_scheme_id = None
+                        sms_summary = None
+                    # A guide section of the same topic mirrors the card (NSP section <-> NSP card): keep the match.
+                    if chosen is not None:
+                        sources.sort(key=lambda src: src.id != chosen_source)
                 if req.for_voice:
                     answer_text = _clean_for_voice(answer_text, req.language)
+                else:
+                    answer_text = _cap_text_sentences(answer_text)
                 mode_used = "llm"
             except Exception as exc:
                 logger.warning("Groq LCEL call failed (%s); falling back to extractive answer for 60s.", exc)
@@ -781,6 +845,17 @@ class RagEngine:
                 sms_summary=sms_summary,
                 query=req.query,
             )
+
+        # A scheme answer always carries its helpline (the model sometimes drops it).
+        if matched_scheme_id:
+            card_doc = next((d for d, _ in scored if str(d.metadata.get("code") or d.metadata.get("id")) == matched_scheme_id), None)
+            helpline = str(card_doc.metadata.get("helpline") or "") if card_doc is not None else ""
+            first = helpline.split("/")[0].strip()
+            if first and first not in answer_text:
+                # Joined to the last sentence so a spoken answer stays within its 3 sentences.
+                body = answer_text.rstrip().rstrip(".।!?")
+                end = "।" if req.language in ("hi-IN", "mr-IN") else "."
+                answer_text = f"{body}, {_HELPLINE_WORD.get(req.language, 'Helpline')}: {first}{end}"
 
         elapsed_ms = int((time.perf_counter() - t0) * 1000)
         logger.info(

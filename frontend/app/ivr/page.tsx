@@ -209,6 +209,16 @@ export default function IvrPage() {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const recorder = useRecorder();
 
+  // Voice agent mode (DEC-20): after the DTMF menus the call is a hands-free conversation. The page
+  // listens after every prompt, sends the question when the caller stops talking, plays the answer
+  // and listens again, until hang-up. Same gateway path and agent brain as the Sarvam phone agent.
+  const [agentMode, setAgentMode] = useState<boolean>(true);
+  const [agentListening, setAgentListening] = useState<boolean>(false);
+  const callActiveRef = useRef<boolean>(false);
+  const turnRef = useRef<number>(0); // bumped by any manual action: a pending automatic turn then stops
+  const agentModeRef = useRef<boolean>(true);
+  useEffect(() => { agentModeRef.current = agentMode; if (!agentMode) recorder.cancel(); }, [agentMode, recorder]);
+
   // CloudTalk Webhook Log History & Drawer
   const [webhookLogs, setWebhookLogs] = useState<Array<IvrStep['webhookLog']>>([]);
   const [showWebhookDrawer, setShowWebhookDrawer] = useState<boolean>(false);
@@ -221,9 +231,10 @@ export default function IvrPage() {
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Speak IVR Prompt via Web Speech API
+  // Resolves when the prompt has finished playing, so the voice agent knows when to listen.
   const speakPrompt = useCallback(
-    (text: string, lang: LanguageCode) => {
-      if (typeof window === 'undefined' || !('speechSynthesis' in window) || isAudioMuted) return;
+    (text: string, lang: LanguageCode) => new Promise<void>((resolve) => {
+      if (typeof window === 'undefined' || !('speechSynthesis' in window) || isAudioMuted) { resolve(); return; }
 
       window.speechSynthesis.cancel();
       const clean = text.replace(/[*_#`[\]()]/g, '').replace(/https?:\/\/\S+/g, '').trim();
@@ -232,30 +243,31 @@ export default function IvrPage() {
       utterance.rate = 0.92;
 
       utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
+      utterance.onend = () => { setIsSpeaking(false); resolve(); };
+      utterance.onerror = () => { setIsSpeaking(false); resolve(); };
 
       window.speechSynthesis.speak(utterance);
-    },
+    }),
     [isAudioMuted]
   );
 
   // Play an IVR step: Sarvam WAV (audioBase64) when present, else browser speech synthesis.
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playStep = useCallback(
-    (step: IvrStep) => {
-      if (isAudioMuted) return;
+    (step: IvrStep) => new Promise<void>((resolve) => {
+      if (isAudioMuted) { resolve(); return; }
       if (step.audioBase64 && !step.useBrowserTts) {
         audioRef.current?.pause();
         const audio = new Audio(`data:audio/wav;base64,${step.audioBase64}`);
         audioRef.current = audio;
         audio.onplay = () => setIsSpeaking(true);
-        audio.onended = () => setIsSpeaking(false);
-        audio.play().catch(() => speakPrompt(step.promptText, step.session.languageCode));
+        audio.onended = () => { setIsSpeaking(false); resolve(); };
+        audio.onpause = () => { setIsSpeaking(false); resolve(); };
+        audio.play().catch(() => speakPrompt(step.promptText, step.session.languageCode).then(resolve));
         return;
       }
-      speakPrompt(step.promptText, step.session.languageCode);
-    },
+      speakPrompt(step.promptText, step.session.languageCode).then(resolve);
+    }),
     [isAudioMuted, speakPrompt]
   );
 
@@ -293,6 +305,7 @@ export default function IvrPage() {
       });
 
       setCallState('connected');
+      callActiveRef.current = true;
       setCurrentStep(step);
       setSessionLang(step.session.languageCode || languageCode);
       setSessionCategory(step.session.category);
@@ -315,6 +328,10 @@ export default function IvrPage() {
 
   // Terminate Call
   const hangUp = async () => {
+    callActiveRef.current = false;
+    turnRef.current += 1;
+    recorder.cancel();
+    setAgentListening(false);
     stopSpeech();
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
@@ -374,7 +391,8 @@ export default function IvrPage() {
         playTelephoneBeep();
       }
 
-      playStep(nextStep);
+      setIsProcessing(false);
+      continueAgent(nextStep);
     } catch (err) {
       console.error('DTMF simulation failed:', err);
     } finally {
@@ -382,10 +400,60 @@ export default function IvrPage() {
     }
   };
 
-  // Submit Speech / Query in Stage 3
-  // Record the caller's question and send it as audio (Groq Whisper / Sarvam on the gateway).
+  // One spoken / typed / silent turn at the speech stage -> next IvrStep (answer, re-prompt or goodbye).
+  const sendSpeechTurn = async (input: { audio?: Blob; text?: string }) => {
+    setIsProcessing(true);
+    try {
+      const nextStep = await ivrSimulate({ callerPhone, stage: 'speech', languageCode: sessionLang, ...input });
+      setCurrentStep(nextStep);
+      if (nextStep.webhookLog) setWebhookLogs((prev) => [nextStep.webhookLog, ...prev]);
+      if (nextStep.answer?.smsReceipt) {
+        setSmsToastData({
+          text: nextStep.answer.smsReceipt.smsReceiptText,
+          portal: nextStep.answer.smsReceipt.portalUrl,
+          help: nextStep.answer.smsReceipt.helpline,
+          delivery: nextStep.answer.smsReceipt.delivery,
+        });
+        setShowSmsToast(true);
+      }
+      return nextStep;
+    } catch (err) {
+      console.error('Speech turn failed:', err);
+      return null;
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Play the step, then (voice agent) listen for the next question. The gateway ended the call
+  // (goodbye after repeated silence) -> show the call as ended.
+  const continueAgent = async (step: IvrStep) => {
+    const turn = ++turnRef.current;
+    const current = () => callActiveRef.current && turn === turnRef.current;
+    await playStep(step);
+    if (!current()) return;
+    if (step.stage === 'goodbye') {
+      callActiveRef.current = false;
+      if (timerIntervalRef.current) { clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; }
+      setCallState('ended');
+      setTimeout(() => { setCallState('idle'); setCurrentStep(null); }, 3000);
+      return;
+    }
+    if (!agentModeRef.current || awaitedInput(step.stage) !== 'speech') return;
+    setAgentListening(true);
+    const audio = await recorder.listen();
+    setAgentListening(false);
+    if (!current() || !agentModeRef.current) return;
+    // No speech -> an empty turn: the gateway re-prompts once, then says goodbye.
+    const next = await sendSpeechTurn(audio ? { audio } : {});
+    if (next && current()) continueAgent(next);
+  };
+
+  // Manual mode: tap to record, tap again to send.
   const toggleRecording = async () => {
     if (isProcessing) return;
+    turnRef.current += 1;
+    if (agentListening) { recorder.cancel(); return; }
     if (!recorder.recording) {
       stopSpeech();
       await recorder.start();
@@ -393,63 +461,18 @@ export default function IvrPage() {
     }
     const audio = await recorder.stop();
     if (!audio) return;
-    setIsProcessing(true);
-    try {
-      const nextStep = await ivrSimulate({ callerPhone, stage: 'speech', languageCode: sessionLang, audio });
-      setCurrentStep(nextStep);
-      if (nextStep.webhookLog) setWebhookLogs((prev) => [nextStep.webhookLog, ...prev]);
-      if (nextStep.answer?.smsReceipt) {
-        setSmsToastData({
-          text: nextStep.answer.smsReceipt.smsReceiptText,
-          portal: nextStep.answer.smsReceipt.portalUrl,
-          help: nextStep.answer.smsReceipt.helpline,
-          delivery: nextStep.answer.smsReceipt.delivery,
-        });
-        setShowSmsToast(true);
-      }
-      playStep(nextStep);
-    } catch (err) {
-      console.error('Recorded speech failed:', err);
-    } finally {
-      setIsProcessing(false);
-    }
+    const next = await sendSpeechTurn({ audio });
+    if (next) continueAgent(next);
   };
 
   const submitSpeechQuery = async (queryText: string) => {
     if (!queryText.trim() || isProcessing) return;
-
-    setIsProcessing(true);
+    turnRef.current += 1;
+    recorder.cancel();
     stopSpeech();
-
-    try {
-      const nextStep = await ivrSimulate({
-        callerPhone,
-        stage: 'speech',
-        languageCode: sessionLang,
-        text: queryText,
-      });
-
-      setCurrentStep(nextStep);
-      if (nextStep.webhookLog) setWebhookLogs((prev) => [nextStep.webhookLog, ...prev]);
-      setSpeechInputText('');
-
-      // Trigger Slide-in SMS Toast Notification if SMS receipt is attached
-      if (nextStep.answer?.smsReceipt) {
-        setSmsToastData({
-          text: nextStep.answer.smsReceipt.smsReceiptText,
-          portal: nextStep.answer.smsReceipt.portalUrl,
-          help: nextStep.answer.smsReceipt.helpline,
-          delivery: nextStep.answer.smsReceipt.delivery,
-        });
-        setShowSmsToast(true);
-      }
-
-      playStep(nextStep);
-    } catch (err) {
-      console.error('Speech query failed:', err);
-    } finally {
-      setIsProcessing(false);
-    }
+    setSpeechInputText('');
+    const next = await sendSpeechTurn({ text: queryText });
+    if (next) continueAgent(next);
   };
 
   const copyWebhookLog = (index: number, content: string) => {
@@ -647,12 +670,16 @@ export default function IvrPage() {
                   <span>👇 Press 1 for Schemes · 2 for Agri · 3 for Health · 4 for Education</span>
                 )}
                 {awaitedInput(currentStep.stage) === 'speech' && (
-                  <span className="text-amber-400 font-semibold">🎙️ Speak or click question below</span>
-                )}
-                {currentStep.stage === 'answer' && (
-                  <span className="text-emerald-400 font-semibold">
-                    ✓ Answer played
-                    {currentStep.answer?.smsReceipt ? ` · SMS ${currentStep.answer.smsReceipt.delivery}` : ''}
+                  <span className={`font-semibold ${agentListening ? 'text-rose-400 animate-pulse' : 'text-amber-400'}`} role="status">
+                    {agentListening
+                      ? '🎙️ सुन रही हूँ… बोलिए (Listening, speak now)'
+                      : isProcessing
+                        ? '⏳ सोच रही हूँ… (Thinking)'
+                        : isSpeaking
+                          ? '🔊 जवाब (Speaking)'
+                          : currentStep.stage === 'answer'
+                            ? `✓ Answer played${currentStep.answer?.smsReceipt ? ` · SMS ${currentStep.answer.smsReceipt.delivery}` : ''} · ask again`
+                            : '🎙️ Speak or click a question below'}
                   </span>
                 )}
               </div>
@@ -678,6 +705,16 @@ export default function IvrPage() {
                 <Mic className="h-3.5 w-3.5 text-amber-400" />
                 <span>अपना सवाल बोलें या लिखें (Ask Question):</span>
               </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={agentMode}
+                onClick={() => setAgentMode((on) => !on)}
+                className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${agentMode ? 'border-emerald-400 bg-emerald-600 text-white' : 'border-zinc-500 bg-zinc-700 text-zinc-300'}`}
+                title="Hands-free: listens after every prompt and answers until you hang up"
+              >
+                Voice agent: {agentMode ? 'ON' : 'OFF'}
+              </button>
             </div>
 
             {/* Speak the question (recorded audio, transcribed on the gateway) */}
@@ -686,13 +723,15 @@ export default function IvrPage() {
               onClick={toggleRecording}
               disabled={isProcessing}
               aria-pressed={recorder.recording}
-              aria-label={recorder.recording ? 'Stop recording and send' : 'Record your question'}
+              aria-label={agentListening ? 'Stop listening' : recorder.recording ? 'Stop recording and send' : 'Record your question'}
               className={`mb-3 flex w-full min-h-12 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold transition-all disabled:opacity-50 ${
                 recorder.recording ? 'border-rose-400 bg-rose-600 text-white animate-pulse' : 'border-amber-400 bg-amber-500 text-zinc-950 hover:bg-amber-400'
               }`}
             >
               <Mic className="h-4 w-4" aria-hidden="true" />
-              {recorder.recording ? 'Stop & send (बोलना बंद करें)' : isProcessing ? 'Processing…' : 'Tap and speak (बोलें)'}
+              {agentListening
+                ? 'Listening… tap to stop (सुन रही हूँ)'
+                : recorder.recording ? 'Stop & send (बोलना बंद करें)' : isProcessing ? 'Processing…' : 'Tap and speak (बोलें)'}
             </button>
             {recorder.error && <p className="mb-2 text-[11px] text-rose-300" role="alert">{recorder.error}</p>}
 

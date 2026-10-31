@@ -1,6 +1,7 @@
 const { config, LANGUAGES, CATEGORIES, ROLES } = require('../config');
 const { AppError } = require('../utils/response');
 const msg = require('../config/messages');
+const { localizeTerms } = require('../config/glossary');
 const seedSchemes = require('../adapters/seedSchemes');
 const dbAdapter = require('../adapters/dbAdapter');
 const sessionService = require('./sessionService');
@@ -21,6 +22,16 @@ const { localName, smsSummaryFor } = require('./schemeView');
 const MAX_QUERY_CHARS = 2000;
 const REQUIRED_HELPLINE = { emergency: '108', doseAgri: '1800-180-1551', doseMedical: '104' };
 // The user is asking about a scheme by name ("... Yojana", "योजना", "திட்டம்").
+// R4 guard: a sentence that tells the person they are (not) eligible. The LLM is told never to do this;
+// this deterministic check removes any slip (LD-04 L1/L2).
+const VERDICT_RE = /(you are (not )?eligible|you (will|won't|do not|don't) (qualify|get it)|आप (पात्र|योग्य) (हैं|नहीं)|तुम्ही पात्र (आहात|नाही)|તમે (પાત્ર|લાયક) (છો|નથી)|நீங்கள் தகுதி(யானவர்|யற்றவர்|யுடையவர்|பெறுவீர்கள்|பெற மாட்டீர்கள்))/i;
+
+function withoutVerdict(text, languageCode) {
+  if (!VERDICT_RE.test(text)) return text;
+  const kept = text.split(/(?<=[.।!?])\s+/).filter((sentence) => !VERDICT_RE.test(sentence));
+  return [...kept, msg.ELIGIBILITY_POINTER[languageCode] || msg.ELIGIBILITY_POINTER['en-IN']].join(' ');
+}
+
 const SCHEME_WORD_RE = /(yojana|yojna|scheme|योजना|योजने|யோஜனா|திட்ட)/i;
 const DOMAIN_RE = /\s*\b(?:https?:\/\/)?[\w.-]+\.(?:gov|nic|org|com)\.in\b\S*/gi;
 // RAG's voice cleanup can turn "pmkisan.gov.in" into "pmkisan, gov, in" before stripping URLs.
@@ -157,6 +168,13 @@ async function answerQuery({
       card = null;
       matchedSchemeId = null;
       answerText = msg.UNKNOWN_SCHEME[msg.langOf(languageCode)];
+    } else if (!fixed && !named && card && rag.mode === 'extractive') {
+      // Extractive mode (LLM rate-limited) cannot judge relevance and card scores do not separate real
+      // from unrelated questions (DEC-20: a Tamil state scheme matched JSY at 0.81). Without the scheme
+      // being named, say so honestly instead of reading out a neighbouring card.
+      card = null;
+      matchedSchemeId = null;
+      answerText = msg.NO_VERIFIED_INFO[msg.langOf(languageCode)];
     }
     // A call must never speak only "details are sent by SMS": a closing-only RAG answer
     // (seen with reasoning LLMs whose token budget runs out) is rebuilt from the scheme card.
@@ -175,6 +193,9 @@ async function answerQuery({
     matchedSchemeId = card ? card.code : null;
   }
   if (forVoice) answerText = voiceSafe(answerText);
+  // Pure Hindi / Marathi / Gujarati / Tamil: no leftover English abbreviations (DEC-20). Receipts untouched (R5).
+  answerText = localizeTerms(answerText, languageCode);
+  answerText = withoutVerdict(answerText, languageCode);
 
   // R5: the receipt is the seed card text verbatim, never RAG or model text.
   const smsReceipt = smsReceiptFor(card, languageCode);

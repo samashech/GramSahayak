@@ -127,7 +127,7 @@ export default function VoicePage() {
   const { t, languageCode, setLanguageCode, role, activePreset, sessionId } = useApp();
 
   // Selection states
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>('schemes');
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [typedQuery, setTypedQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [activeTurn, setActiveTurn] = useState<TurnRecord | null>(null);

@@ -176,6 +176,15 @@ const UNKNOWN_SCHEME = {
   'ta-IN': 'இந்தப் பெயரில் உள்ள திட்டம் பற்றி சரிபார்த்த தகவல் இல்லை. 13 மத்திய திட்டங்கள் மட்டும்; HELP அனுப்பவும் அல்லது CSC / கிராம பஞ்சாயத்தில் கேட்கவும்.',
 };
 
+// R4: an answer never says "you are / are not eligible"; such a sentence is replaced with this pointer.
+const ELIGIBILITY_POINTER = {
+  'en-IN': 'The Eligibility Checker or your nearest CSC will confirm whether you qualify.',
+  'hi-IN': 'आप पात्र हैं या नहीं, यह पात्रता जाँच या नज़दीकी जन सेवा केंद्र पर पक्का होगा।',
+  'mr-IN': 'तुम्ही पात्र आहात की नाही, हे पात्रता तपासणी किंवा जवळच्या सेवा केंद्रात निश्चित होईल.',
+  'gu-IN': 'તમે પાત્ર છો કે નહીં, તે પાત્રતા ચકાસણી અથવા નજીકના જન સેવા કેન્દ્રમાં નક્કી થશે.',
+  'ta-IN': 'நீங்கள் தகுதியானவரா என்பதை தகுதிச் சரிபார்ப்பு அல்லது அருகிலுள்ள பொது சேவை மையம் உறுதி செய்யும்.',
+};
+
 const SMS_CLOSING = {
   'en-IN': 'Full details are being sent by SMS.',
   'hi-IN': 'पूरी जानकारी SMS से भेजी जा रही है।',
@@ -243,6 +252,7 @@ module.exports = {
   SMS_HELP,
   SAFETY_ANSWERS,
   NO_VERIFIED_INFO,
+  ELIGIBILITY_POINTER,
   UNKNOWN_SCHEME,
   SMS_CLOSING,
   IVR,

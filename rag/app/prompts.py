@@ -29,6 +29,7 @@ SYSTEM_PROMPT_TEMPLATE = (
     "If the answer is not in the context, say you do not have verified information and give the helpline from the context. "
     "Reply in {language_name} ({language}) in simple spoken words; keep scheme names recognisable. "
     "Never invent amounts, dates, limits, documents or phone numbers: copy them exactly from CONTEXT. "
+    "When the question is about a scheme, always state its main benefit amount and its helpline number from CONTEXT, in digits. "
     "Never decide a person's eligibility from numbers; state the official criteria and suggest the Eligibility Checker or the CSC. "
     "Medical: no diagnosis or doses; for danger signs say go to the nearest health centre now and call 108 (ambulance) or 102 (pregnancy ambulance). "
     "Agriculture: no pesticide brand or dose; give the IPM steps from the context and refer to the Krishi Vigyan Kendra or Kisan Call Centre 1800-180-1551. "
@@ -37,11 +38,12 @@ SYSTEM_PROMPT_TEMPLATE = (
 
 VOICE_INSTRUCTION = (
     "Maximum 3 short sentences. Plain text only: no lists, markdown, URLs or emojis. "
-    "Say amounts in words suited to speech. End by saying the details are being sent by SMS."
+    "Write amounts and phone numbers in digits exactly as in CONTEXT. End by saying the details are being sent by SMS."
 )
 
 TEXT_INSTRUCTION = (
-    "Keep the answer concise, clear, and strictly grounded in the CONTEXT in {language_name} ({language})."
+    "Answer in at most 5 short sentences of plain text (no markdown, headings, bullets or URLs), clear and strictly "
+    "grounded in the CONTEXT, in {language_name} ({language}). Include the relevant helpline number from CONTEXT."
 )
 
 VOICE_CLOSING_BY_LANG: dict[str, str] = {

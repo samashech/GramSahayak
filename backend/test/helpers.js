@@ -10,6 +10,12 @@ function setupTestEnv() {
     DATABASE_URL: '',
     DEMO_MODE: 'true',
     AI_RAG_URL: 'http://127.0.0.1:9', // discard port: RAG is "down"
+    // Never reach real AI services from tests, whatever .env holds.
+    LLM_API_KEY: '',
+    SARVAM_API_KEY: '',
+    CLOUDTALK_API_KEY_ID: '',
+    CLOUDTALK_API_SECRET: '',
+    USE_MOCK_AI: 'false',
     SQLITE_PATH: path.join(tmpDir, 'test.sqlite'),
   });
   return { tmpDir, cleanup: () => fs.rmSync(tmpDir, { recursive: true, force: true }) };

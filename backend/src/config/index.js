@@ -4,8 +4,23 @@ const dotenv = require('dotenv');
 // Contract section 10: one root .env shared by all services. A backend/.env (also git-ignored)
 // is read too and wins for the gateway; real environment variables win over both.
 const REPO_ROOT = path.resolve(__dirname, '../../..');
-dotenv.config({ path: path.join(REPO_ROOT, 'backend', '.env'), quiet: true });
-dotenv.config({ path: path.join(REPO_ROOT, '.env'), quiet: true });
+// Real environment variables always win (even when set to ''). Between the two files, an empty value
+// (e.g. `LLM_API_KEY=` in backend/.env) must not hide a real value from the root .env.
+const fromFiles = {};
+for (const file of [path.join(REPO_ROOT, 'backend', '.env'), path.join(REPO_ROOT, '.env')]) {
+  let parsed = {};
+  try {
+    parsed = dotenv.parse(require('node:fs').readFileSync(file));
+  } catch {
+    continue; // file missing
+  }
+  for (const [key, value] of Object.entries(parsed)) {
+    if (!fromFiles[key]) fromFiles[key] = value;
+  }
+}
+for (const [key, value] of Object.entries(fromFiles)) {
+  if (process.env[key] === undefined) process.env[key] = value;
+}
 
 const env = process.env;
 
@@ -74,6 +89,9 @@ const config = {
   sarvamBaseUrl: 'https://api.sarvam.ai',
   llmApiKey: env.LLM_API_KEY || '',
   llmModel: env.LLM_MODEL || 'llama-3.3-70b-versatile',
+  // Speech-to-text fallback when Sarvam is not configured: Groq Whisper with the same LLM_API_KEY.
+  groqBaseUrl: 'https://api.groq.com/openai/v1',
+  groqSttModel: env.GROQ_STT_MODEL || 'whisper-large-v3',
 
   cloudtalk: {
     apiKeyId: env.CLOUDTALK_API_KEY_ID || '',

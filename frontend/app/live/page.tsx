@@ -77,7 +77,8 @@ export default function LivePage() {
                     <div className="mb-1 flex justify-between text-xl">
                       <span className={done ? 'font-bold text-white' : 'text-zinc-500'}>
                         {done ? '✓' : '○'} {label}
-                        {step === 'groq_llm_synthesized' && live.answerMode && <span className="text-zinc-400"> ({live.answerMode})</span>}
+                        {step === 'sarvam_stt_done' && live.sttProvider && <span className="opacity-70"> ({live.sttProvider})</span>}
+                {step === 'groq_llm_synthesized' && live.answerMode && <span className="text-zinc-400"> ({live.answerMode})</span>}
                       </span>
                       <span className="font-mono text-zinc-300">{done ? `${ms} ms` : '—'}</span>
                     </div>

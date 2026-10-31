@@ -1,6 +1,7 @@
 """Groq LLM client wrapper, LCEL chain builder, and 60s retry state tracker for GramSahayak RAG (RAG-03 & RAG-05)."""
 
 import logging
+import re
 import time
 from typing import List, Literal, Sequence
 
@@ -69,23 +70,38 @@ class LLMRuntimeState:
 llm_state = LLMRuntimeState(retry_interval_sec=60.0)
 
 
-def get_chat_groq(for_voice: bool = False) -> ChatGroq:
+def _reasoning_effort(model: str) -> str:
+    """Groq reasoning models need the right effort value: qwen3 'none', gpt-oss 'low'."""
+    if model == settings.LLM_MODEL and settings.LLM_REASONING_EFFORT:
+        return settings.LLM_REASONING_EFFORT
+    if model.startswith("openai/gpt-oss"):
+        return "low"
+    if model.startswith("qwen/qwen3"):
+        return "none"
+    return ""
+
+
+def get_chat_groq(for_voice: bool = False, model: str | None = None) -> ChatGroq:
     """Build a configured ChatGroq instance per contract budget rules (temperature 0.2, timeout 3.5s)."""
-    max_tokens = 120 if for_voice else 220
+    model = model or settings.LLM_MODEL
+    max_tokens = settings.LLM_MAX_TOKENS_VOICE if for_voice else settings.LLM_MAX_TOKENS_TEXT
+    effort = _reasoning_effort(model)
+    extra = {"reasoning_effort": effort} if effort else {}
     return ChatGroq(
         api_key=settings.LLM_API_KEY,
-        model=settings.LLM_MODEL,
+        model=model,
         temperature=settings.LLM_TEMPERATURE,
         max_tokens=max_tokens,
         timeout=settings.LLM_TIMEOUT_SEC,
         max_retries=0,
+        model_kwargs=extra,
     )
 
 
-def build_lcel_chain(for_voice: bool = False) -> RunnableSerializable[dict, str]:
+def build_lcel_chain(for_voice: bool = False, model: str | None = None) -> RunnableSerializable[dict, str]:
     """Build the LangChain Expression Language (LCEL) chain: prompt | llm | parser."""
     prompt = build_rag_prompt()
-    llm = get_chat_groq(for_voice=for_voice)
+    llm = get_chat_groq(for_voice=for_voice, model=model)
     parser = StrOutputParser()
     return prompt | llm | parser
 
@@ -137,9 +153,7 @@ def invoke_lcel_answer(
     )
     lc_history = trim_history_messages(history, max_messages=6, max_chars=1200)
 
-    chain = build_lcel_chain(for_voice=for_voice)
-    answer = chain.invoke(
-        {
+    inputs = {
             "language_name": language_name,
             "language": language,
             "role": role,
@@ -148,7 +162,17 @@ def invoke_lcel_answer(
             "context": context,
             "history": lc_history,
             "question": question,
-        }
-    )
+    }
+    models = [settings.LLM_MODEL, *settings.LLM_FALLBACK_MODELS]
+    for i, model in enumerate(models):
+        try:
+            answer = build_lcel_chain(for_voice=for_voice, model=model).invoke(inputs)
+            break
+        except Exception as exc:  # only a rate limit moves on to the next model's TPM budget
+            if "429" not in str(exc) or i == len(models) - 1:
+                raise
+            logger.warning("Groq model %s rate-limited; trying %s", model, models[i + 1])
     llm_state.record_success()
+    # Reasoning models may prefix hidden thinking; never pass it on.
+    answer = re.sub(r"<think>.*?</think>", "", answer, flags=re.S)
     return answer.strip()

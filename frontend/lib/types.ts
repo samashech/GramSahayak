@@ -131,6 +131,7 @@ export interface SseEvent {
   mode?: string; // pipeline groq_llm_synthesized: 'llm' | 'extractive'; sms: keyword | rag | help
   delivery?: 'sent' | 'simulated' | 'failed';
   source?: string; // transcript (assistant): rag | cache | fallback
+  provider?: string; // pipeline sarvam_stt_done: sarvam | groq-whisper
   ts: string;
 }
 

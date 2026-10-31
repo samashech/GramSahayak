@@ -41,6 +41,7 @@ export function LivePipelineBar() {
               <li key={step} className={ms === undefined ? 'text-zinc-400' : 'text-zinc-800'}>
                 {ms === undefined ? '○' : '●'} {label}
                 {ms !== undefined && <span className="font-mono"> · {ms} ms</span>}
+                {step === 'sarvam_stt_done' && live.sttProvider && <span className="opacity-70"> ({live.sttProvider})</span>}
                 {step === 'groq_llm_synthesized' && live.answerMode && <span> ({live.answerMode})</span>}
               </li>
             );

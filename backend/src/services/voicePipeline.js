@@ -2,6 +2,7 @@ const { LANGUAGES } = require('../config');
 const { AppError } = require('../utils/response');
 const dbAdapter = require('../adapters/dbAdapter');
 const sarvamService = require('./sarvamService');
+const groqSttService = require('./groqSttService');
 const eventBus = require('./eventBus');
 
 // Shared by POST /api/voice-chat (web) and the IVR speech stage (CloudTalk + simulator).
@@ -14,29 +15,40 @@ function languageFromScript(text) {
   return null;
 }
 
-// Audio -> text. Order: Sarvam STT on the recording, else the client's transcriptHint
+// Audio -> text. Providers in order: Sarvam (saarika:v2.5) when SARVAM_API_KEY is set, then Groq
+// Whisper (LLM_API_KEY, language hint + domain vocabulary), then the client's transcriptHint
 // (browser SpeechRecognition or typed text), else ERR_STT_FAILED.
-// -> {transcript, detectedLanguage, via: 'sarvam'|'hint'}
+// -> {transcript, detectedLanguage, via: 'sarvam'|'groq-whisper'|'hint'}
+const STT_PROVIDERS = [
+  { via: 'sarvam', service: sarvamService },
+  { via: 'groq-whisper', service: groqSttService },
+];
+
 async function transcribe({ audioPath, languageCode, transcriptHint, channel, phone, sessionKey }) {
   const hint = String(transcriptHint ?? '').trim();
-  if (audioPath && sarvamService.isConfigured()) {
+  const providers = audioPath ? STT_PROVIDERS.filter((p) => p.service.isConfigured()) : [];
+  let wav = null;
+  for (const { via, service } of providers) {
     try {
-      const t0 = performance.now();
-      const { buffer } = await sarvamService.normalizeAudioToWav16k(audioPath);
-      eventBus.pipeline('audio_normalized', performance.now() - t0, { channel, phone });
+      if (!wav) {
+        const t0 = performance.now();
+        wav = (await sarvamService.normalizeAudioToWav16k(audioPath)).buffer;
+        eventBus.pipeline('audio_normalized', performance.now() - t0, { channel, phone });
+      }
       const t1 = performance.now();
-      const stt = await sarvamService.speechToText(buffer, languageCode);
+      const stt = await service.speechToText(wav, languageCode);
       const ms = performance.now() - t1;
-      eventBus.pipeline('sarvam_stt_done', ms, { channel, phone, text: stt.transcript });
-      await dbAdapter.logCallOrSms({ sessionKey, phone, channel, eventType: 'stt', detail: { via: 'sarvam', languageCode: stt.languageCode }, latencyMs: ms });
+      // Contract step name; `provider` tells /live which engine really transcribed.
+      eventBus.pipeline('sarvam_stt_done', ms, { channel, phone, text: stt.transcript, provider: via });
+      await dbAdapter.logCallOrSms({ sessionKey, phone, channel, eventType: 'stt', detail: { via, languageCode: stt.languageCode }, latencyMs: ms });
       return {
         transcript: stt.transcript,
         detectedLanguage: stt.languageCode || languageCode || languageFromScript(stt.transcript),
-        via: 'sarvam',
+        via,
       };
     } catch (err) {
-      console.warn(`[voice] Sarvam STT failed${hint ? ', using transcriptHint' : ''}: ${err.message}`);
-      await dbAdapter.logCallOrSms({ sessionKey, phone, channel, eventType: 'stt', detail: { via: 'sarvam', error: err.message }, ok: false });
+      console.warn(`[voice] ${via} STT failed: ${err.message}`);
+      await dbAdapter.logCallOrSms({ sessionKey, phone, channel, eventType: 'stt', detail: { via, error: err.message }, ok: false });
     }
   }
   if (hint) {

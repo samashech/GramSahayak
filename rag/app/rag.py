@@ -741,7 +741,8 @@ class RagEngine:
             clean_chunk = sanitize_retrieved_context(doc.page_content.removeprefix("passage: ").strip())
             context_blocks.append(f"[{idx}] ({src_id}, score={sim:.3f}):\n{clean_chunk}")
 
-        context_str = "\n\n".join(context_blocks)
+        llm_blocks = context_blocks[: settings.LLM_CONTEXT_CHUNKS] if settings.LLM_CONTEXT_CHUNKS > 0 else context_blocks
+        context_str = "\n\n".join(llm_blocks)
         llm_ms = 0.0
 
         # 4. Run Groq LCEL chain if available (and >=60s since any prior failure), else extractive fallback (RAG-05)

@@ -42,6 +42,15 @@ class Settings:
         self.LLM_MODEL: str = os.getenv("LLM_MODEL", "llama-3.3-70b-versatile").strip()
         self.MOCK_LLM: bool = _parse_bool(os.getenv("MOCK_LLM"), default=False)
         self.LLM_TIMEOUT_SEC: float = float(os.getenv("LLM_TIMEOUT_SEC", "3.5"))
+        # Output budgets (Tamil needs more tokens per sentence than Hindi/English) and, for reasoning
+        # models on Groq, the reasoning effort ("none" for qwen3, "low" for gpt-oss; empty = not sent).
+        self.LLM_MAX_TOKENS_VOICE: int = int(os.getenv("LLM_MAX_TOKENS_VOICE", "120"))
+        self.LLM_MAX_TOKENS_TEXT: int = int(os.getenv("LLM_MAX_TOKENS_TEXT", "220"))
+        self.LLM_REASONING_EFFORT: str = os.getenv("LLM_REASONING_EFFORT", "").strip()
+        # Chunks sent to the LLM (0 = all retrieved). Fewer chunks = fewer tokens per minute on Groq's free tier.
+        self.LLM_CONTEXT_CHUNKS: int = int(os.getenv("LLM_CONTEXT_CHUNKS", "0"))
+        # Tried in order when the primary model is rate-limited (429); each Groq model has its own TPM budget.
+        self.LLM_FALLBACK_MODELS: list[str] = [m.strip() for m in os.getenv("LLM_FALLBACK_MODELS", "").split(",") if m.strip()]
         self.LLM_TEMPERATURE: float = float(os.getenv("LLM_TEMPERATURE", "0.2"))
 
         # Embedding & Chroma settings

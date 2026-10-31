@@ -40,6 +40,7 @@ before(async () => {
     return { json: ragResponse({ answer: 'model text that must not be used for safety cases' }) };
   });
   sarvam = await startStub(({ url }) => {
+    if (url === '/audio/transcriptions') return { json: { text: G5 } }; // Groq Whisper stand-in
     if (url === '/speech-to-text') return { json: { transcript: G1, language_code: 'hi-IN' } };
     if (url === '/text-to-speech') return { json: { audios: ['UklGRg=='] } };
     return { status: 404 };
@@ -47,10 +48,11 @@ before(async () => {
   app = await startApp();
   config.aiRagUrl = rag.url;
   config.sarvamBaseUrl = sarvam.url;
+  config.groqBaseUrl = sarvam.url;
 });
 after(async () => { await app.close(); await rag.close(); await sarvam.close(); env.cleanup(); });
 beforeEach(() => {
-  ragMode = 'up'; config.useMockAi = false; config.ragTimeoutMs = 4000; config.sarvamApiKey = '';
+  ragMode = 'up'; config.useMockAi = false; config.ragTimeoutMs = 4000; config.sarvamApiKey = ''; config.llmApiKey = '';
   rag.calls.length = 0; sarvam.calls.length = 0;
 });
 
@@ -235,6 +237,23 @@ test('voice-chat with Sarvam: STT -> agent -> TTS, voice answer has no URL', asy
   const tts = sarvam.calls.find((c) => c.url === '/text-to-speech').json;
   assert.deepEqual([tts.model, tts.speech_sample_rate, tts.target_language_code], ['bulbul:v2', 22050, 'hi-IN']);
   assert.equal(rag.calls[0].json.for_voice, true);
+});
+
+test('voice-chat without Sarvam: Groq Whisper with language hint + vocabulary, then browser TTS', async () => {
+  config.llmApiKey = 'groq-test-key';
+  const form = new FormData();
+  form.append('audio', new Blob([Buffer.from('not really audio')], { type: 'audio/webm' }), 'clip.webm');
+  form.append('languageCode', 'ta-IN');
+  form.append('role', 'asha');
+  const { status, json } = await app.call('POST', '/api/voice-chat', { form, headers: { 'x-session-id': 'voice-groq-0001' } });
+  assert.equal(status, 200);
+  assert.deepEqual([json.data.transcript, json.data.detectedLanguage, json.data.matchedSchemeId, json.data.useBrowserTts], [G5, 'ta-IN', 'JSY', true]);
+  const call = sarvam.calls.find((c) => c.url === '/audio/transcriptions');
+  assert.equal(call.headers.authorization, 'Bearer groq-test-key');
+  const body = call.raw.toString('utf8');
+  assert.match(body, /whisper-large-v3/);
+  assert.match(body, /name="language"\r\n\r\nta\r\n/);
+  assert.match(body, /ஜனனி சுரக்ஷா யோஜனா திட்டம்/, 'Tamil vocabulary prompt sent');
 });
 
 test('voice-chat without Sarvam uses transcriptHint and browser TTS; with neither it is ERR_STT_FAILED', async () => {

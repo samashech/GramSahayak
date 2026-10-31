@@ -5,6 +5,7 @@ import { useApp } from '@/context/AppContext';
 import { ivrSimulate } from '@/lib/api';
 import { LivePipelineBar } from '@/components/live/LivePipelineBar';
 import { awaitedInput, acceptsDigits, webhookLabel } from '@/lib/ivr';
+import { useRecorder } from '@/hooks/useRecorder';
 import { IvrStep, LanguageCode, Category } from '@/lib/types';
 import {
   Phone,
@@ -206,6 +207,7 @@ export default function IvrPage() {
   // Speech & Text input in Stage 3
   const [speechInputText, setSpeechInputText] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const recorder = useRecorder();
 
   // CloudTalk Webhook Log History & Drawer
   const [webhookLogs, setWebhookLogs] = useState<Array<IvrStep['webhookLog']>>([]);
@@ -381,6 +383,38 @@ export default function IvrPage() {
   };
 
   // Submit Speech / Query in Stage 3
+  // Record the caller's question and send it as audio (Groq Whisper / Sarvam on the gateway).
+  const toggleRecording = async () => {
+    if (isProcessing) return;
+    if (!recorder.recording) {
+      stopSpeech();
+      await recorder.start();
+      return;
+    }
+    const audio = await recorder.stop();
+    if (!audio) return;
+    setIsProcessing(true);
+    try {
+      const nextStep = await ivrSimulate({ callerPhone, stage: 'speech', languageCode: sessionLang, audio });
+      setCurrentStep(nextStep);
+      if (nextStep.webhookLog) setWebhookLogs((prev) => [nextStep.webhookLog, ...prev]);
+      if (nextStep.answer?.smsReceipt) {
+        setSmsToastData({
+          text: nextStep.answer.smsReceipt.smsReceiptText,
+          portal: nextStep.answer.smsReceipt.portalUrl,
+          help: nextStep.answer.smsReceipt.helpline,
+          delivery: nextStep.answer.smsReceipt.delivery,
+        });
+        setShowSmsToast(true);
+      }
+      playStep(nextStep);
+    } catch (err) {
+      console.error('Recorded speech failed:', err);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const submitSpeechQuery = async (queryText: string) => {
     if (!queryText.trim() || isProcessing) return;
 
@@ -645,6 +679,22 @@ export default function IvrPage() {
                 <span>अपना सवाल बोलें या लिखें (Ask Question):</span>
               </span>
             </div>
+
+            {/* Speak the question (recorded audio, transcribed on the gateway) */}
+            <button
+              type="button"
+              onClick={toggleRecording}
+              disabled={isProcessing}
+              aria-pressed={recorder.recording}
+              aria-label={recorder.recording ? 'Stop recording and send' : 'Record your question'}
+              className={`mb-3 flex w-full min-h-12 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold transition-all disabled:opacity-50 ${
+                recorder.recording ? 'border-rose-400 bg-rose-600 text-white animate-pulse' : 'border-amber-400 bg-amber-500 text-zinc-950 hover:bg-amber-400'
+              }`}
+            >
+              <Mic className="h-4 w-4" aria-hidden="true" />
+              {recorder.recording ? 'Stop & send (बोलना बंद करें)' : isProcessing ? 'Processing…' : 'Tap and speak (बोलें)'}
+            </button>
+            {recorder.error && <p className="mb-2 text-[11px] text-rose-300" role="alert">{recorder.error}</p>}
 
             {/* Quick Golden Chips for IVR */}
             <div className="flex flex-wrap gap-1.5 mb-3">

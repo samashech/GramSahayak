@@ -110,6 +110,7 @@ def _is_prompt_intact() -> bool:
 
 
 _LLM_BLOCK_CHARS = 900
+_SOURCE_REF_RE = re.compile(r"\s*[(\[]\s*(?:GUIDE_?[A-Z_]*\d+|[A-Z][A-Z_]{1,12}|\d{1,2})(?:\s*,\s*score=[0-9.]+)?\s*[)\]]")
 _HELPLINE_WORD = {"hi-IN": "हेल्पलाइन", "mr-IN": "हेल्पलाइन", "gu-IN": "હેલ્પલાઇન", "ta-IN": "உதவி எண்", "en-IN": "Helpline"}
 
 
@@ -837,6 +838,8 @@ class RagEngine:
                     # A guide section of the same topic mirrors the card (NSP section <-> NSP card): keep the match.
                     if chosen is not None:
                         sources.sort(key=lambda src: src.id != chosen_source)
+                # The model sometimes echoes its citation ("(GUIDE_AGRI_1)", "[2]") into the answer.
+                answer_text = _SOURCE_REF_RE.sub("", answer_text).strip()
                 if req.for_voice:
                     answer_text = _clean_for_voice(answer_text, req.language)
                 else:

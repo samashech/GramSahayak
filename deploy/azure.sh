@@ -21,9 +21,10 @@ envval() { # first non-empty value of $1 in backend/.env then .env
   local f v
   for f in "$ROOT/backend/.env" "$ROOT/.env"; do
     [[ -f "$f" ]] || continue
-    v="$(grep -E "^$1=" "$f" | tail -1 | cut -d= -f2- | sed -E 's/^["'\'']|["'\'']$//g')"
-    [[ -n "$v" ]] && { printf '%s' "$v"; return; }
+    v="$( (grep -E "^$1=" "$f" || true) | tail -1 | cut -d= -f2- | sed -E 's/^["'\'']|["'\'']$//g')"
+    [[ -n "$v" ]] && { printf '%s' "$v"; return 0; }
   done
+  return 0 # missing key = empty value, not an error under set -e
 }
 
 # The Sarvam voice agent's tool token lives only in the git-ignored root .env.

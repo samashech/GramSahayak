@@ -22,20 +22,29 @@ function createDriver(name) {
   return null;
 }
 
+let generation = 0; // a newer init() cancels pending reconnects of an older one
+
+async function connect(driver, gen) {
+  const candidate = createDriver(driver);
+  if (!candidate) return;
+  try {
+    await candidate.init();
+    if (gen !== generation) return void candidate.close().catch(() => {});
+    primary = candidate;
+  } catch (err) {
+    console.warn(`[db] ${driver} unavailable, using memory (reconnect in ${RETRY_MS / 1000}s): ${err.message}`);
+    await candidate.close().catch(() => {});
+    // A cold start can time out once (seen on Azure); keep trying in the background.
+    if (gen === generation) setTimeout(() => connect(driver, gen).then(() => primary && gen === generation && console.log(`[db] ${driver} connected`)), RETRY_MS).unref();
+  }
+}
+
 async function init({ driver = config.db.driver } = {}) {
   configuredDriver = driver;
   seedSchemes.load();
   primary = null;
   retryAt = 0;
-  const candidate = createDriver(driver);
-  if (!candidate) return activeDriver();
-  try {
-    await candidate.init();
-    primary = candidate;
-  } catch (err) {
-    console.warn(`[db] ${driver} unavailable, using memory: ${err.message}`);
-    await candidate.close().catch(() => {});
-  }
+  await connect(driver, ++generation);
   return activeDriver();
 }
 

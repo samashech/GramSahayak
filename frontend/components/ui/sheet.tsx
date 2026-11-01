@@ -47,7 +47,7 @@ function SheetContent({
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(
-          "fixed inset-y-0 right-0 z-50 flex h-full w-[85%] max-w-sm flex-col gap-4 overflow-y-auto bg-background shadow-xl",
+          "fixed inset-y-0 right-0 z-50 flex h-full w-[85%] max-w-sm flex-col gap-4 overflow-y-auto bg-background shadow-md",
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right data-[state=closed]:duration-200 data-[state=open]:duration-300",
           className,
         )}
@@ -73,7 +73,7 @@ function SheetTitle({ className, ...props }: React.ComponentProps<typeof SheetPr
   return (
     <SheetPrimitive.Title
       data-slot="sheet-title"
-      className={cn("text-lg font-bold text-foreground", className)}
+      className={cn("text-lg font-semibold text-foreground", className)}
       {...props}
     />
   );

@@ -23,7 +23,7 @@ export function SafetyBanner({ safety, title }: { safety: Safety; title: string 
           <AlertTriangle className="h-6 w-6" />
         </div>
         <div className="flex-1">
-          <h3 className="text-base font-extrabold text-rose-900">{title}</h3>
+          <h3 className="text-base font-semibold text-rose-900">{title}</h3>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {helplines.map((h, i) => (
               <a
@@ -32,8 +32,8 @@ export function SafetyBanner({ safety, title }: { safety: Safety; title: string 
                 aria-label={`Call ${HELPLINE_LABELS[h] ?? h}`}
                 className={
                   i === 0
-                    ? 'inline-flex min-h-12 items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-sm'
-                    : 'inline-flex min-h-12 items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-rose-300 text-rose-900 font-bold text-sm hover:bg-rose-100'
+                    ? 'inline-flex min-h-12 items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm shadow-sm'
+                    : 'inline-flex min-h-12 items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-rose-300 text-rose-900 font-semibold text-sm hover:bg-rose-100'
                 }
               >
                 <Phone className="h-4 w-4" aria-hidden="true" />

@@ -40,7 +40,7 @@ export function LowBandwidthSection() {
                   <Icon className="size-6" strokeWidth={2.25} />
                 </span>
                 <div className="min-w-0">
-                  <h3 className="text-lg font-bold text-background sm:text-xl">{feature.title}</h3>
+                  <h3 className="text-lg font-semibold text-background sm:text-xl">{feature.title}</h3>
                   <p className="mt-1 text-base text-background/80">{feature.description}</p>
                 </div>
               </li>

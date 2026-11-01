@@ -171,15 +171,11 @@ export default function SmsPage() {
     <div className="mx-auto max-w-4xl px-3 py-4 sm:px-6 sm:py-6 text-zinc-900">
       {/* Header & Feature Phone Context */}
       <div className="text-center mb-6">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100/90 text-emerald-800 text-xs font-semibold mb-2 border border-emerald-300">
-          <WifiOff className="h-3.5 w-3.5 text-emerald-700" />
-          <span>Rule R5: Offline Feature Phone GSM / CDMA SMS</span>
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900">
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-900">
           {t.smsTitle}
         </h1>
         <p className="mt-1 text-xs sm:text-sm text-zinc-600 max-w-xl mx-auto">
-          {t.smsSubtitle} — 160-char GSM &amp; 70-char Unicode standard verified.
+          {t.smsSubtitle}
         </p>
       </div>
 
@@ -189,7 +185,7 @@ export default function SmsPage() {
         <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-zinc-200 text-xs shadow-2xs">
           <Phone className="h-3.5 w-3.5 text-emerald-600" />
           <span className="text-zinc-500">From Phone:</span>
-          <span className="font-mono font-bold text-zinc-800">{userPhone}</span>
+          <span className="font-mono font-semibold text-zinc-800">{userPhone}</span>
           {activePreset && (
             <span className="text-[10px] bg-emerald-50 text-emerald-700 font-semibold px-1.5 py-0.5 rounded border border-emerald-200">
               {activePreset.name.split(' ')[0]}
@@ -201,7 +197,7 @@ export default function SmsPage() {
         <button
           type="button"
           onClick={() => setShowRawSms((prev) => !prev)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all shadow-2xs ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-colors shadow-2xs ${
             showRawSms
               ? 'border-emerald-600 bg-emerald-600 text-white'
               : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50'
@@ -214,9 +210,8 @@ export default function SmsPage() {
 
       {/* Quick-Tap Keyword Chips */}
       <div className="mb-4 rounded-xl border border-amber-200/90 bg-amber-50/70 p-3 shadow-2xs">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 mb-2">
-          <Sparkles className="h-3.5 w-3.5 text-amber-700" />
-          <span>{t.quickKeywords} (1-Tap Send):</span>
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-900 mb-2">
+          <span>{t.quickKeywords}</span>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {QUICK_KEYWORDS.map((k) => (
@@ -225,7 +220,7 @@ export default function SmsPage() {
               type="button"
               onClick={() => handleQuickKeyword(k.code)}
               disabled={isSending}
-              className="rounded-lg border border-amber-300/80 bg-white px-2.5 py-1 text-xs font-bold text-amber-950 hover:bg-amber-100 hover:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all shadow-2xs disabled:opacity-50"
+              className="rounded-lg border border-amber-300/80 bg-white px-2.5 py-1 text-xs font-semibold text-amber-950 hover:bg-amber-100 hover:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors shadow-2xs disabled:opacity-50"
             >
               <span className="font-mono text-emerald-800">{k.code}</span>
               <span className="text-[10px] text-zinc-500 font-normal ml-1">({k.label.split(' ')[0]})</span>
@@ -255,7 +250,7 @@ export default function SmsPage() {
       )}
 
       {/* Feature Phone Message Container */}
-      <div className="rounded-3xl border-4 border-zinc-800 bg-zinc-900 p-2 sm:p-4 shadow-xl">
+      <div className="rounded-3xl border-4 border-zinc-800 bg-zinc-900 p-2 sm:p-4 shadow-md">
         {/* Handset Top Speaker & Status Bar */}
         <div className="flex flex-col items-center justify-center pb-2">
           <div className="h-1.5 w-16 bg-zinc-700 rounded-full mb-2" />
@@ -264,7 +259,7 @@ export default function SmsPage() {
               <Signal className="h-3 w-3 text-zinc-300" />
               <span>Jio GSM</span>
             </div>
-            <span className="text-zinc-200 font-bold">GramSahayak SMS</span>
+            <span className="text-zinc-200 font-semibold">GramSahayak SMS</span>
             <div className="flex items-center gap-1.5">
               <span>98%</span>
               <Battery className="h-3 w-3 text-emerald-400" />
@@ -317,7 +312,7 @@ export default function SmsPage() {
 
                     {/* Mode Badge */}
                     <span
-                      className={`px-1.5 py-0.5 rounded font-bold uppercase tracking-wide ${
+                      className={`px-1.5 py-0.5 rounded font-semibold tracking-wide ${
                         msg.meta.mode === 'keyword'
                           ? 'bg-blue-100 text-blue-800 border border-blue-300'
                           : msg.meta.mode === 'help'
@@ -400,7 +395,7 @@ export default function SmsPage() {
           <button
             type="submit"
             disabled={!inputBody.trim() || isSending}
-            className="h-12 w-12 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:opacity-40 transition-all shrink-0"
+            className="h-12 w-12 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:opacity-40 transition-colors shrink-0"
             aria-label={t.send}
           >
             <Send className="h-5 w-5" />
@@ -412,7 +407,7 @@ export default function SmsPage() {
       <div className="mt-4 text-center text-xs text-zinc-500 flex items-center justify-center gap-1.5">
         <Info className="h-3.5 w-3.5 text-zinc-400" />
         <span>
-          Real feature phone queries operate without 4G/WiFi data via SMS shortcode.
+          On a real keypad phone this works over plain SMS, with no internet
         </span>
       </div>
     </div>

@@ -22,7 +22,7 @@ export function SiteFooter() {
           <p className="mt-1 text-base font-semibold text-primary">{t.common.tagline}</p>
         </div>
         <div className="text-sm text-muted-foreground md:text-right">
-          <p>© 2026 GramSathi. {t.footer.rights}</p>
+          <p>© 2026 ग्राम सहायक। {t.footer.rights}</p>
           <p className="mt-1">
             {t.footer.photoCredit}:{" "}
             <a

@@ -49,7 +49,7 @@ export function HowItWorksSection() {
                   <p className="text-sm font-semibold text-primary">
                     {t.howItWorks.stepLabel} {numberFormat.format(index + 1)}
                   </p>
-                  <h3 className="text-2xl font-bold text-primary-dark">{step.title}</h3>
+                  <h3 className="text-2xl font-semibold text-primary-dark">{step.title}</h3>
                   <p className="mt-1 text-base text-muted-foreground sm:text-lg">{step.description}</p>
                 </div>
               </li>

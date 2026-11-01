@@ -23,7 +23,7 @@ export function CtaBanner() {
               <Smartphone className="size-7" />
             </span>
             <div className="min-w-0">
-              <h2 id="cta-title" className="text-2xl font-bold text-primary-dark sm:text-3xl">
+              <h2 id="cta-title" className="text-2xl font-semibold text-primary-dark sm:text-3xl">
                 {t.ctaBanner.title}
               </h2>
               <p className="mt-2 text-base text-foreground/85 sm:text-lg">{t.ctaBanner.description}</p>

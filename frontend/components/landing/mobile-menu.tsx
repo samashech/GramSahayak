@@ -25,7 +25,7 @@ export function MobileMenu() {
       </SheetTrigger>
       <SheetContent closeLabel={t.header.closeMenu} aria-describedby={undefined}>
         <SheetHeader>
-          <SheetTitle className="text-xl">GramSathi</SheetTitle>
+          <SheetTitle className="text-xl">ग्राम सहायक</SheetTitle>
         </SheetHeader>
 
         <nav aria-label={t.header.navigation} className="px-3">

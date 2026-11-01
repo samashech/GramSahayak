@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 
 /*
- * GramSathi brand palette
+ * (old GramSathi palette, superseded below)
  *  Background        #F4EBDD
  *  Primary green     #49664B
  *  Dark green        #293C2D
@@ -159,4 +159,26 @@ html,
 body {
   max-width: 100%;
   overflow-x: hidden;
+}
+
+/* Signature: the verified SMS receipt is drawn as a paper slip torn from a pad. It appears only where a
+   receipt copied word for word from a scheme card is shown (voice answer, call, SMS). */
+.receipt-slip {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-top: 2px dashed #c9c7ab;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgb(48 59 44 / 0.06);
+  color: var(--foreground);
+}
+.receipt-slip .receipt-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace, var(--font-noto-devanagari);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.receipt-slip .receipt-meta {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
 }

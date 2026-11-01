@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/landing/site-header";
 import { SkipLink } from "@/components/landing/skip-link";
 
 export const metadata: Metadata = {
-  title: "GramSathi — लॉग इन",
+  title: "लॉग इन · ग्राम सहायक",
 };
 
 export default function LoginPage() {

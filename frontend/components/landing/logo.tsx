@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Leaf } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -17,26 +16,21 @@ export function Logo({ label, className, tone = "dark" }: LogoProps) {
       href="/"
       aria-label={label}
       className={cn(
-        "inline-flex min-h-12 items-center gap-2.5 rounded-xl pr-2 outline-none focus-visible:ring-4 focus-visible:ring-ring/50",
+        "inline-flex min-h-12 items-center gap-3 rounded-md pr-2 outline-none focus-visible:ring-4 focus-visible:ring-ring/50",
         className,
       )}
     >
       <span
         aria-hidden="true"
         className={cn(
-          "flex size-10 items-center justify-center rounded-xl",
-          tone === "dark" ? "bg-primary-dark text-accent" : "bg-background text-primary",
+          "flex size-9 items-center justify-center rounded-md text-lg font-medium",
+          tone === "dark" ? "bg-primary text-primary-foreground" : "bg-background text-primary-dark",
         )}
       >
-        <Leaf className="size-6" strokeWidth={2.25} />
+        ग
       </span>
-      <span
-        className={cn(
-          "text-xl font-bold tracking-tight",
-          tone === "dark" ? "text-primary-dark" : "text-background",
-        )}
-      >
-        Gram<span className={tone === "dark" ? "text-primary" : "text-accent"}>Sathi</span>
+      <span className={cn("text-lg font-semibold", tone === "dark" ? "text-foreground" : "text-background")}>
+        ग्राम सहायक
       </span>
     </Link>
   );

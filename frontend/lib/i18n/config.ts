@@ -1,5 +1,5 @@
 /**
- * Central language configuration for GramSathi.
+ * Central language configuration for GramSahayak.
  *
  * Only Hindi, Marathi and Gujarati are supported. Add new languages here
  * (and a matching dictionary in `translations.ts`) — never in components.

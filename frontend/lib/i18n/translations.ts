@@ -75,6 +75,7 @@ export interface Dictionary {
     title: string;
     description: string;
     backHome: string;
+    continueApp: string;
   };
 }
 
@@ -82,7 +83,7 @@ const hi: Dictionary = {
   common: {
     skipToContent: "मुख्य सामग्री पर जाएँ",
     tagline: "आपकी भाषा। आपका सहायक।",
-    homeLabel: "GramSathi मुख्य पेज",
+    homeLabel: "ग्राम सहायक मुख्य पेज",
   },
   header: {
     menu: "मेन्यू खोलें",
@@ -167,6 +168,7 @@ const hi: Dictionary = {
     title: "लॉग इन",
     description: "मोबाइल OTP से लॉग इन की सुविधा जल्द ही यहाँ उपलब्ध होगी।",
     backHome: "मुख्य पेज पर वापस जाएँ",
+    continueApp: "बिना लॉग इन के आगे बढ़ें",
   },
 };
 
@@ -174,7 +176,7 @@ const mr: Dictionary = {
   common: {
     skipToContent: "मुख्य मजकुराकडे जा",
     tagline: "तुमची भाषा. तुमचा सहाय्यक.",
-    homeLabel: "GramSathi मुख्य पान",
+    homeLabel: "ग्राम सहायक मुख्य पान",
   },
   header: {
     menu: "मेनू उघडा",
@@ -259,6 +261,7 @@ const mr: Dictionary = {
     title: "लॉग इन",
     description: "मोबाइल OTP द्वारे लॉग इन करण्याची सुविधा लवकरच येथे उपलब्ध होईल.",
     backHome: "मुख्य पानावर परत जा",
+    continueApp: "लॉग इन न करता पुढे जा",
   },
 };
 
@@ -266,7 +269,7 @@ const gu: Dictionary = {
   common: {
     skipToContent: "મુખ્ય સામગ્રી પર જાઓ",
     tagline: "તમારી ભાષા. તમારો સહાયક.",
-    homeLabel: "GramSathi મુખ્ય પેજ",
+    homeLabel: "ग्राम सहायक મુખ્ય પેજ",
   },
   header: {
     menu: "મેનૂ ખોલો",
@@ -351,6 +354,7 @@ const gu: Dictionary = {
     title: "લૉગ ઇન",
     description: "મોબાઇલ OTP વડે લૉગ ઇન કરવાની સુવિધા ટૂંક સમયમાં અહીં ઉપલબ્ધ થશે.",
     backHome: "મુખ્ય પેજ પર પાછા જાઓ",
+    continueApp: "લૉગ ઇન વગર આગળ વધો",
   },
 };
 

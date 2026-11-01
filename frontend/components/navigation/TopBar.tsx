@@ -1,22 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useApp, DEMO_PRESETS, type DemoPreset } from '@/context/AppContext';
 import { LanguageCode, Role } from '@/lib/types';
-import {
-  Tractor,
-  HeartPulse,
-  Building2,
-  GraduationCap,
-  RotateCcw,
-  Languages,
-  UserCheck,
-  Radio,
-  Sparkles,
-  Check,
-} from 'lucide-react';
+import { RotateCcw, Languages, Radio, Check, SlidersHorizontal, ChevronDown } from 'lucide-react';
 
 const LANGUAGES: Array<{ code: LanguageCode; label: string; scriptLabel: string }> = [
   { code: 'hi-IN', label: 'Hindi', scriptLabel: 'हिन्दी' },
@@ -25,12 +14,18 @@ const LANGUAGES: Array<{ code: LanguageCode; label: string; scriptLabel: string 
   { code: 'en-IN', label: 'English', scriptLabel: 'English' },
 ];
 
-const ROLES: Array<{ role: Role; labelKey: 'farmer' | 'asha' | 'panchayat' | 'student'; icon: React.ElementType }> = [
-  { role: 'farmer', labelKey: 'farmer', icon: Tractor },
-  { role: 'asha', labelKey: 'asha', icon: HeartPulse },
-  { role: 'panchayat', labelKey: 'panchayat', icon: Building2 },
-  { role: 'student', labelKey: 'student', icon: GraduationCap },
+const ROLES: Array<{ role: Role; labelKey: 'farmer' | 'asha' | 'panchayat' | 'student' }> = [
+  { role: 'farmer', labelKey: 'farmer' },
+  { role: 'asha', labelKey: 'asha' },
+  { role: 'panchayat', labelKey: 'panchayat' },
+  { role: 'student', labelKey: 'student' },
 ];
+
+// The landing page and login have their own header; the app shell shows nowhere else twice.
+export const SHELL_HIDDEN_ROUTES = ['/', '/landing', '/login'];
+
+const fieldClass =
+  'h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40';
 
 export function TopBar() {
   const pathname = usePathname();
@@ -49,6 +44,20 @@ export function TopBar() {
   } = useApp();
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [demoOpen, setDemoOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // Close the demo menu on outside click or Escape.
+  useEffect(() => {
+    if (!demoOpen) return;
+    const onClick = (e: MouseEvent) => { if (!menuRef.current?.contains(e.target as Node)) setDemoOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setDemoOpen(false); };
+    document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onClick); document.removeEventListener('keydown', onKey); };
+  }, [demoOpen]);
+
+  if (SHELL_HIDDEN_ROUTES.includes(pathname)) return null;
 
   const handleReset = async () => {
     const ok = await resetDemoData();
@@ -59,129 +68,114 @@ export function TopBar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-amber-200/60 bg-amber-50/95 backdrop-blur-md text-amber-950 transition-colors">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-3 py-2 sm:px-6 sm:py-3">
-        {/* Brand Logo & Name */}
-        <div className="flex items-center gap-3">
-          <Link href="/voice" className="flex items-center gap-2 group focus:outline-none focus:ring-2 focus:ring-amber-500 rounded-lg p-1">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-600 to-emerald-700 text-white font-bold text-lg shadow-sm">
-              ग
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-base sm:text-lg tracking-tight text-emerald-950">
-                  {t.appName}
-                </span>
-                <span className="hidden sm:inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 border border-emerald-300">
-                  Domain 2.1
-                </span>
-              </div>
-              <p className="hidden md:block text-[11px] text-amber-800/80 font-medium">
-                {t.appSubtitle}
-              </p>
-            </div>
-          </Link>
-        </div>
+    <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur-sm">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
+        <Link
+          href="/voice"
+          className="flex min-w-0 items-center gap-3 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-lg font-medium text-primary-foreground">
+            ग
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate text-base font-semibold text-foreground">{t.appName}</span>
+            <span className="hidden truncate text-xs text-muted-foreground md:block">{t.appSubtitle}</span>
+          </span>
+        </Link>
 
-        {/* Action Controls */}
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
-          {/* Language Selector */}
-          <div className="relative flex items-center bg-white/80 rounded-lg border border-amber-200 shadow-xs px-2 py-1 text-xs">
-            <Languages className="mr-1.5 h-3.5 w-3.5 text-amber-700" aria-hidden="true" />
+        <div className="flex shrink-0 items-center gap-2">
+          <label className="flex h-10 items-center gap-2 rounded-md border border-border bg-card px-3 text-sm">
+            <Languages className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             <select
               aria-label={t.language}
               value={languageCode}
               onChange={(e) => setLanguageCode(e.target.value as LanguageCode)}
-              className="bg-transparent font-medium text-amber-900 focus:outline-none cursor-pointer pr-1"
+              className="cursor-pointer bg-transparent text-foreground focus:outline-none"
             >
               {LANGUAGES.map((lang) => (
                 <option key={lang.code} value={lang.code}>
-                  {lang.scriptLabel} ({lang.label})
+                  {lang.scriptLabel}
                 </option>
               ))}
             </select>
-          </div>
+          </label>
 
-          {/* Persona Selector */}
-          <div className="relative flex items-center bg-white/80 rounded-lg border border-amber-200 shadow-xs px-2 py-1 text-xs">
-            <UserCheck className="mr-1.5 h-3.5 w-3.5 text-emerald-700" aria-hidden="true" />
-            <select
-              aria-label={t.persona}
-              value={role}
-              onChange={(e) => setRole(e.target.value as Role)}
-              className="bg-transparent font-medium text-emerald-950 focus:outline-none cursor-pointer pr-1"
+          {/* Judge / demo controls, folded away from villagers */}
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setDemoOpen((open) => !open)}
+              aria-expanded={demoOpen}
+              aria-haspopup="true"
+              className="flex h-10 items-center gap-2 rounded-md border border-border bg-card px-3 text-sm text-foreground transition-colors hover:bg-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
             >
-              {ROLES.map((r) => (
-                <option key={r.role} value={r.role}>
-                  {t[r.labelKey]}
-                </option>
-              ))}
-            </select>
+              <SlidersHorizontal className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              <span className="hidden sm:inline">Demo</span>
+              <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            </button>
+
+            {demoOpen && (
+              <div className="absolute right-0 top-12 z-50 w-72 rounded-lg border border-border bg-card p-4 shadow-md">
+                <label className="block text-xs text-muted-foreground" htmlFor="demo-role">{t.persona}</label>
+                <select id="demo-role" value={role} onChange={(e) => setRole(e.target.value as Role)} className={`mt-1 ${fieldClass}`}>
+                  {ROLES.map((r) => (
+                    <option key={r.role} value={r.role}>{t[r.labelKey]}</option>
+                  ))}
+                </select>
+
+                <label className="mt-3 block text-xs text-muted-foreground" htmlFor="demo-preset">{t.judgePresets}</label>
+                <select
+                  id="demo-preset"
+                  value={demoUser || ''}
+                  onChange={(e) => selectPreset((e.target.value as DemoPreset['id']) || null)}
+                  className={`mt-1 ${fieldClass}`}
+                >
+                  <option value="">{t.judgePresets}</option>
+                  {DEMO_PRESETS.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setLiteMode(!liteMode)}
+                    aria-pressed={liteMode}
+                    title="Lite mode for slow networks (?lite=1)"
+                    className={`h-10 rounded-md border text-sm transition-colors ${
+                      liteMode ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-foreground hover:bg-secondary'
+                    }`}
+                  >
+                    Lite {liteMode ? 'on' : 'off'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    disabled={isResetting}
+                    className="flex h-10 items-center justify-center gap-2 rounded-md border border-border bg-card text-sm text-foreground transition-colors hover:bg-secondary disabled:opacity-50"
+                  >
+                    <RotateCcw className={`h-4 w-4 text-muted-foreground ${isResetting ? 'animate-spin' : ''}`} aria-hidden="true" />
+                    {isResetting ? t.resetting : t.resetDemo}
+                  </button>
+                </div>
+
+                <Link
+                  href="/live"
+                  target="_blank"
+                  className="mt-2 flex h-10 items-center justify-center gap-2 rounded-md bg-primary-dark text-sm text-primary-foreground transition-colors hover:bg-primary"
+                >
+                  <Radio className="h-4 w-4" aria-hidden="true" />
+                  Live pipeline view
+                </Link>
+              </div>
+            )}
           </div>
-
-          {/* Judge Presets Menu */}
-          <div className="relative flex items-center bg-emerald-50 rounded-lg border border-emerald-200 shadow-xs px-2 py-1 text-xs">
-            <Sparkles className="mr-1.5 h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
-            <select
-              aria-label={t.judgePresets}
-              value={demoUser || ''}
-              onChange={(e) => selectPreset((e.target.value as DemoPreset['id']) || null)}
-              className="bg-transparent font-semibold text-emerald-900 focus:outline-none cursor-pointer pr-1"
-            >
-              <option value="">-- {t.judgePresets} --</option>
-              {DEMO_PRESETS.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Demo Reset Button */}
-          <button
-            type="button"
-            onClick={handleReset}
-            disabled={isResetting}
-            title={t.resetDemo}
-            className="flex items-center gap-1 rounded-lg border border-rose-300 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-800 hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-500 transition-all disabled:opacity-50"
-          >
-            <RotateCcw className={`h-3 w-3 ${isResetting ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">{isResetting ? t.resetting : t.resetDemo}</span>
-          </button>
-
-          {/* Lite mode (FE-09): text-first, no animation, for 2G/3G */}
-          <button
-            type="button"
-            onClick={() => setLiteMode(!liteMode)}
-            aria-pressed={liteMode}
-            title="Lite mode for slow networks (?lite=1)"
-            className={`rounded-lg border px-2.5 py-1 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
-              liteMode ? 'border-emerald-700 bg-emerald-700 text-white' : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100'
-            }`}
-          >
-            Lite
-          </button>
-
-          {/* Live Projector Screen Link */}
-          <Link
-            href="/live"
-            target="_blank"
-            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
-              pathname === '/live'
-                ? 'bg-rose-600 text-white'
-                : 'bg-zinc-900 text-amber-300 hover:bg-zinc-800 shadow-xs'
-            }`}
-          >
-            <Radio className="h-3 w-3 text-rose-400 animate-pulse" />
-            <span>LIVE</span>
-          </Link>
         </div>
       </div>
 
-      {/* Toast Notification */}
       {toastMessage && (
-        <div className="bg-emerald-600 text-white text-xs py-1 px-4 text-center font-medium transition-all flex items-center justify-center gap-1">
-          <Check className="h-3.5 w-3.5" />
+        <div className="flex items-center justify-center gap-2 bg-primary px-4 py-1 text-xs text-primary-foreground">
+          <Check className="h-4 w-4" aria-hidden="true" />
           <span>{toastMessage}</span>
         </div>
       )}

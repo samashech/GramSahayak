@@ -32,37 +32,37 @@ export default function LivePage() {
   const badge = live.channel ? CHANNEL_BADGE[live.channel] : null;
 
   return (
-    <main className="min-h-screen bg-black text-white px-4 py-6 sm:px-8">
+    <main className="min-h-screen bg-[#1d2a1e] text-[#f7f5e8] px-4 py-6 sm:px-8">
       <div className="mx-auto max-w-7xl">
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-800 pb-5">
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-600" aria-hidden="true">
+            <div className="flex h-14 w-14 items-center justify-center rounded-md bg-[#526b45]" aria-hidden="true">
               <Radio className="h-8 w-8" />
             </div>
             <div>
-              <h1 className="text-3xl font-black tracking-wider sm:text-4xl">GRAMSAHAYAK LIVE</h1>
+              <h1 className="text-3xl font-semibold sm:text-4xl">GramSahayak live</h1>
               <p className="text-base text-zinc-400">Call · Web · SMS → one Node gateway → RAG → SMS receipt</p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-lg font-bold">
-            <span className={`rounded-full px-4 py-1.5 ${connected ? 'bg-emerald-500 text-black' : 'bg-zinc-700 text-zinc-300'}`} role="status">
+          <div className="flex flex-wrap items-center gap-3 text-lg font-semibold">
+            <span className={`rounded-full px-4 py-1.5 ${connected ? 'bg-[#f1e6b8] text-[#303b2c]' : 'bg-[#344b35] text-[#dddcc5]'}`} role="status">
               {connected ? '● LIVE' : '○ RECONNECTING'}
             </span>
             {badge && (
-              <span className="flex items-center gap-2 rounded-full bg-sky-500 px-4 py-1.5 text-black">
+              <span className="flex items-center gap-2 rounded-full bg-[#526b45] px-4 py-1.5 text-[#f7f5e8]">
                 <badge.Icon className="h-5 w-5" aria-hidden="true" /> {badge.label}
               </span>
             )}
-            <span className="rounded-full bg-zinc-800 px-4 py-1.5 font-mono" aria-label="Caller (masked)">{maskPhone(live.phone)}</span>
+            <span className="rounded-full bg-[#344b35] px-4 py-1.5 font-mono" aria-label="Caller (masked)">{maskPhone(live.phone)}</span>
           </div>
         </header>
 
         <div className={`mt-6 grid gap-6 transition-opacity duration-700 lg:grid-cols-3 ${idle ? 'opacity-40' : 'opacity-100'}`}>
-          <section className="lg:col-span-2 rounded-3xl border border-zinc-800 bg-zinc-950 p-6" aria-label="Pipeline latency">
+          <section className="lg:col-span-2 rounded-3xl border border-[#344b35] bg-[#253526] p-6" aria-label="Pipeline latency">
             <div className="mb-5 flex items-end justify-between">
-              <h2 className="text-2xl font-extrabold">Pipeline</h2>
+              <h2 className="text-2xl font-semibold">Pipeline</h2>
               <div className="text-right">
-                <div className={`font-mono text-5xl font-black ${live.totalMs === 0 ? 'text-zinc-600' : within ? 'text-emerald-400' : 'text-amber-400'}`}>
+                <div className={`font-mono text-5xl font-semibold ${live.totalMs === 0 ? 'text-zinc-600' : within ? 'text-emerald-400' : 'text-amber-400'}`}>
                   {live.totalMs} ms
                 </div>
                 <div className="text-sm text-zinc-400">voice budget &lt; {VOICE_BUDGET_MS} ms</div>
@@ -75,7 +75,7 @@ export default function LivePage() {
                 return (
                   <li key={step}>
                     <div className="mb-1 flex justify-between text-xl">
-                      <span className={done ? 'font-bold text-white' : 'text-zinc-500'}>
+                      <span className={done ? 'font-semibold text-white' : 'text-zinc-500'}>
                         {done ? '✓' : '○'} {label}
                         {step === 'sarvam_stt_done' && live.sttProvider && <span className="opacity-70"> ({live.sttProvider})</span>}
                 {step === 'groq_llm_synthesized' && live.answerMode && <span className="text-zinc-400"> ({live.answerMode})</span>}
@@ -84,7 +84,7 @@ export default function LivePage() {
                     </div>
                     <div className="h-4 overflow-hidden rounded-full bg-zinc-800">
                       <div
-                        className={`h-full rounded-full ${done ? 'bg-emerald-400' : ''} transition-all duration-500`}
+                        className={`h-full rounded-full ${done ? 'bg-emerald-400' : ''} transition-colors duration-500`}
                         style={{ width: done ? `${Math.max(4, ((ms ?? 0) / maxStep) * 100)}%` : '0%' }}
                       />
                     </div>
@@ -95,11 +95,11 @@ export default function LivePage() {
             <p className="mt-4 text-sm text-zinc-500">Steps without Sarvam (no key) or without audio are skipped, not faked.</p>
           </section>
 
-          <section className="flex flex-col items-center justify-center rounded-3xl border border-zinc-800 bg-zinc-950 p-6" aria-label="Last keypad press">
-            <h2 className="self-start text-2xl font-extrabold">Keypad (DTMF)</h2>
+          <section className="flex flex-col items-center justify-center rounded-3xl border border-[#344b35] bg-[#253526] p-6" aria-label="Last keypad press">
+            <h2 className="self-start text-2xl font-semibold">Keypad (DTMF)</h2>
             <div
-              className={`my-6 flex h-48 w-48 items-center justify-center rounded-full font-mono text-9xl font-black transition-all duration-300 ${
-                digitFresh ? 'scale-110 bg-amber-400 text-black' : 'bg-zinc-900 text-zinc-600'
+              className={`my-6 flex h-48 w-48 items-center justify-center rounded-full font-mono text-9xl font-semibold transition-colors duration-300 ${
+                digitFresh ? 'bg-[#f1e6b8] text-[#303b2c]' : 'bg-[#1d2a1e] text-[#5e604f]'
               }`}
               aria-live="polite"
             >
@@ -108,16 +108,16 @@ export default function LivePage() {
             <p className="text-lg text-zinc-400">1 Hindi · 2 Marathi · 3 Tamil, then 1-4 topic</p>
           </section>
 
-          <section className="lg:col-span-2 rounded-3xl border border-zinc-800 bg-zinc-950 p-6" aria-label="Live transcript">
-            <h2 className="mb-4 text-2xl font-extrabold">Transcript</h2>
+          <section className="lg:col-span-2 rounded-3xl border border-[#344b35] bg-[#253526] p-6" aria-label="Live transcript">
+            <h2 className="mb-4 text-2xl font-semibold">Transcript</h2>
             {live.transcript.length === 0 ? (
               <p className="text-xl text-zinc-500">Waiting for a call, a voice question or an SMS…</p>
             ) : (
               <ul className="space-y-3" aria-live="polite">
                 {live.transcript.map((t, i) => (
                   <li key={`${t.ts}-${i}`} className={`flex ${t.speaker === 'assistant' ? 'justify-start' : 'justify-end'}`}>
-                    <div className={`max-w-[85%] rounded-2xl px-5 py-3 text-xl leading-snug ${t.speaker === 'assistant' ? 'bg-zinc-800' : 'bg-emerald-600 text-black'}`}>
-                      <div className="mb-1 text-sm font-bold uppercase opacity-70">
+                    <div className={`max-w-[85%] rounded-2xl px-5 py-3 text-xl leading-snug ${t.speaker === 'assistant' ? 'bg-[#344b35]' : 'bg-[#f1e6b8] text-[#303b2c]'}`}>
+                      <div className="mb-1 text-sm font-semibold opacity-70">
                         {t.speaker === 'assistant' ? 'GramSahayak' : 'Caller'} · {t.channel}{t.source ? ` · ${t.source}` : ''}
                       </div>
                       {t.text}
@@ -128,12 +128,12 @@ export default function LivePage() {
             )}
           </section>
 
-          <section className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6" aria-label="SMS receipt">
-            <h2 className="mb-4 flex items-center gap-2 text-2xl font-extrabold">
+          <section className="rounded-3xl border border-[#344b35] bg-[#253526] p-6" aria-label="SMS receipt">
+            <h2 className="mb-4 flex items-center gap-2 text-2xl font-semibold">
               <MessageSquareText className="h-6 w-6" aria-hidden="true" /> SMS receipt
             </h2>
             {live.sms ? (
-              <div className="rounded-2xl border-2 border-emerald-500 bg-emerald-950 p-4">
+              <div className="rounded-2xl border border-[#7f9670] bg-[#1d2a1e] p-4">
                 <p className="font-mono text-lg leading-relaxed text-emerald-100">{live.sms.text}</p>
                 <p className="mt-3 text-sm text-emerald-300">
                   {Array.from(live.sms.text).length} chars · verbatim scheme card (R5) · delivery: {live.sms.delivery ?? 'simulated'}

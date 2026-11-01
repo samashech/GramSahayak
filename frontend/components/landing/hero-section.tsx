@@ -19,14 +19,11 @@ export function HeroSection() {
     <section aria-labelledby="hero-title" className="relative overflow-hidden">
       <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 pt-8 pb-14 sm:px-6 sm:pt-12 lg:grid-cols-2 lg:gap-12 lg:pt-16 lg:pb-20">
         <div className="min-w-0">
-          <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-1.5 text-sm font-semibold text-primary-dark">
-            <span aria-hidden="true" className="size-2 rounded-full bg-primary" />
-            {t.hero.eyebrow}
-          </p>
+          <p className="mb-4 text-base font-medium text-primary">{t.hero.eyebrow}</p>
 
           <h1
             id="hero-title"
-            className="text-[2.5rem] leading-[1.25] font-bold text-primary-dark sm:text-5xl sm:leading-[1.25] lg:text-6xl lg:leading-[1.2]"
+            className="text-[2.5rem] leading-[1.25] font-semibold text-primary-dark sm:text-5xl sm:leading-[1.25] lg:text-6xl lg:leading-[1.2]"
           >
             <span className="block">{t.hero.titleLine1}</span>
             <span className="block text-primary">{t.hero.titleLine2}</span>
@@ -46,7 +43,7 @@ export function HeroSection() {
         </div>
 
         <figure className="relative min-w-0">
-          <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border-4 border-card shadow-xl sm:aspect-[16/10] lg:aspect-[4/5]">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-lg border border-border sm:aspect-[16/10] lg:aspect-[4/5]">
             <Image
               src={heroImage}
               alt={t.hero.imageAlt}
@@ -62,7 +59,7 @@ export function HeroSection() {
           {/* Supported-language badge overlapping the photo */}
           <div
             aria-hidden="true"
-            className="absolute -bottom-5 left-4 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-2xl bg-primary-dark px-4 py-2.5 text-base font-semibold text-background shadow-lg sm:left-6"
+            className="absolute -bottom-5 left-4 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md bg-primary-dark px-4 py-2 text-base font-medium text-background sm:left-6"
           >
             {LANGUAGE_OPTIONS.map((option, index) => (
               <span key={option.code} lang={option.htmlLang} className="flex items-center gap-2">

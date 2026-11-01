@@ -26,7 +26,7 @@ export function SectionHeading({
       <h2
         id={id}
         className={cn(
-          "text-2xl font-bold sm:text-3xl lg:text-4xl",
+          "text-2xl font-semibold sm:text-3xl lg:text-4xl",
           tone === "dark" ? "text-primary-dark" : "text-background",
         )}
       >

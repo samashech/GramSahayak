@@ -406,12 +406,12 @@ export default function VoicePage() {
       {activePreset && (
         <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50/90 p-3 sm:p-4 flex items-center justify-between shadow-2xs">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+            <div className="h-9 w-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-semibold text-sm shadow-xs">
               {activePreset.name.charAt(0)}
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-xs sm:text-sm text-emerald-950">
+                <span className="font-semibold text-xs sm:text-sm text-emerald-950">
                   {activePreset.name}
                 </span>
                 <span className="text-[10px] bg-emerald-200/70 text-emerald-900 font-semibold px-2 py-0.5 rounded-full">
@@ -431,20 +431,20 @@ export default function VoicePage() {
 
       {/* 2. Main Title Header */}
       <div className="text-center mb-5">
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900">
-          {t.tabVoice} — {t.appName}
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-900">
+          {t.tabVoice.replace(/\s*\(.*\)\s*$/, '')}
         </h1>
         <p className="mt-1 text-xs sm:text-sm text-zinc-600 max-w-xl mx-auto">
-          {t.appSubtitle} · <span className="font-semibold text-emerald-700">3-Sentence Spoken Verification</span>
+          {t.appSubtitle}
         </p>
       </div>
 
       {/* 3. Rural Domain Categories */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-bold text-zinc-700 flex items-center gap-1.5">
+          <span className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
             <Layers className="h-3.5 w-3.5 text-emerald-600" />
-            <span>विषय चुनें (Select Domain):</span>
+            <span>विषय चुनें</span>
           </span>
           {selectedCategory && (
             <button
@@ -465,9 +465,9 @@ export default function VoicePage() {
                 key={cat.id}
                 type="button"
                 onClick={() => setSelectedCategory(isSelected ? null : cat.id)}
-                className={`flex items-center gap-2.5 p-3 rounded-2xl border text-left transition-all ${
+                className={`flex items-center gap-2.5 p-3 rounded-2xl border text-left transition-colors ${
                   isSelected
-                    ? 'border-emerald-600 bg-emerald-50 text-emerald-950 font-bold shadow-xs ring-2 ring-emerald-500/20'
+                    ? 'border-emerald-600 bg-emerald-50 text-emerald-950 font-semibold shadow-xs ring-2 ring-emerald-500/20'
                     : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
                 }`}
               >
@@ -488,7 +488,7 @@ export default function VoicePage() {
       </div>
 
       {/* 4. Giant Voice Mic & Speech Hub */}
-      <div className="rounded-3xl border-2 border-emerald-200/80 bg-gradient-to-b from-white to-emerald-50/40 p-6 sm:p-8 shadow-sm text-center mb-6">
+      <div className="rounded-3xl border-2 border-emerald-200/80 bg-card p-6 sm:p-8 shadow-sm text-center mb-6">
         {micError && (
           <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-900 text-xs border border-amber-300">
             <AlertTriangle className="h-4 w-4 text-amber-700" />
@@ -501,13 +501,13 @@ export default function VoicePage() {
           <div className="flex flex-col items-center">
             {/* Pulsing Recording Ring */}
             <div className="relative mb-4 flex items-center justify-center">
-              <div className="absolute h-32 w-32 rounded-full bg-rose-500/20 animate-ping" />
-              <div className="h-24 w-24 rounded-full bg-rose-600 flex items-center justify-center text-white shadow-lg z-10">
+              <div className="absolute h-32 w-32 rounded-full border-2 border-rose-300" />
+              <div className="h-24 w-24 rounded-full bg-rose-600 flex items-center justify-center text-white shadow-md z-10">
                 <Radio className="h-10 w-10 animate-pulse" />
               </div>
             </div>
 
-            <div className="flex items-center gap-2 font-mono text-base font-bold text-rose-700 mb-1">
+            <div className="flex items-center gap-2 font-mono text-base font-semibold text-rose-700 mb-1">
               <span className="h-2.5 w-2.5 rounded-full bg-rose-600 animate-pulse" />
               <span>
                 {Math.floor(recordingSeconds / 60)}:
@@ -520,7 +520,7 @@ export default function VoicePage() {
             </p>
 
             {speechHint && (
-              <div className="max-w-md bg-white px-3 py-1.5 rounded-xl border border-zinc-200 text-xs text-zinc-800 italic mb-4 shadow-2xs">
+              <div className="max-w-md bg-white px-3 py-1.5 rounded-xl border border-zinc-200 text-xs text-zinc-800 mb-4 shadow-2xs">
                 &ldquo;{speechHint}&rdquo;
               </div>
             )}
@@ -529,7 +529,7 @@ export default function VoicePage() {
               <button
                 type="button"
                 onClick={stopRecordingAndSend}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-md transition-colors cursor-pointer"
               >
                 <Check className="h-4 w-4" />
                 <span>{t.stopRecording}</span>
@@ -537,7 +537,7 @@ export default function VoicePage() {
               <button
                 type="button"
                 onClick={cancelRecording}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-zinc-200 hover:bg-zinc-300 text-zinc-800 font-semibold text-xs transition-all cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-zinc-200 hover:bg-zinc-300 text-zinc-800 font-semibold text-xs transition-colors cursor-pointer"
               >
                 <MicOff className="h-4 w-4" />
                 <span>{t.cancelRecording}</span>
@@ -549,7 +549,7 @@ export default function VoicePage() {
             <div className="h-20 w-20 rounded-full bg-amber-500/20 flex items-center justify-center mb-4">
               <Clock className="h-10 w-10 text-amber-600 animate-spin" />
             </div>
-            <h3 className="text-base font-bold text-zinc-900">{t.processing}</h3>
+            <h3 className="text-base font-semibold text-zinc-900">{t.processing}</h3>
             <p className="text-xs text-zinc-500 mt-1">
               Sarvam STT · Chroma RAG · Groq LLM · Sarvam TTS
             </p>
@@ -563,14 +563,14 @@ export default function VoicePage() {
               className="group relative mb-4 flex items-center justify-center focus:outline-none cursor-pointer"
               aria-label={t.pressAndSpeak}
             >
-              <div className="h-28 w-28 rounded-full bg-emerald-500/15 group-hover:scale-105 group-hover:bg-emerald-500/25 transition-all flex items-center justify-center">
-                <div className="h-20 w-20 rounded-full bg-emerald-600 group-hover:bg-emerald-700 text-white flex items-center justify-center shadow-lg transition-transform">
-                  <Mic className="h-9 w-9 group-hover:scale-110 transition-transform" />
+              <div className="h-28 w-28 rounded-full bg-emerald-500/15 group- group-hover:bg-emerald-500/25 transition-colors flex items-center justify-center">
+                <div className="h-20 w-20 rounded-full bg-emerald-600 group-hover:bg-emerald-700 text-white flex items-center justify-center shadow-md transition-transform">
+                  <Mic className="h-9 w-9 group- transition-transform" />
                 </div>
               </div>
             </button>
 
-            <h2 className="text-base sm:text-lg font-extrabold text-zinc-900">
+            <h2 className="text-base sm:text-lg font-semibold text-zinc-900">
               {t.pressAndSpeak}
             </h2>
             <p className="text-xs text-zinc-600 mt-0.5">
@@ -598,7 +598,7 @@ export default function VoicePage() {
           <button
             type="submit"
             disabled={!typedQuery.trim() || isLoading || isRecording}
-            className="h-11 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-40 transition-all shrink-0 cursor-pointer"
+            className="h-11 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-40 transition-colors shrink-0 cursor-pointer"
           >
             <Send className="h-4 w-4" />
             <span className="hidden sm:inline">{t.send}</span>
@@ -609,11 +609,7 @@ export default function VoicePage() {
       {/* 5. Judge Quick-Demo Golden Chips (G1-G5, G7, S1) */}
       <div className="mb-6 rounded-2xl border border-amber-200/90 bg-amber-50/60 p-4 shadow-2xs">
         <div className="flex items-center justify-between mb-2.5">
-          <span className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
-            <Sparkles className="h-3.5 w-3.5 text-amber-700" />
-            <span>{t.quickQuestions}:</span>
-          </span>
-          <span className="text-[10px] text-amber-800 font-semibold">1-Tap Live Test</span>
+          <span className="text-sm font-medium text-foreground">{t.quickQuestions}</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {GOLDEN_DEMO_CHIPS.map((chip) => (
@@ -622,24 +618,18 @@ export default function VoicePage() {
               type="button"
               onClick={() => handleGoldenChip(chip)}
               disabled={isLoading || isRecording}
-              className={`p-2.5 rounded-xl border text-left transition-all disabled:opacity-50 cursor-pointer shadow-2xs flex flex-col justify-between ${
+              className={`p-2.5 rounded-xl border text-left transition-colors disabled:opacity-50 cursor-pointer shadow-2xs flex flex-col justify-between ${
                 chip.isEmergency
                   ? 'border-rose-300 bg-rose-50/90 hover:bg-rose-100 text-rose-950 ring-1 ring-rose-400'
                   : 'border-amber-200/80 bg-white hover:bg-amber-100/70 text-zinc-900'
               }`}
             >
               <div className="flex items-center justify-between mb-1">
-                <span
-                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded font-mono ${
-                    chip.isEmergency ? 'bg-rose-600 text-white' : 'bg-emerald-100 text-emerald-900'
-                  }`}
-                >
-                  {chip.scenario}
-                </span>
+                <span className={`text-xs ${chip.isEmergency ? 'font-medium text-rose-800' : 'text-muted-foreground'}`}>{chip.isEmergency ? 'आपातकाल' : ''}</span>
                 <span className="text-[10px] text-zinc-500 font-medium">{chip.tag}</span>
               </div>
-              <p className="text-xs font-bold line-clamp-1">{chip.label}</p>
-              <p className="text-[11px] text-zinc-600 line-clamp-1 mt-0.5 italic">
+              <p className="text-xs font-semibold line-clamp-1">{chip.label}</p>
+              <p className="text-[11px] text-zinc-600 line-clamp-1 mt-0.5">
                 &ldquo;{chip.query}&rdquo;
               </p>
             </button>
@@ -678,7 +668,7 @@ export default function VoicePage() {
                       playAnswerAudio(activeTurn.answer);
                     }
                   }}
-                  className={`h-9 px-3 rounded-xl flex items-center gap-1.5 text-xs font-bold transition-all shadow-2xs cursor-pointer ${
+                  className={`h-9 px-3 rounded-xl flex items-center gap-1.5 text-xs font-semibold transition-colors shadow-2xs cursor-pointer ${
                     isPlaying
                       ? 'bg-rose-600 text-white'
                       : 'bg-emerald-600 hover:bg-emerald-700 text-white'
@@ -700,7 +690,7 @@ export default function VoicePage() {
                 <button
                   type="button"
                   onClick={() => playAnswerAudio(activeTurn.answer)}
-                  className="h-9 w-9 rounded-xl border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 flex items-center justify-center text-zinc-600 transition-all cursor-pointer"
+                  className="h-9 w-9 rounded-xl border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 flex items-center justify-center text-zinc-600 transition-colors cursor-pointer"
                   title="फिर से सुनें (Replay)"
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
@@ -714,7 +704,7 @@ export default function VoicePage() {
                     setPlaybackSpeed(newSpeed);
                     if (isPlaying) playAnswerAudio(activeTurn.answer, newSpeed);
                   }}
-                  className="px-2 py-1 rounded-lg border border-zinc-200 text-[10px] font-mono font-bold text-zinc-700 bg-zinc-50"
+                  className="px-2 py-1 rounded-lg border border-zinc-200 text-[10px] font-mono font-semibold text-zinc-700 bg-zinc-50"
                   title="बोलने की गति (Speech Speed)"
                 >
                   {playbackSpeed}x
@@ -740,11 +730,11 @@ export default function VoicePage() {
 
             {/* SMS Receipt / Official Portal Card (Rule R5) */}
             {activeTurn.answer.smsReceipt && (
-              <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
+              <div className="receipt-slip mt-4 p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
-                    <FileCheck className="h-4 w-4 text-emerald-700" />
-                    <span>{t.smsReceipt}:</span>
+                  <span className="text-xs font-semibold text-emerald-950 flex items-center gap-1.5">
+                    <FileCheck className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    <span>{t.smsReceipt}</span>
                   </span>
                   <button
                     type="button"
@@ -765,8 +755,9 @@ export default function VoicePage() {
                   </button>
                 </div>
 
-                <p className="text-xs text-zinc-800 leading-relaxed font-mono bg-white p-2.5 rounded-xl border border-emerald-200/80">
-                  {activeTurn.answer.smsReceipt.smsReceiptText}
+                <p className="receipt-text">{activeTurn.answer.smsReceipt.smsReceiptText}</p>
+                <p className="receipt-meta mt-2">
+                  verbatim · scheme card · {Array.from(activeTurn.answer.smsReceipt.smsReceiptText).length} chars · {activeTurn.answer.smsReceipt.delivery}
                 </p>
 
                 {/* Scheme Action Links & Helplines */}
@@ -776,7 +767,7 @@ export default function VoicePage() {
                       href={activeTurn.answer.smsReceipt.portalUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white border border-emerald-300 text-xs font-bold text-emerald-900 hover:bg-emerald-100 transition-all shadow-2xs"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white border border-emerald-300 text-xs font-semibold text-emerald-900 hover:bg-emerald-100 transition-colors shadow-2xs"
                     >
                       <ExternalLink className="h-3.5 w-3.5 text-emerald-700" />
                       <span>{t.officialPortal}</span>
@@ -786,7 +777,7 @@ export default function VoicePage() {
                   {activeTurn.answer.smsReceipt.helpline && (
                     <a
                       href={`tel:${activeTurn.answer.smsReceipt.helpline.replace(/[^0-9]/g, '')}`}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-700 text-white text-xs font-bold hover:bg-emerald-800 transition-all shadow-2xs"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-700 text-white text-xs font-semibold hover:bg-emerald-800 transition-colors shadow-2xs"
                     >
                       <Phone className="h-3.5 w-3.5" />
                       <span>
@@ -800,7 +791,7 @@ export default function VoicePage() {
                 {activeTurn.answer.smsReceipt.documents &&
                   activeTurn.answer.smsReceipt.documents.length > 0 && (
                     <div className="mt-3 pt-2 border-t border-emerald-200/60">
-                      <span className="text-[11px] font-bold text-emerald-950 block mb-1">
+                      <span className="text-[11px] font-semibold text-emerald-950 block mb-1">
                         {t.documents}:
                       </span>
                       <div className="flex flex-wrap gap-1.5">
@@ -825,7 +816,7 @@ export default function VoicePage() {
       {/* 7. Previous Conversation History */}
       {history.length > 1 && (
         <div className="mt-8 pt-6 border-t border-zinc-200">
-          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">
+          <h3 className="text-xs font-semibold text-zinc-500 mb-3">
             हालिया प्रश्न (Recent Questions in Session)
           </h3>
           <div className="space-y-2">
@@ -836,7 +827,7 @@ export default function VoicePage() {
                   setActiveTurn(item);
                   playAnswerAudio(item.answer);
                 }}
-                className="p-3 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 flex items-center justify-between text-xs cursor-pointer transition-all shadow-2xs"
+                className="p-3 rounded-2xl border border-zinc-200 bg-white hover:bg-zinc-50 flex items-center justify-between text-xs cursor-pointer transition-colors shadow-2xs"
               >
                 <div className="flex items-center gap-2">
                   <Volume2 className="h-3.5 w-3.5 text-emerald-600" />

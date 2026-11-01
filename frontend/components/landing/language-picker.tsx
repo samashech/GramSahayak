@@ -55,7 +55,7 @@ export function LanguagePicker({ label, variant = "cards", className }: Language
                 aria-hidden="true"
                 lang={option.htmlLang}
                 className={cn(
-                  "flex shrink-0 items-center justify-center rounded-xl font-bold",
+                  "flex shrink-0 items-center justify-center rounded-xl font-semibold",
                   isCards ? "size-12 text-2xl" : "size-10 text-xl",
                   checked ? "bg-background/15 text-background" : "bg-secondary text-primary",
                 )}
@@ -63,7 +63,7 @@ export function LanguagePicker({ label, variant = "cards", className }: Language
                 {option.glyph}
               </span>
               <span className="flex min-w-0 flex-1 flex-col">
-                <span lang={option.htmlLang} className={cn("font-bold", isCards ? "text-xl" : "text-lg")}>
+                <span lang={option.htmlLang} className={cn("font-semibold", isCards ? "text-xl" : "text-lg")}>
                   {option.nativeName}
                 </span>
                 <span className={cn("text-sm", checked ? "text-primary-foreground/85" : "text-muted-foreground")}>

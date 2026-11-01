@@ -485,15 +485,11 @@ export default function IvrPage() {
     <div className="mx-auto max-w-4xl px-3 py-4 sm:px-6 sm:py-6 text-zinc-900">
       {/* 1. Header & Toll-Free Banner */}
       <div className="text-center mb-6">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100/90 text-emerald-800 text-xs font-semibold mb-2 border border-emerald-300">
-          <PhoneCall className="h-3.5 w-3.5 text-emerald-700" />
-          <span>CloudTalk Toll-Free IVR Service (DEC-06 / B-07)</span>
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900">
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-900">
           {t.ivrTitle}
         </h1>
         <p className="mt-1 text-xs sm:text-sm text-zinc-600 max-w-xl mx-auto">
-          {t.ivrSubtitle} · Hindi (1), Marathi (2), Tamil (3) DTMF Routing.
+          {t.ivrSubtitle}
         </p>
       </div>
 
@@ -502,7 +498,7 @@ export default function IvrPage() {
         <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-zinc-200 text-xs shadow-2xs">
           <Phone className="h-3.5 w-3.5 text-emerald-600" />
           <span className="text-zinc-500">Caller Handset:</span>
-          <span className="font-mono font-bold text-zinc-800">{callerPhone}</span>
+          <span className="font-mono font-semibold text-zinc-800">{callerPhone}</span>
           {activePreset && (
             <span className="text-[10px] bg-emerald-50 text-emerald-700 font-semibold px-1.5 py-0.5 rounded border border-emerald-200">
               {activePreset.name.split(' ')[0]} ({activePreset.languageCode})
@@ -514,7 +510,7 @@ export default function IvrPage() {
         <button
           type="button"
           onClick={() => setShowWebhookDrawer((prev) => !prev)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all shadow-2xs cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-colors shadow-2xs cursor-pointer ${
             showWebhookDrawer
               ? 'border-emerald-600 bg-emerald-600 text-white'
               : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50'
@@ -530,22 +526,18 @@ export default function IvrPage() {
 
       {/* 3. Slide-in Top SMS Receipt Notification Banner */}
       {showSmsToast && smsToastData && (
-        <div className="mb-6 rounded-2xl border-2 border-emerald-500 bg-emerald-900 text-white p-4 shadow-lg transition-all animate-in slide-in-from-top-4">
+        <div className="receipt-slip mb-6 p-4 animate-in fade-in slide-in-from-top-1">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-2.5">
-              <div className="h-8 w-8 rounded-xl bg-emerald-700 flex items-center justify-center shrink-0">
-                <FileCheck className="h-4 w-4 text-emerald-200" />
-              </div>
+              <FileCheck className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-emerald-200 uppercase tracking-wider">
+                  <span className="text-sm font-medium text-foreground">
                     {t.smsReceipt} → {callerPhone} · {smsToastData.delivery}
                   </span>
-                  <span className="text-[10px] bg-emerald-800 px-1.5 py-0.2 rounded text-emerald-300 font-mono">
-                    Verbatim Card (R5)
-                  </span>
+                  <span className="receipt-meta">verbatim · scheme card</span>
                 </div>
-                <p className="mt-1 text-xs text-emerald-100 font-mono leading-relaxed">
+                <p className="receipt-text mt-1">
                   {smsToastData.text}
                 </p>
                 <div className="mt-2 flex items-center gap-2 text-[11px]">
@@ -554,14 +546,14 @@ export default function IvrPage() {
                       href={smsToastData.portal}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-emerald-300 hover:underline font-semibold"
+                      className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
                     >
                       <ExternalLink className="h-3 w-3" />
                       <span>{t.officialPortal}</span>
                     </a>
                   )}
                   {smsToastData.help && (
-                    <span className="text-emerald-300 font-mono">
+                    <span className="receipt-meta">
                       • {t.helpline}: {smsToastData.help}
                     </span>
                   )}
@@ -571,7 +563,7 @@ export default function IvrPage() {
             <button
               type="button"
               onClick={() => setShowSmsToast(false)}
-              className="text-emerald-300 hover:text-white text-xs font-bold p-1 cursor-pointer"
+              className="text-muted-foreground hover:text-foreground text-xs font-medium p-1 cursor-pointer"
             >
               ✕
             </button>
@@ -580,14 +572,14 @@ export default function IvrPage() {
       )}
 
       {/* 4. Feature Phone Handset Simulator Container */}
-      <div className="rounded-3xl border-4 border-zinc-800 bg-zinc-900 p-4 sm:p-6 shadow-2xl max-w-xl mx-auto">
+      <div className="rounded-3xl border-4 border-zinc-800 bg-zinc-900 p-4 sm:p-6 shadow-md max-w-xl mx-auto">
         {/* Handset Top Bar */}
         <div className="flex items-center justify-between text-zinc-400 text-[11px] px-2 pb-3 font-mono border-b border-zinc-800">
           <div className="flex items-center gap-1.5">
             <Signal className="h-3 w-3 text-zinc-300" />
             <span>BSNL 2G</span>
           </div>
-          <div className="flex items-center gap-1.5 font-bold text-zinc-200">
+          <div className="flex items-center gap-1.5 font-semibold text-zinc-200">
             <span>{TOLL_FREE_NUMBER}</span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -603,7 +595,7 @@ export default function IvrPage() {
               <div className="h-14 w-14 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-2">
                 <PhoneCall className="h-7 w-7" />
               </div>
-              <h3 className="text-white font-bold text-sm sm:text-base">
+              <h3 className="text-white font-semibold text-sm sm:text-base">
                 1800-180-1551 (Toll-Free)
               </h3>
               <p className="text-zinc-500 text-xs mt-0.5">
@@ -617,8 +609,8 @@ export default function IvrPage() {
               <div className="h-14 w-14 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mb-2">
                 <PhoneCall className="h-7 w-7 animate-spin" />
               </div>
-              <h3 className="text-amber-300 font-bold text-sm">कॉल कनेक्ट हो रहा है...</h3>
-              <p className="text-zinc-500 text-xs mt-0.5">Connecting CloudTalk Toll-Free...</p>
+              <h3 className="text-amber-300 font-semibold text-sm">कॉल कनेक्ट हो रहा है...</h3>
+              <p className="text-zinc-500 text-xs mt-0.5">Connecting…</p>
             </div>
           )}
 
@@ -626,7 +618,7 @@ export default function IvrPage() {
             <div className="flex flex-col justify-between h-full">
               {/* Call Header */}
               <div className="flex items-center justify-between text-xs text-zinc-400 border-b border-zinc-800/80 pb-2 mb-2">
-                <div className="flex items-center gap-1.5 text-emerald-400 font-mono font-bold">
+                <div className="flex items-center gap-1.5 text-emerald-400 font-mono font-semibold">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                   <span>
                     {Math.floor(callDuration / 60)}:
@@ -634,7 +626,7 @@ export default function IvrPage() {
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="bg-emerald-950 text-emerald-300 border border-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+                  <span className="bg-emerald-950 text-emerald-300 border border-emerald-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">
                     STAGE: {currentStep.stage}
                   </span>
                 </div>
@@ -691,7 +683,7 @@ export default function IvrPage() {
               <div className="h-14 w-14 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center mb-2">
                 <PhoneOff className="h-7 w-7" />
               </div>
-              <h3 className="text-zinc-300 font-bold text-sm">कॉल समाप्त (Call Ended)</h3>
+              <h3 className="text-zinc-300 font-semibold text-sm">कॉल समाप्त (Call Ended)</h3>
               <p className="text-zinc-500 text-xs mt-0.5">Duration: {callDuration}s</p>
             </div>
           )}
@@ -700,17 +692,17 @@ export default function IvrPage() {
         {/* 5. Stage 3 Speech Query Input (Active when stage === 'speech') */}
         {callState === 'connected' && awaitedInput(currentStep?.stage) === 'speech' && (
           <div className="mt-4 rounded-2xl bg-zinc-800/90 border border-zinc-700 p-3 text-left">
-            <div className="flex items-center justify-between text-xs text-zinc-300 font-bold mb-2">
+            <div className="flex items-center justify-between text-xs text-zinc-300 font-semibold mb-2">
               <span className="flex items-center gap-1.5">
                 <Mic className="h-3.5 w-3.5 text-amber-400" />
-                <span>अपना सवाल बोलें या लिखें (Ask Question):</span>
+                <span>अपना सवाल बोलें या लिखें</span>
               </span>
               <button
                 type="button"
                 role="switch"
                 aria-checked={agentMode}
                 onClick={() => setAgentMode((on) => !on)}
-                className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${agentMode ? 'border-emerald-400 bg-emerald-600 text-white' : 'border-zinc-500 bg-zinc-700 text-zinc-300'}`}
+                className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${agentMode ? 'border-emerald-400 bg-emerald-600 text-white' : 'border-zinc-500 bg-zinc-700 text-zinc-300'}`}
                 title="Hands-free: listens after every prompt and answers until you hang up"
               >
                 Voice agent: {agentMode ? 'ON' : 'OFF'}
@@ -724,7 +716,7 @@ export default function IvrPage() {
               disabled={isProcessing}
               aria-pressed={recorder.recording}
               aria-label={agentListening ? 'Stop listening' : recorder.recording ? 'Stop recording and send' : 'Record your question'}
-              className={`mb-3 flex w-full min-h-12 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold transition-all disabled:opacity-50 ${
+              className={`mb-3 flex w-full min-h-12 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${
                 recorder.recording ? 'border-rose-400 bg-rose-600 text-white animate-pulse' : 'border-amber-400 bg-amber-500 text-zinc-950 hover:bg-amber-400'
               }`}
             >
@@ -743,7 +735,7 @@ export default function IvrPage() {
                   type="button"
                   onClick={() => submitSpeechQuery(q.query)}
                   disabled={isProcessing}
-                  className="rounded-lg bg-zinc-700 hover:bg-zinc-600 text-white px-2 py-1 text-[11px] font-medium border border-zinc-600 transition-all cursor-pointer disabled:opacity-50"
+                  className="rounded-lg bg-zinc-700 hover:bg-zinc-600 text-white px-2 py-1 text-[11px] font-medium border border-zinc-600 transition-colors cursor-pointer disabled:opacity-50"
                 >
                   {q.label}
                 </button>
@@ -769,7 +761,7 @@ export default function IvrPage() {
               <button
                 type="submit"
                 disabled={!speechInputText.trim() || isProcessing}
-                className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 disabled:opacity-40 cursor-pointer"
+                className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center gap-1 disabled:opacity-40 cursor-pointer"
               >
                 <Send className="h-3 w-3" />
                 <span>बोलें</span>
@@ -791,7 +783,7 @@ export default function IvrPage() {
                 onClick={() => handleKeypadPress(btn.digit)}
                 aria-label={`Key ${btn.digit}${btn.sub ? `, ${btn.sub}` : ''}`}
                 aria-disabled={!isClickable}
-                className={`flex flex-col items-center justify-center h-14 sm:h-16 rounded-2xl border transition-all cursor-pointer select-none active:scale-95 ${
+                className={`flex flex-col items-center justify-center h-14 sm:h-16 rounded-2xl border transition-colors cursor-pointer select-none active:scale-[0.98] ${
                   isPressed
                     ? 'bg-emerald-500 border-emerald-400 text-white ring-4 ring-emerald-500/40'
                     : isClickable
@@ -799,7 +791,7 @@ export default function IvrPage() {
                     : 'bg-zinc-800/40 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
                 }`}
               >
-                <span className="font-mono text-xl sm:text-2xl font-bold leading-none">
+                <span className="font-mono text-xl sm:text-2xl font-semibold leading-none">
                   {btn.digit}
                 </span>
                 {btn.sub ? (
@@ -807,7 +799,7 @@ export default function IvrPage() {
                     {btn.sub}
                   </span>
                 ) : btn.letters ? (
-                  <span className="text-[9px] text-zinc-500 font-mono tracking-widest mt-0.5">
+                  <span className="text-[9px] text-zinc-500 font-mono mt-0.5">
                     {btn.letters}
                   </span>
                 ) : null}
@@ -824,7 +816,7 @@ export default function IvrPage() {
               onClick={startCall}
               aria-label="Call the toll-free number (simulated)"
               disabled={isProcessing}
-              className="flex items-center gap-2 px-8 py-3.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg hover:shadow-emerald-600/30 transition-all cursor-pointer active:scale-95"
+              className="flex items-center gap-2 px-8 py-3.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-md hover:shadow-emerald-600/30 transition-colors cursor-pointer active:scale-[0.98]"
             >
               <Phone className="h-5 w-5" />
               <span>{t.callButton} (1800-180-1551)</span>
@@ -834,7 +826,7 @@ export default function IvrPage() {
               type="button"
               onClick={hangUp}
               aria-label="Hang up"
-              className="flex items-center gap-2 px-8 py-3.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm shadow-lg hover:shadow-rose-600/30 transition-all cursor-pointer active:scale-95"
+              className="flex items-center gap-2 px-8 py-3.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-semibold text-sm shadow-md hover:shadow-rose-600/30 transition-colors cursor-pointer active:scale-[0.98]"
             >
               <PhoneOff className="h-5 w-5" />
               <span>{t.hangupButton}</span>
@@ -845,12 +837,12 @@ export default function IvrPage() {
 
       {/* 8. CloudTalk Webhook Log Drawer (Judges View) */}
       {showWebhookDrawer && (
-        <div className="mt-6 rounded-2xl border border-zinc-300 bg-zinc-900 text-zinc-100 p-4 sm:p-5 shadow-lg">
+        <div className="mt-6 rounded-2xl border border-zinc-300 bg-zinc-900 text-zinc-100 p-4 sm:p-5 shadow-md">
           <div className="flex items-center justify-between border-b border-zinc-800 pb-3 mb-4">
             <div className="flex items-center gap-2">
               <Code className="h-4 w-4 text-emerald-400" />
-              <h3 className="text-sm font-bold text-white">
-                {t.webhookLog} — CloudTalk Telephony Webhook Trail
+              <h3 className="text-sm font-semibold text-white">
+                {t.webhookLog}
               </h3>
             </div>
             <span className="text-xs text-zinc-400 font-mono">
@@ -872,7 +864,7 @@ export default function IvrPage() {
                     className="rounded-xl border border-zinc-800 bg-zinc-950 p-3 font-mono text-xs"
                   >
                     <div className="flex items-center justify-between text-[11px] text-zinc-400 border-b border-zinc-800/80 pb-1.5 mb-2">
-                      <span className="text-emerald-400 font-bold uppercase">
+                      <span className="text-emerald-400 font-semibold">
                         Stage: {webhookLabel(log)}
                       </span>
                       <button

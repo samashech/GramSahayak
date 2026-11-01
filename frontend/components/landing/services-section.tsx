@@ -23,7 +23,7 @@ function ServiceCard({ icon: Icon, content }: { icon: LucideIcon; content: Dicti
         <Icon className="size-8" strokeWidth={2} />
       </span>
       <div className="min-w-0">
-        <h3 className="text-xl font-bold text-primary-dark sm:text-2xl">{content.title}</h3>
+        <h3 className="text-xl font-semibold text-primary-dark sm:text-2xl">{content.title}</h3>
         <p className="mt-1.5 text-base text-muted-foreground sm:mt-2 sm:text-lg">{content.description}</p>
       </div>
     </li>
